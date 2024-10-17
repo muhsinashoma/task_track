@@ -1,0 +1,171 @@
+import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+
+//import 'dart:convert';
+
+import '../../data/data.dart';
+import '../../models/models.dart';
+import '../widgets/kanban_board.dart';
+import 'kanban_board_controller.dart';
+
+class KanbanSetStatePage extends StatefulWidget {
+  const KanbanSetStatePage({super.key});
+
+  @override
+  _KanbanSetStatePageState createState() => _KanbanSetStatePageState();
+}
+
+class _KanbanSetStatePageState extends State<KanbanSetStatePage>
+    implements KanbanBoardController {
+  //To show column data
+
+//  List<KColumn> columns = Data.getColumns();
+
+  // List<KColumn> columns = [];
+
+  // getColumnData() async {
+  //   try {
+  //     final dio = Dio();
+  //     var response =
+  //         await dio.get("http://192.168.35.134/get_column_data_kanban.php");
+
+  //     print(response.data);
+
+  //     if (response.statusCode == 200) {
+  //       print('---------------------column data---------');
+
+  //       columns = Data.getColumns(response.data);
+
+  //       print(columns);
+
+  //       setState(() {});
+  //     }
+  //   } catch (e) {
+  //     print('------------------------------');
+  //   }
+  // }
+
+  List<KColumn> columns = [];
+
+  getColumnData() async {
+    try {
+      final dio = Dio();
+      var response =
+          await dio.get("http://192.168.35.89/API/get_column_data.php");
+
+      print(response);
+
+      // print('--------------------Column Data-----------------------------');
+      // print(response.data);
+
+      // var columnDataValue = response.data;
+
+      // print(columnDataValue);
+
+      print('----------Board Name and ID Number-----------------------------');
+      columns = Data.getColumns(response.data);
+
+      print(columns);
+
+      print('--------------------Column Data-----------------------------');
+
+      setState(() {});
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getColumnData();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Set State--------------------------'),
+      ),
+      body: SafeArea(
+        child: KanbanBoard(
+          columns: columns,
+          controller: this,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void deleteItem(int columnIndex, KTask task) {
+    setState(() {
+      columns[columnIndex].children.remove(task);
+    });
+  }
+
+  @override
+  void handleReOrder(int oldIndex, int newIndex, int index) {
+    setState(() {
+      if (oldIndex != newIndex) {
+        final task = columns[index].children[oldIndex];
+        columns[index].children.remove(task);
+        columns[index].children.insert(newIndex, task);
+      }
+    });
+  }
+
+  @override
+  void addColumn(String title) async {
+    // print('--------------add column---------------');
+    setState(() {
+      columns.add(KColumn(
+        title: title,
+        children: List.of([]),
+      ));
+    });
+
+    final dio = Dio();
+    var url = 'http://192.168.35.134/API/add_column_kanban.php';
+
+    print(url);
+
+    try {
+      var data = {
+        "title": title,
+        "created_by": "muhisna",
+      };
+
+      // print("data--------------------------");
+      //print(data);
+      Response response = await dio.post(
+        url,
+        data: data,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        ),
+      );
+
+      print('---------------------');
+      print(response);
+    } catch (e) {
+      print('Unexpected error: $e');
+    }
+  }
+
+  @override
+  void addTask(String title, int column) {
+    setState(() {
+      columns[column].children.add(KTask(title: title));
+    });
+  }
+
+  @override
+  void dragHandler(KData data, int index) {
+    setState(() {
+      columns[data.from].children.remove(data.task);
+      columns[index].children.add(data.task);
+    });
+  }
+}
