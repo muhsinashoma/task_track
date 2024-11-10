@@ -19,8 +19,8 @@ class Data {
     // print('----------------------------------');
 
     return jsonData.map((item) {
-      print(item['id']);
-      print(item['title']);
+      //print(item['id']);
+      //print(item['title']);
 
       // Fetching current column
 
@@ -33,6 +33,7 @@ class Data {
       }
 
       return KColumn(
+        id: int.tryParse(item['id'].toString()) ?? 0, // Ensure it's an integer
         // id: item['id'],
         title: item['title'],
         children: tasks, // Ignoring children as per your requirement

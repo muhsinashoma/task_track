@@ -32,19 +32,19 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.34.17/API/get_column_data_kanban.php");
+          await dio.get("http://192.168.34.206/API/get_column_data_kanban.php");
 
       // print('----------Response Data----------------------------');
 
       //print(response);
 
-      print('--------Board Name and ID number---------------');
+      // print('--------Board Name and ID number---------------');
 
       columns = Data.getColumns(response.data);
 
-      print(columns);
+      //print(columns);
 
-      print('--------Board Name and ID number---------------');
+      //print('--------Board Name and ID number---------------');
 
       setState(() {});
     } catch (e) {
@@ -56,7 +56,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.34.17/API/get_task_data_kanban.php");
+          await dio.get("http://192.168.34.206/API/get_task_data_kanban.php");
 
       //print("--------------All Data-----------------");
 
@@ -76,11 +76,24 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
           // print(tasks);
 
+          // tasksForColumns.add({
+          //   'id': board['id'],
+          //   'title': board['title'],
+          //   'tasks': tasks
+          //       .map((task) => {'id': task['id'], 'title': task['title']})
+          //       .toList()
+          // });
+
           tasksForColumns.add({
-            'id': board['id'],
+            'id': int.tryParse(board['id'].toString()) ??
+                0, // Ensure it's an integer
             'title': board['title'],
             'tasks': tasks
-                .map((task) => {'id': task['id'], 'title': task['title']})
+                .map((task) => {
+                      'id': int.tryParse(task['id'].toString()) ??
+                          0, // Ensure task id is an integer
+                      'title': task['title']
+                    })
                 .toList()
           });
         }
@@ -100,8 +113,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
         setState(() {}); //for loading task data
       }
-
-      print('--------------------------------');
     } catch (e) {
       print(e);
     }
@@ -113,7 +124,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Set State--------------------------'),
+        title: const Text('ITM Task Status'),
       ),
       body: SafeArea(
         child: KanbanBoard(
@@ -146,21 +157,25 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   void addColumn(String title) async {
     // print('--------------add column---------------');
     setState(() {
+      // Generate a temporary ID (for example, using the length of columns)
+      int newId = columns.length + 1; // Or use a unique ID generator if needed
+
       columns.add(KColumn(
+        id: newId,
         title: title,
         children: List.of([]),
       ));
     });
 
     final dio = Dio();
-    var url = 'http://192.168.34.17/API/add_column_kanban.php';
+    var url = 'http://192.168.34.206/API/add_column_kanban.php';
 
     print(url);
 
     try {
       var data = {
         "title": title,
-        "created_by": "muhisna",
+        "created_by": "muhsina",
       };
 
       // print("data--------------------------");
@@ -193,39 +208,31 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
   @override
   void addTask(String title, int column) async {
+    // Add the task locally
     setState(() {
       columns[column].children.add(KTask(title: title));
     });
 
-    // Fetch the column name dynamically
+    // Fetch the column ID dynamically using the column index
+    int columnId = columns[column].id;
 
-    String columnName = columns[column].title;
+    print('------------- Dynamically Column ID -------------');
+    print(columnId); // This is where you get the column ID
+    print('------------------------------------------------');
 
-    print('-------------Dynamically Column ID------------------');
-
-    print(columnName);
-
-    // columns = Data.getColumns(columns.data);
-
-    print(columns);
-
-    print('-------------Dynamically Column ID------------------');
     final dio = Dio();
-    var url = ("http://192.168.34.17/API/add_task_kanban.php");
-
-    print(url);
+    var url = "http://192.168.34.206/API/add_task_kanban.php";
 
     try {
       var data = {
         "title": title,
-        "column_name": columnName,
+        "column_id": columnId, // Dynamically added column ID
         "model_name": 1,
         "project_name": 1,
         "created_by": "muhsina"
       };
 
-      print('------------Task Data-----------');
-
+      print('------------ Task Data -----------');
       print(data);
 
       Response response = await dio.post(
@@ -238,10 +245,10 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         ),
       );
 
-      print('------------Response Task Data-----------');
+      print('------------ Response Task Data -----------');
       print(response);
     } catch (e) {
-      print('Unexpected Error $e');
+      print('Unexpected Error: $e');
     }
   }
 

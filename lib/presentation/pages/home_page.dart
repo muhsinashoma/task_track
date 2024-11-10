@@ -13,7 +13,7 @@ class HomePage extends StatelessWidget {
       body: ListView(
         children: [
           _buildListTile(
-            title: 'Set State -----------------test purpose---------',
+            title: 'ITM',
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const KanbanSetStatePage()),
             ),

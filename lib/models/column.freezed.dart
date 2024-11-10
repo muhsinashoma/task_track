@@ -16,6 +16,7 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$KColumn {
+  int get id => throw _privateConstructorUsedError; // Add the `id` field
   String get title => throw _privateConstructorUsedError;
   List<KTask> get children => throw _privateConstructorUsedError;
 
@@ -28,7 +29,7 @@ abstract class $KColumnCopyWith<$Res> {
   factory $KColumnCopyWith(KColumn value, $Res Function(KColumn) then) =
       _$KColumnCopyWithImpl<$Res, KColumn>;
   @useResult
-  $Res call({String title, List<KTask> children});
+  $Res call({int id, String title, List<KTask> children}); // Update with `id`
 }
 
 /// @nodoc
@@ -44,10 +45,15 @@ class _$KColumnCopyWithImpl<$Res, $Val extends KColumn>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? id = null, // Add `id`
     Object? title = null,
     Object? children = null,
   }) {
     return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
@@ -67,7 +73,7 @@ abstract class _$$_KColumnCopyWith<$Res> implements $KColumnCopyWith<$Res> {
       __$$_KColumnCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String title, List<KTask> children});
+  $Res call({int id, String title, List<KTask> children}); // Update with `id`
 }
 
 /// @nodoc
@@ -80,10 +86,15 @@ class __$$_KColumnCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? id = null, // Add `id`
     Object? title = null,
     Object? children = null,
   }) {
     return _then(_$_KColumn(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
@@ -97,10 +108,12 @@ class __$$_KColumnCopyWithImpl<$Res>
 }
 
 /// @nodoc
-
 class _$_KColumn implements _KColumn {
-  const _$_KColumn({required this.title, required this.children});
+  const _$_KColumn(
+      {required this.id, required this.title, required this.children});
 
+  @override
+  final int id; // Add `id` field
   @override
   final String title;
   @override
@@ -108,7 +121,7 @@ class _$_KColumn implements _KColumn {
 
   @override
   String toString() {
-    return 'KColumn(title: $title, children: $children)';
+    return 'KColumn(id: $id, title: $title, children: $children)'; // Include `id` in toString()
   }
 
   @override
@@ -116,13 +129,19 @@ class _$_KColumn implements _KColumn {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_KColumn &&
+            (identical(other.id, id) ||
+                other.id == id) && // Compare `id` in equality check
             (identical(other.title, title) || other.title == title) &&
             const DeepCollectionEquality().equals(other.children, children));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType, title, const DeepCollectionEquality().hash(children));
+      runtimeType,
+      id,
+      title,
+      const DeepCollectionEquality()
+          .hash(children)); // Include `id` in hashCode
 
   @JsonKey(ignore: true)
   @override
@@ -133,11 +152,12 @@ class _$_KColumn implements _KColumn {
 
 abstract class _KColumn implements KColumn {
   const factory _KColumn(
-      {
-      //required final int id,
+      {required final int id, // Add `id` to the factory constructor
       required final String title,
       required final List<KTask> children}) = _$_KColumn;
 
+  @override
+  int get id; // Add `id` getter
   @override
   String get title;
   @override
