@@ -1,12 +1,7 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint
-// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'task.dart';
 
-// **************************************************************************
-// FreezedGenerator
 // **************************************************************************
 
 T _$identity<T>(T value) => value;
@@ -17,6 +12,8 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$KTask {
   String get title => throw _privateConstructorUsedError;
+  String get taskId =>
+      throw _privateConstructorUsedError; // Include taskId here
 
   @JsonKey(ignore: true)
   $KTaskCopyWith<KTask> get copyWith => throw _privateConstructorUsedError;
@@ -27,7 +24,7 @@ abstract class $KTaskCopyWith<$Res> {
   factory $KTaskCopyWith(KTask value, $Res Function(KTask) then) =
       _$KTaskCopyWithImpl<$Res, KTask>;
   @useResult
-  $Res call({String title});
+  $Res call({String title, String taskId});
 }
 
 /// @nodoc
@@ -40,15 +37,19 @@ class _$KTaskCopyWithImpl<$Res, $Val extends KTask>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? title = null,
+    Object? taskId = null,
   }) {
     return _then(_value.copyWith(
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      taskId: null == taskId
+          ? _value.taskId
+          : taskId // ignore: cast_nullable_to_non_nullable
               as String,
     ) as $Val);
   }
@@ -60,7 +61,7 @@ abstract class _$$_KTaskCopyWith<$Res> implements $KTaskCopyWith<$Res> {
       __$$_KTaskCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String title});
+  $Res call({String title, String taskId});
 }
 
 /// @nodoc
@@ -69,15 +70,19 @@ class __$$_KTaskCopyWithImpl<$Res> extends _$KTaskCopyWithImpl<$Res, _$_KTask>
   __$$_KTaskCopyWithImpl(_$_KTask _value, $Res Function(_$_KTask) _then)
       : super(_value, _then);
 
-  @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? title = null,
+    Object? taskId = null,
   }) {
     return _then(_$_KTask(
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      taskId: null == taskId
+          ? _value.taskId
+          : taskId // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
@@ -86,14 +91,16 @@ class __$$_KTaskCopyWithImpl<$Res> extends _$KTaskCopyWithImpl<$Res, _$_KTask>
 /// @nodoc
 
 class _$_KTask implements _KTask {
-  const _$_KTask({required this.title});
+  const _$_KTask({required this.title, required this.taskId});
 
   @override
   final String title;
+  @override
+  final String taskId;
 
   @override
   String toString() {
-    return 'KTask(title: $title)';
+    return 'KTask(title: $title, taskId: $taskId)';
   }
 
   @override
@@ -101,24 +108,27 @@ class _$_KTask implements _KTask {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_KTask &&
-            (identical(other.title, title) || other.title == title));
+            (identical(other.title, title) || other.title == title) &&
+            (identical(other.taskId, taskId) || other.taskId == taskId));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, title);
+  int get hashCode => Object.hash(runtimeType, title, taskId);
 
   @JsonKey(ignore: true)
   @override
-  @pragma('vm:prefer-inline')
   _$$_KTaskCopyWith<_$_KTask> get copyWith =>
       __$$_KTaskCopyWithImpl<_$_KTask>(this, _$identity);
 }
 
 abstract class _KTask implements KTask {
-  const factory _KTask({required final String title}) = _$_KTask;
+  const factory _KTask({required String title, required String taskId}) =
+      _$_KTask;
 
   @override
   String get title;
+  @override
+  String get taskId;
   @override
   @JsonKey(ignore: true)
   _$$_KTaskCopyWith<_$_KTask> get copyWith =>

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../models/models.dart';
 import 'taks_menu.widget.dart';
 import 'task_text_widget.dart';
@@ -45,7 +44,10 @@ class TaskCard extends StatelessWidget {
               ),
             ),
             childWhenDragging: Container(color: Colors.black12),
-            data: KData(from: columnIndex, task: task),
+            data: KData(
+                from: columnIndex,
+                task: task,
+                taskId: task.taskId), // Pass taskId here
             child: Container(
               color: Colors.red,
               child: ListTile(

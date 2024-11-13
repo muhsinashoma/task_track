@@ -6,5 +6,6 @@ part 'task.freezed.dart';
 class KTask with _$KTask {
   const factory KTask({
     required String title,
+    required String taskId, //Added taskId Field
   }) = _KTask;
 }

@@ -9,5 +9,6 @@ class KData with _$KData {
   const factory KData({
     required int from,
     required KTask task,
+    required String taskId, //Added taskId field
   }) = _KData;
 }

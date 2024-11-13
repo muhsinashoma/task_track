@@ -1,12 +1,7 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint
-// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'data.dart';
 
-// **************************************************************************
-// FreezedGenerator
 // **************************************************************************
 
 T _$identity<T>(T value) => value;
@@ -18,6 +13,8 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$KData {
   int get from => throw _privateConstructorUsedError;
   KTask get task => throw _privateConstructorUsedError;
+  String get taskId =>
+      throw _privateConstructorUsedError; // Include taskId here
 
   @JsonKey(ignore: true)
   $KDataCopyWith<KData> get copyWith => throw _privateConstructorUsedError;
@@ -28,7 +25,7 @@ abstract class $KDataCopyWith<$Res> {
   factory $KDataCopyWith(KData value, $Res Function(KData) then) =
       _$KDataCopyWithImpl<$Res, KData>;
   @useResult
-  $Res call({int from, KTask task});
+  $Res call({int from, KTask task, String taskId}); // Update call method
 
   $KTaskCopyWith<$Res> get task;
 }
@@ -48,6 +45,7 @@ class _$KDataCopyWithImpl<$Res, $Val extends KData>
   $Res call({
     Object? from = null,
     Object? task = null,
+    Object? taskId = null,
   }) {
     return _then(_value.copyWith(
       from: null == from
@@ -58,6 +56,10 @@ class _$KDataCopyWithImpl<$Res, $Val extends KData>
           ? _value.task
           : task // ignore: cast_nullable_to_non_nullable
               as KTask,
+      taskId: null == taskId
+          ? _value.taskId
+          : taskId // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 
@@ -76,7 +78,7 @@ abstract class _$$_KDataCopyWith<$Res> implements $KDataCopyWith<$Res> {
       __$$_KDataCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int from, KTask task});
+  $Res call({int from, KTask task, String taskId}); // Update call method
 
   @override
   $KTaskCopyWith<$Res> get task;
@@ -93,6 +95,7 @@ class __$$_KDataCopyWithImpl<$Res> extends _$KDataCopyWithImpl<$Res, _$_KData>
   $Res call({
     Object? from = null,
     Object? task = null,
+    Object? taskId = null,
   }) {
     return _then(_$_KData(
       from: null == from
@@ -103,6 +106,10 @@ class __$$_KDataCopyWithImpl<$Res> extends _$KDataCopyWithImpl<$Res, _$_KData>
           ? _value.task
           : task // ignore: cast_nullable_to_non_nullable
               as KTask,
+      taskId: null == taskId
+          ? _value.taskId
+          : taskId // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -110,16 +117,19 @@ class __$$_KDataCopyWithImpl<$Res> extends _$KDataCopyWithImpl<$Res, _$_KData>
 /// @nodoc
 
 class _$_KData implements _KData {
-  const _$_KData({required this.from, required this.task});
+  const _$_KData(
+      {required this.from, required this.task, required this.taskId});
 
   @override
   final int from;
   @override
   final KTask task;
+  @override
+  final String taskId;
 
   @override
   String toString() {
-    return 'KData(from: $from, task: $task)';
+    return 'KData(from: $from, task: $task, taskId: $taskId)';
   }
 
   @override
@@ -128,11 +138,12 @@ class _$_KData implements _KData {
         (other.runtimeType == runtimeType &&
             other is _$_KData &&
             (identical(other.from, from) || other.from == from) &&
-            (identical(other.task, task) || other.task == task));
+            (identical(other.task, task) || other.task == task) &&
+            (identical(other.taskId, taskId) || other.taskId == taskId));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, from, task);
+  int get hashCode => Object.hash(runtimeType, from, task, taskId);
 
   @JsonKey(ignore: true)
   @override
@@ -142,13 +153,17 @@ class _$_KData implements _KData {
 }
 
 abstract class _KData implements KData {
-  const factory _KData({required final int from, required final KTask task}) =
-      _$_KData;
+  const factory _KData(
+      {required int from,
+      required KTask task,
+      required String taskId}) = _$_KData;
 
   @override
   int get from;
   @override
   KTask get task;
+  @override
+  String get taskId;
   @override
   @JsonKey(ignore: true)
   _$$_KDataCopyWith<_$_KData> get copyWith =>
