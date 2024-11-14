@@ -277,29 +277,18 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
   @override
   void dragHandler(KData data, int index) async {
-    print('---------------Drag and Drop------------');
-
-    print('---------from---------+${data.from}');
-    print(data.from);
-
     print(data);
 
     //Assuming KData has a taskId attribute
     print('Task ID : ${data.taskId}');
-
-    // int taskId = data.taskId;
-    print('--------------index-----------${index}');
 
     setState(() {
       columns[data.from].children.remove(data.task);
       columns[index].children.add(data.task);
     });
 
-    print('--------------------------');
-
-    //int taskId = data.taskId;
-    print(data.taskId);
-    print(data.from);
+    // print(data.taskId);
+    // data.from;
 
     final dio = Dio();
     var url = "http://192.168.34.206/API/drag_drop_kanban.php";
@@ -309,8 +298,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       var requestData = {
         "id": data.taskId,
-        "column_name": index,
-        "previous_status": data.from,
+        "column_name": index + 1,
+        "previous_status": data.from + 1,
         "model_name": 1,
         "project_name": 1,
         "status_change_by": "muhsina"
@@ -332,61 +321,4 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       print('Enexpected Error $e');
     }
   }
-
-// @override
-//   void dragHandler(KData data, int index) async {
-//     print('---------------Drag and Drop------------');
-
-//     print('---------from---------${data.from}');
-//     print(data);
-
-//     // Assuming KData has a taskId attribute
-//     print('Task ID: ${data.taskId}');
-//    // int taskId = data.taskId;
-
-//     print('--------------index-----------$index');
-
-//     setState(() {
-//       columns[data.from].children.remove(data.task);
-//       columns[index].children.add(data.task);
-//     });
-
-//     final dio = Dio();
-//     const String url = "http://192.168.34.206/drag_drop_kanban.php";
-
-//     print(url);
-
-//     try {
-//       var requestData = {
-//         "id": taskId,
-//         "column_name": index,
-//         "previous_status": data.from,
-//         "model_name": 1,
-//         "project_name": 1,
-//         "status_change_by": "muhsina"
-//       };
-
-//       print('---------------------------Drag and Drop Task');
-//       print(requestData);
-
-//       Response response = await dio.post(
-//         url,
-//         data: requestData,
-//         options: Options(
-//           headers: {
-//             'Content-Type': 'application/x-www-form-urlencoded',
-//           },
-//         ),
-//       );
-
-//       // Optional: handle the response if needed
-//       if (response.statusCode == 200) {
-//         print('Task updated successfully.');
-//       } else {
-//         print('Failed to update task. Status code: ${response.statusCode}');
-//       }
-//     } catch (e) {
-//       print('Unexpected Error: $e');
-//     }
-//   }
 }

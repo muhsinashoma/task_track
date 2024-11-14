@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 10, 2024 at 10:42 AM
+-- Generation Time: Nov 14, 2024 at 09:43 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -118,7 +118,8 @@ INSERT INTO `tbl_task_board` (`id`, `title`, `status`, `created_at`, `created_by
 (1, 'Open', 1, '2024-11-10 07:38:18', 'muhsina'),
 (2, 'Inprogress', 1, '2024-11-10 07:38:40', 'muhsina'),
 (3, 'QA', 1, '2024-11-10 07:38:50', 'muhsina'),
-(4, 'Done', 1, '2024-11-10 07:39:01', 'muhsina');
+(4, 'Done', 1, '2024-11-10 07:39:01', 'muhsina'),
+(5, 'Pending Task', 1, '2024-11-11 07:02:15', 'muhsina');
 
 -- --------------------------------------------------------
 
@@ -136,22 +137,31 @@ CREATE TABLE `tbl_task_name` (
   `created_by` varchar(50) NOT NULL,
   `status` int(2) NOT NULL DEFAULT 1,
   `edited_at` datetime NOT NULL,
-  `edited_by` varchar(11) NOT NULL
+  `edited_by` varchar(11) NOT NULL,
+  `previous_status` int(2) NOT NULL,
+  `status_change_time` datetime NOT NULL,
+  `status_change_by` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tbl_task_name`
 --
 
-INSERT INTO `tbl_task_name` (`id`, `title`, `column_name`, `model_name`, `project_name`, `created_at`, `created_by`, `status`, `edited_at`, `edited_by`) VALUES
-(1, 'Multiple TT Create at a time for ITM Module', 1, 1, 1, '2024-11-10 07:39:26', 'muhisna', 1, '0000-00-00 00:00:00', ''),
-(2, '10.	Display a report showing the average time for TT to open and close, organized by date. Additionally, show the average time for the current month on the dashboard', 3, 1, 1, '2024-11-10 07:42:20', 'muhisna', 1, '0000-00-00 00:00:00', ''),
-(3, '7.	Update employee information in the HRIS system, including: ○	Mobile number. ○	Email. ○	Designation', 4, 1, 1, '2024-11-10 07:44:26', 'muhisna', 1, '0000-00-00 00:00:00', ''),
-(4, '8.	Add \"Device Requisition\" to the main menu on the left sidebar. Under this menu, include: ○	TT Requisition List. ○	Approval List.', 3, 1, 1, '2024-11-10 07:45:50', 'muhisna', 1, '0000-00-00 00:00:00', ''),
-(5, '10.	Display a report showing the average time for TT to open and close, organized by date. Additionally, show the average time for the current month on the dashboard.', 2, 1, 1, '2024-11-10 07:46:14', 'muhisna', 1, '0000-00-00 00:00:00', ''),
-(6, '1.	Implement an \"Approve\" button.', 3, 1, 1, '2024-11-10 07:49:14', 'muhisna', 1, '0000-00-00 00:00:00', ''),
-(7, '2.	Add print functionality with two options: ○	Print All TT Summary. ○	Print TT Details.', 3, 1, 1, '2024-11-10 07:49:31', 'muhisna', 1, '0000-00-00 00:00:00', ''),
-(8, 'Supply Chain with ITM Device Issue', 1, 1, 1, '2024-11-10 09:34:17', 'muhsina', 1, '0000-00-00 00:00:00', '');
+INSERT INTO `tbl_task_name` (`id`, `title`, `column_name`, `model_name`, `project_name`, `created_at`, `created_by`, `status`, `edited_at`, `edited_by`, `previous_status`, `status_change_time`, `status_change_by`) VALUES
+(1, 'Multiple TT Create at a time for ITM Module', 2, 1, 1, '2024-11-10 07:39:26', 'muhisna', 1, '0000-00-00 00:00:00', '', 2, '0000-00-00 00:00:00', 'muhsina'),
+(2, 'Display a report showing the average time for TT to open and close, organized by date. Additionally, show the average time for the current month on the dashboard', 1, 1, 1, '2024-11-10 07:42:20', 'muhisna', 1, '0000-00-00 00:00:00', '', 2, '0000-00-00 00:00:00', 'muhsina'),
+(3, 'Update employee information in the HRIS system, including: ○	Mobile number. ○	Email. ○	Designation', 3, 1, 1, '2024-11-10 07:44:26', 'muhisna', 1, '0000-00-00 00:00:00', '', 1, '0000-00-00 00:00:00', 'muhsina'),
+(4, 'Add \"Device Requisition\" to the main menu on the left sidebar. Under this menu, include: ○	TT Requisition List. ○	Approval List.', 4, 1, 1, '2024-11-10 07:45:50', 'muhisna', 1, '0000-00-00 00:00:00', '', 3, '0000-00-00 00:00:00', 'muhsina'),
+(5, 'Display a report showing the average time for TT to open and close, organized by date. Additionally, show the average time for the current month on the dashboard.', 2, 1, 1, '2024-11-10 07:46:14', 'muhisna', 1, '0000-00-00 00:00:00', '', 1, '0000-00-00 00:00:00', 'muhsina'),
+(6, 'Implement an \"Approve\" button.', 3, 1, 1, '2024-11-10 07:49:14', 'muhisna', 1, '0000-00-00 00:00:00', '', 0, '0000-00-00 00:00:00', ''),
+(7, 'Add print functionality with two options: ○	Print All TT Summary. ○	Print TT Details.', 3, 1, 1, '2024-11-10 07:49:31', 'muhisna', 1, '0000-00-00 00:00:00', '', 0, '0000-00-00 00:00:00', ''),
+(8, 'Supply Chain with ITM Device Issue', 1, 1, 1, '2024-11-10 09:34:17', 'muhsina', 1, '0000-00-00 00:00:00', '', 0, '0000-00-00 00:00:00', 'muhsina'),
+(9, 'test', 4, 1, 1, '2024-11-11 07:02:20', 'muhsina', 1, '0000-00-00 00:00:00', '', 3, '0000-00-00 00:00:00', 'muhsina'),
+(10, 'To add access issue for IT Persons', 5, 1, 1, '2024-11-11 12:16:38', 'muhsina', 1, '0000-00-00 00:00:00', '', 3, '0000-00-00 00:00:00', 'muhsina'),
+(11, 'Modification for Device Requisition', 4, 1, 1, '2024-11-14 06:25:18', 'muhsina', 1, '0000-00-00 00:00:00', '', 1, '0000-00-00 00:00:00', 'muhsina'),
+(12, 'Need to add email in TT Edit View Page', 4, 1, 1, '2024-11-14 06:25:44', 'muhsina', 1, '0000-00-00 00:00:00', '', 1, '0000-00-00 00:00:00', 'muhsina'),
+(13, 'To add device report under report menu', 3, 1, 1, '2024-11-14 06:28:43', 'muhsina', 1, '0000-00-00 00:00:00', '', 2, '0000-00-00 00:00:00', 'muhsina'),
+(14, 'TT Average Age in MIS', 5, 1, 1, '2024-11-14 07:02:50', 'muhsina', 1, '0000-00-00 00:00:00', '', 0, '0000-00-00 00:00:00', '');
 
 -- --------------------------------------------------------
 
@@ -318,13 +328,13 @@ ALTER TABLE `tbl_name_of_allah_swt`
 -- AUTO_INCREMENT for table `tbl_task_board`
 --
 ALTER TABLE `tbl_task_board`
-  MODIFY `id` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `tbl_task_name`
 --
 ALTER TABLE `tbl_task_name`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `tbl_title_subtitle`
