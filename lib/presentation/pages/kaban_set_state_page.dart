@@ -143,7 +143,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
     //print('Print Index ${columnIndex}');
 
-    // print('Task ID---------${task.taskId}');
+    print('Task ID---------${task.taskId}');
 
     setState(() {
       columns[columnIndex].children.remove(task);
