@@ -138,10 +138,37 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   }
 
   @override
-  void deleteItem(int columnIndex, KTask task) {
+  Future<void> deleteItem(int columnIndex, KTask task) async {
+    print('-------------delete Task---------');
+
+    //print('Print Index ${columnIndex}');
+
+    // print('Task ID---------${task.taskId}');
+
     setState(() {
       columns[columnIndex].children.remove(task);
     });
+
+    final dio = Dio();
+    var url = "http://192.168.34.206/API/delete_task_kanban.php";
+    print(url);
+
+    try {
+      var deletedData = {"id": task.taskId, "deleted_by": "muhsina"};
+      // print("----------------------Task Details ${deletedData}");
+
+      Response response = await dio.post(
+        url,
+        data: deletedData,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        ),
+      );
+    } catch (e) {
+      print('Unexpected Issue $e');
+    }
   }
 
   @override
@@ -200,21 +227,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       print('Unexpected error: $e');
     }
   }
-
-  // @override
-  // void addTask(String title, int column) {
-  //   setState(() {
-  //     columns[column].children.add(KTask(title: title));
-  //   });
-  // }
-
-// Assuming you have a KTask class like this:
-// class KTask {
-//   final String title;
-//   final String taskId;
-
-//   KTask({required this.title, required this.taskId});
-// }
 
   @override
   void addTask(String title, int column) async {

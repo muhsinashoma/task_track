@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Nov 14, 2024 at 09:43 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Host: localhost:3306
+-- Generation Time: Nov 25, 2024 at 06:03 AM
+-- Server version: 8.0.30
+-- PHP Version: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -28,18 +28,18 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `tbl_login` (
-  `id` int(10) NOT NULL,
-  `user_name` varchar(100) NOT NULL,
-  `password` varchar(100) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `mobile` varchar(11) NOT NULL,
-  `user_type` int(3) NOT NULL,
-  `status` int(2) NOT NULL DEFAULT 1,
-  `user` varchar(100) NOT NULL,
+  `id` int NOT NULL,
+  `user_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `password` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `email` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `mobile` varchar(11) COLLATE utf8mb4_general_ci NOT NULL,
+  `user_type` int NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
+  `user` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `created_date` datetime NOT NULL,
-  `edited_by` varchar(50) NOT NULL,
+  `edited_by` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
   `edited_date` datetime NOT NULL,
-  `token` varchar(255) NOT NULL
+  `token` varchar(255) COLLATE utf8mb4_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -58,17 +58,17 @@ INSERT INTO `tbl_login` (`id`, `user_name`, `password`, `email`, `mobile`, `user
 --
 
 CREATE TABLE `tbl_name_of_allah_swt` (
-  `id` int(10) NOT NULL,
-  `single_item_id` int(10) NOT NULL,
+  `id` int NOT NULL,
+  `single_item_id` int NOT NULL,
   `arabic_name` varchar(100) NOT NULL,
   `english_meaning` varchar(100) NOT NULL,
   `name_of_allah_swt` varchar(70) NOT NULL,
   `bangoli_meaning` varchar(100) NOT NULL,
-  `status` int(2) NOT NULL DEFAULT 1,
+  `status` int NOT NULL DEFAULT '1',
   `created_by` varchar(50) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `like_status` varchar(6) NOT NULL DEFAULT 'false'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `tbl_name_of_allah_swt`
@@ -103,11 +103,11 @@ INSERT INTO `tbl_name_of_allah_swt` (`id`, `single_item_id`, `arabic_name`, `eng
 --
 
 CREATE TABLE `tbl_task_board` (
-  `id` int(5) NOT NULL,
-  `title` varchar(100) NOT NULL,
-  `status` int(2) NOT NULL DEFAULT 1,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `created_by` varchar(10) NOT NULL
+  `id` int NOT NULL,
+  `title` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` varchar(10) COLLATE utf8mb4_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -128,40 +128,53 @@ INSERT INTO `tbl_task_board` (`id`, `title`, `status`, `created_at`, `created_by
 --
 
 CREATE TABLE `tbl_task_name` (
-  `id` int(10) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `column_name` int(2) NOT NULL,
-  `model_name` int(10) NOT NULL,
-  `project_name` int(10) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `created_by` varchar(50) NOT NULL,
-  `status` int(2) NOT NULL DEFAULT 1,
-  `edited_at` datetime NOT NULL,
-  `edited_by` varchar(11) NOT NULL,
-  `previous_status` int(2) NOT NULL,
-  `status_change_time` datetime NOT NULL,
-  `status_change_by` varchar(50) NOT NULL
+  `id` int NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `column_name` int NOT NULL,
+  `model_name` int NOT NULL,
+  `project_name` int NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_by` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
+  `edited_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `edited_by` varchar(11) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'muhsina',
+  `previous_status` int NOT NULL DEFAULT '0',
+  `status_change_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `status_change_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `deleted_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tbl_task_name`
 --
 
-INSERT INTO `tbl_task_name` (`id`, `title`, `column_name`, `model_name`, `project_name`, `created_at`, `created_by`, `status`, `edited_at`, `edited_by`, `previous_status`, `status_change_time`, `status_change_by`) VALUES
-(1, 'Multiple TT Create at a time for ITM Module', 2, 1, 1, '2024-11-10 07:39:26', 'muhisna', 1, '0000-00-00 00:00:00', '', 2, '0000-00-00 00:00:00', 'muhsina'),
-(2, 'Display a report showing the average time for TT to open and close, organized by date. Additionally, show the average time for the current month on the dashboard', 1, 1, 1, '2024-11-10 07:42:20', 'muhisna', 1, '0000-00-00 00:00:00', '', 2, '0000-00-00 00:00:00', 'muhsina'),
-(3, 'Update employee information in the HRIS system, including: ○	Mobile number. ○	Email. ○	Designation', 3, 1, 1, '2024-11-10 07:44:26', 'muhisna', 1, '0000-00-00 00:00:00', '', 1, '0000-00-00 00:00:00', 'muhsina'),
-(4, 'Add \"Device Requisition\" to the main menu on the left sidebar. Under this menu, include: ○	TT Requisition List. ○	Approval List.', 4, 1, 1, '2024-11-10 07:45:50', 'muhisna', 1, '0000-00-00 00:00:00', '', 3, '0000-00-00 00:00:00', 'muhsina'),
-(5, 'Display a report showing the average time for TT to open and close, organized by date. Additionally, show the average time for the current month on the dashboard.', 2, 1, 1, '2024-11-10 07:46:14', 'muhisna', 1, '0000-00-00 00:00:00', '', 1, '0000-00-00 00:00:00', 'muhsina'),
-(6, 'Implement an \"Approve\" button.', 3, 1, 1, '2024-11-10 07:49:14', 'muhisna', 1, '0000-00-00 00:00:00', '', 0, '0000-00-00 00:00:00', ''),
-(7, 'Add print functionality with two options: ○	Print All TT Summary. ○	Print TT Details.', 3, 1, 1, '2024-11-10 07:49:31', 'muhisna', 1, '0000-00-00 00:00:00', '', 0, '0000-00-00 00:00:00', ''),
-(8, 'Supply Chain with ITM Device Issue', 1, 1, 1, '2024-11-10 09:34:17', 'muhsina', 1, '0000-00-00 00:00:00', '', 0, '0000-00-00 00:00:00', 'muhsina'),
-(9, 'test', 4, 1, 1, '2024-11-11 07:02:20', 'muhsina', 1, '0000-00-00 00:00:00', '', 3, '0000-00-00 00:00:00', 'muhsina'),
-(10, 'To add access issue for IT Persons', 5, 1, 1, '2024-11-11 12:16:38', 'muhsina', 1, '0000-00-00 00:00:00', '', 3, '0000-00-00 00:00:00', 'muhsina'),
-(11, 'Modification for Device Requisition', 4, 1, 1, '2024-11-14 06:25:18', 'muhsina', 1, '0000-00-00 00:00:00', '', 1, '0000-00-00 00:00:00', 'muhsina'),
-(12, 'Need to add email in TT Edit View Page', 4, 1, 1, '2024-11-14 06:25:44', 'muhsina', 1, '0000-00-00 00:00:00', '', 1, '0000-00-00 00:00:00', 'muhsina'),
-(13, 'To add device report under report menu', 3, 1, 1, '2024-11-14 06:28:43', 'muhsina', 1, '0000-00-00 00:00:00', '', 2, '0000-00-00 00:00:00', 'muhsina'),
-(14, 'TT Average Age in MIS', 5, 1, 1, '2024-11-14 07:02:50', 'muhsina', 1, '0000-00-00 00:00:00', '', 0, '0000-00-00 00:00:00', '');
+INSERT INTO `tbl_task_name` (`id`, `title`, `column_name`, `model_name`, `project_name`, `created_at`, `created_by`, `status`, `edited_at`, `edited_by`, `previous_status`, `status_change_time`, `status_change_by`, `deleted_by`, `deleted_at`) VALUES
+(1, 'Multiple TT Create at a time for ITM Module', 5, 1, 1, '2024-11-10 07:39:26', 'muhisna', 1, '2024-11-19 07:01:17', '', 1, '2024-11-24 16:34:33', 'muhsina', '', '2024-11-24 17:58:36'),
+(2, 'Display a report showing the average time for TT to open and close, organized by date. Additionally, show the average time for the current month on the dashboard', 5, 1, 1, '2024-11-10 07:42:20', 'muhisna', 1, '2024-11-19 07:01:17', '', 1, '0000-00-00 00:00:00', 'muhsina', '', '2024-11-24 17:58:36'),
+(3, 'Update employee information in the HRIS system, including: ○	Mobile number. ○	Email. ○	Designation', 4, 1, 1, '2024-11-10 07:44:26', 'muhisna', 1, '2024-11-19 07:01:17', '', 1, '2024-11-18 10:56:06', 'muhsina', '', '2024-11-24 17:58:36'),
+(4, 'Add \"Device Requisition\" to the main menu on the left sidebar. Under this menu, include: ○	TT Requisition List. ○	Approval List.', 4, 1, 1, '2024-11-10 07:45:50', 'muhisna', 1, '2024-11-19 07:01:17', '', 3, '0000-00-00 00:00:00', 'muhsina', '', '2024-11-24 17:58:36'),
+(5, 'Display a report showing the average time for TT to open and close, organized by date. Additionally, show the average time for the current month on the dashboard.', 4, 1, 1, '2024-11-10 07:46:14', 'muhisna', 1, '2024-11-19 07:01:17', '', 2, '2024-11-19 12:57:39', 'muhsina', '', '2024-11-24 17:58:36'),
+(6, 'Implement an \"Approve\" button.', 4, 1, 1, '2024-11-10 07:49:14', 'muhisna', 1, '2024-11-19 07:01:17', '', 3, '0000-00-00 00:00:00', 'muhsina', '', '2024-11-24 17:58:36'),
+(7, 'Add print functionality with two options: ○	Print All TT Summary. ○	Print TT Details.', 4, 1, 1, '2024-11-10 07:49:31', 'muhisna', 1, '2024-11-19 07:01:17', '', 3, '0000-00-00 00:00:00', 'muhsina', '', '2024-11-24 17:58:36'),
+(8, 'Supply Chain with ITM Device Issue', 2, 1, 1, '2024-11-10 09:34:17', 'muhsina', 0, '2024-11-19 07:01:17', '', 3, '2024-11-20 12:57:25', 'muhsina', 'muhsina', '2024-11-25 12:01:31'),
+(9, 'test', 4, 1, 1, '2024-11-11 07:02:20', 'muhsina', 1, '2024-11-19 07:01:17', '', 3, '0000-00-00 00:00:00', 'muhsina', '', '2024-11-24 17:58:36'),
+(10, 'To add access issue for IT Persons', 5, 1, 1, '2024-11-11 12:16:38', 'muhsina', 1, '2024-11-19 07:01:17', '', 3, '0000-00-00 00:00:00', 'muhsina', '', '2024-11-24 17:58:36'),
+(11, 'Modification for Device Requisition', 4, 1, 1, '2024-11-14 06:25:18', 'muhsina', 1, '2024-11-19 07:01:17', '', 1, '0000-00-00 00:00:00', 'muhsina', '', '2024-11-24 17:58:36'),
+(12, 'Need to add email in TT Edit View Page', 5, 1, 1, '2024-11-14 06:25:44', 'muhsina', 1, '2024-11-19 07:01:17', '', 4, '2024-11-20 12:50:31', 'muhsina', '', '2024-11-24 17:58:36'),
+(13, 'To add device report under report menu', 3, 1, 1, '2024-11-14 06:28:43', 'muhsina', 1, '2024-11-19 07:01:17', '', 2, '2024-11-18 18:30:05', 'muhsina', '', '2024-11-24 17:58:36'),
+(14, 'TT Average Age in MIS', 5, 1, 1, '2024-11-14 07:02:50', 'muhsina', 1, '2024-11-19 07:01:17', '', 4, '2024-11-18 18:30:09', 'muhsina', '', '2024-11-24 17:58:36'),
+(15, 'test', 5, 1, 1, '2024-11-19 07:12:48', 'muhsina', 1, '2024-11-19 07:12:48', 'muhsina', 1, '2024-11-24 16:31:34', 'muhsina', '', '2024-11-24 17:58:36'),
+(16, 'PHP Mail Configuration', 5, 1, 1, '2024-11-19 08:39:38', 'muhsina', 1, '2024-11-19 08:39:38', 'muhsina', 1, '2024-11-24 16:31:04', 'muhsina', '', '2024-11-24 17:58:36'),
+(17, 'Test Purpose Only', 2, 1, 1, '2024-11-20 07:01:47', 'muhsina', 0, '2024-11-20 07:01:47', 'muhsina', 0, '2024-11-20 13:01:47', NULL, 'muhsina', '2024-11-25 11:57:51'),
+(18, 'test purpose only', 5, 1, 1, '2024-11-21 06:03:35', 'muhsina', 0, '2024-11-21 06:03:35', 'muhsina', 1, '2024-11-24 16:30:21', 'muhsina', 'muhsina', '2024-11-25 11:55:03'),
+(19, 'Test Purpose', 2, 1, 1, '2024-11-24 10:29:30', 'muhsina', 1, '2024-11-24 10:29:30', 'muhsina', 0, '2024-11-24 16:29:30', NULL, '', '2024-11-24 17:58:36'),
+(20, 'Need to check from ITM Side', 1, 1, 1, '2024-11-24 10:32:34', 'muhsina', 0, '2024-11-24 10:32:34', 'muhsina', 5, '2024-11-24 16:38:19', 'muhsina', 'muhsina', '2024-11-25 11:58:53'),
+(21, 'test only itm issue', 1, 1, 1, '2024-11-24 10:36:51', 'muhsina', 0, '2024-11-24 10:36:51', 'muhsina', 5, '2024-11-24 16:38:05', 'muhsina', 'muhsina', '2024-11-25 11:59:31'),
+(22, 'test', 1, 1, 1, '2024-11-25 05:09:35', 'muhsina', 0, '2024-11-25 05:09:35', 'muhsina', 0, '2024-11-25 11:09:35', NULL, 'muhsina', '2024-11-25 11:49:42'),
+(23, 'QA Test', 2, 1, 1, '2024-11-25 05:10:24', 'muhsina', 0, '2024-11-25 05:10:24', 'muhsina', 0, '2024-11-25 11:10:24', NULL, 'muhsina', '2024-11-25 11:57:16'),
+(24, 'Pending Issue', 5, 1, 1, '2024-11-25 05:15:09', 'muhsina', 0, '2024-11-25 05:15:09', 'muhsina', 0, '2024-11-25 11:15:09', NULL, 'muhsina', '2024-11-25 11:46:23'),
+(25, 'Need to Add ID with Name', 1, 1, 1, '2024-11-25 06:00:20', 'muhsina', 1, '2024-11-25 06:00:20', 'muhsina', 0, '2024-11-25 12:00:20', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -170,15 +183,15 @@ INSERT INTO `tbl_task_name` (`id`, `title`, `column_name`, `model_name`, `projec
 --
 
 CREATE TABLE `tbl_title_subtitle` (
-  `id` int(11) NOT NULL,
+  `id` int NOT NULL,
   `title` varchar(80) NOT NULL,
   `subtitle` varchar(80) NOT NULL,
-  `status` int(2) NOT NULL,
+  `status` int NOT NULL,
   `created_by` varchar(15) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `updated_by` varchar(50) NOT NULL,
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `tbl_title_subtitle`
@@ -248,16 +261,16 @@ INSERT INTO `tbl_title_subtitle` (`id`, `title`, `subtitle`, `status`, `created_
 --
 
 CREATE TABLE `tbl_weekly_name` (
-  `id` int(10) NOT NULL,
-  `single_item_id` int(10) NOT NULL,
+  `id` int NOT NULL,
+  `single_item_id` int NOT NULL,
   `arabic_name` varchar(50) NOT NULL,
   `bangoli_name` varchar(50) NOT NULL,
   `day_count` varchar(50) NOT NULL,
   `english_name` varchar(50) NOT NULL,
-  `status` int(2) NOT NULL DEFAULT 1,
+  `status` int NOT NULL DEFAULT '1',
   `created_by` varchar(50) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `tbl_weekly_name`
@@ -316,37 +329,37 @@ ALTER TABLE `tbl_weekly_name`
 -- AUTO_INCREMENT for table `tbl_login`
 --
 ALTER TABLE `tbl_login`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `tbl_name_of_allah_swt`
 --
 ALTER TABLE `tbl_name_of_allah_swt`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `tbl_task_board`
 --
 ALTER TABLE `tbl_task_board`
-  MODIFY `id` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `tbl_task_name`
 --
 ALTER TABLE `tbl_task_name`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `tbl_title_subtitle`
 --
 ALTER TABLE `tbl_title_subtitle`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
 
 --
 -- AUTO_INCREMENT for table `tbl_weekly_name`
 --
 ALTER TABLE `tbl_weekly_name`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
