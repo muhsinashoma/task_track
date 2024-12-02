@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
-import 'edit_widget_handler.dart';
-
 import 'taks_menu.widget.dart';
 import 'task_text_widget.dart';
 
@@ -47,10 +45,32 @@ class TaskCard extends StatelessWidget {
             ),
             childWhenDragging: Container(color: Colors.black12),
             data: KData(
-              from: columnIndex,
-              task: task,
-              taskId: task.taskId,
-            ),
+                from: columnIndex,
+                task: task,
+                taskId: task.taskId), // Pass taskId here
+
+            // child: Container(
+            //   color: Colors.red,
+            //   child: ListTile(
+            //     dense: true,
+            //     title: TaskText(
+            //       title: task.title,
+            //     ),
+            //     trailing: InkWell(
+            //       onTap: () => showModalBottomSheet(
+            //         context: context,
+            //         builder: (context) => TaskMenu(
+            //           deleteHandler: () => deleteItemHandler(columnIndex, task),
+            //         ),
+            //       ),
+            //       child: const Icon(
+            //         color: Colors.white,
+            //         Icons.more_horiz,
+            //       ),
+            //     ),
+            //   ),
+            // ),
+
             child: Container(
               color: Colors.red,
               child: ListTile(
@@ -70,22 +90,19 @@ class TaskCard extends StatelessWidget {
                         ),
                       ),
                       child: const Icon(
-                        Icons.delete,
-                        color: Colors.white,
-                        size: 18,
-                      ),
+                          // Icons.more_horiz,
+                          Icons.delete,
+                          color: Colors.white,
+                          size: 18),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 8), // Add some spacing between icons
                     InkWell(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditItemPage(
-                            taskId: task.taskId,
-                            taskTitle: task.title, // Pass taskTitle here
-                          ),
-                        ),
-                      ),
+                      onTap: () {
+                        // Your edit handler logic here
+                        print('Edit task : ${task.title}');
+
+                        print('ID : ${task.taskId}');
+                      },
                       child: const Icon(
                         Icons.edit,
                         color: Colors.white,
