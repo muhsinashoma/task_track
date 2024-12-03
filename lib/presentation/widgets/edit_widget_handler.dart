@@ -1,28 +1,10 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: EditItemPage(
-          taskId: '12345',
-          taskTitle: 'Sample Task Title'), // Pass both taskId and taskTitle
-    );
-  }
-}
-
 class EditItemPage extends StatefulWidget {
   final String taskId;
-  final String taskTitle; // Add taskTitle as a parameter
+  final String taskTitle;
 
-  // Correct constructor definition with named parameters
   const EditItemPage({required this.taskId, required this.taskTitle});
 
   @override
@@ -36,31 +18,18 @@ class _EditItemPageState extends State<EditItemPage> {
   String? updatedAt;
   String? updatedBy;
 
-  // Simulate a task database or API fetch by taskId
   Future<void> fetchTaskById(String taskId) async {
-    // Simulate fetching task data (e.g., from an API or database)
-    await Future.delayed(Duration(seconds: 2)); // Simulate network delay
-
-    // Here, you can use the `taskId` to get actual task data
-    String taskTitle = widget.taskTitle; // Use taskTitle passed in constructor
-
-    print('Fetched task title: $taskTitle');
-
-    // Populate the TextField with the fetched title
+    String taskTitle = widget.taskTitle;
+    //print('Fetched task title: $taskTitle');
     _controller.text = taskTitle;
   }
 
   @override
   void initState() {
     super.initState();
-
-    // Fetch the task data when the page is initialized
     fetchTaskById(widget.taskId);
-
-    // Add listener to the focus node to detect when focus is lost
     _focusNode.addListener(() {
       if (!_focusNode.hasFocus) {
-        // Focus lost, fetch the title value and handle the task edit
         print('Title: ${_controller.text}');
       }
     });
@@ -73,28 +42,23 @@ class _EditItemPageState extends State<EditItemPage> {
     super.dispose();
   }
 
-  Future<void> editItemHandler(String text, String taskId) async {
-    // Handle the edit item logic here (e.g., send updated data to an API)
-    print("Edited item with task ID: $taskId and new text: $text");
+  Future<void> editItemHandler(String textTitle, String taskId) async {
+    print("Edited item with task ID: $taskId and New text: $textTitle");
 
     setState(() {
       updatedAt = DateTime.now().toString();
-      updatedBy = 'Muhsina'; // Replace with the actual user information
-
-      print('Update Date : $updatedAt');
-      print('Updated By : $updatedBy');
+      updatedBy = 'Muhsina';
+      print('Update Date: $updatedAt');
+      print('Updated By: $updatedBy');
     });
 
-    // Here, you can update your database or API with the new data
     final dio = Dio();
     var url = "http://192.168.34.99/API/update_task_kanban.php";
-
-    print(url);
 
     try {
       var responseData = {
         "id": taskId,
-        "title": text,
+        "title": textTitle,
         "edited_by": updatedBy,
         "edited_at": updatedAt
       };
@@ -111,13 +75,63 @@ class _EditItemPageState extends State<EditItemPage> {
           },
         ),
       );
+
+      print('Response Status: ${response.statusCode}');
+      print('Response Data: ${response.data}');
+
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        // Show success message after successful update
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Task Successfully Updated!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        });
+      } else {
+        // Show error message if response status code is not 200
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update task. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        });
+      }
     } catch (e) {
-      print('Unexpected Error : {$e}');
+      print('Error occurred: $e');
+
+      // Show error message in case of an exception
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update task. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      });
     }
   }
 
   void handleSubmit() {
-    editItemHandler(_controller.text, widget.taskId);
+    if (_controller.text.isEmpty) {
+      // Show validation message if title is empty
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Task title cannot be empty'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      });
+    } else {
+      // Proceed with the update if valid
+      print('Submitting task...');
+      editItemHandler(_controller.text, widget.taskId);
+    }
   }
 
   @override
@@ -129,45 +143,49 @@ class _EditItemPageState extends State<EditItemPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Displaying TextField for user input
             TextField(
               controller: _controller,
               focusNode: _focusNode,
-              // ignore: prefer_const_constructors
               decoration: InputDecoration(
-                labelText: 'Enter Task Title',
-                labelStyle: TextStyle(
-                  fontSize: 25.0,
+                prefix: SizedBox(
+                  width: 30.0,
+                  height: 50.0,
+                ),
+                label: Row(
+                  children: [
+                    SizedBox(height: 20),
+                    Text(
+                      'Enter Task Title',
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: Color.fromARGB(255, 231, 94, 3),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            // ignore: prefer_const_constructors
             SizedBox(height: 20),
-            // Display the title value fetched from the controller
             Text(
               'Title: ${_controller.text}',
-              // ignore: prefer_const_constructors
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            // ignore: prefer_const_constructors
             SizedBox(height: 20),
-            // Display the updatedAt value
             Text(
               'Updated At: ${updatedAt ?? 'Not updated yet'}',
-              // ignore: prefer_const_constructors
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
-            // ignore: prefer_const_constructors
             SizedBox(height: 10),
-            // Display the updatedBy value
             Text(
               'Updated By: ${updatedBy ?? 'Not updated yet'}',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
-            // Add the submit button
             ElevatedButton(
               onPressed: handleSubmit,
               child: Text('Submit'),
