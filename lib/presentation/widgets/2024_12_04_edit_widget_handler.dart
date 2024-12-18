@@ -20,14 +20,13 @@ class _EditItemPageState extends State<EditItemPage> {
 
   Future<void> fetchTaskById(String taskId) async {
     String taskTitle = widget.taskTitle;
+    //print('Fetched task title: $taskTitle');
     _controller.text = taskTitle;
   }
 
   @override
   void initState() {
-    _controller.text = widget.taskTitle;
     super.initState();
-
     fetchTaskById(widget.taskId);
     _focusNode.addListener(() {
       if (!_focusNode.hasFocus) {
@@ -54,7 +53,7 @@ class _EditItemPageState extends State<EditItemPage> {
     });
 
     final dio = Dio();
-    var url = "http://192.168.33.28/API/update_task_kanban.php";
+    var url = "http://192.168.34.99/API/update_task_kanban.php";
 
     try {
       var responseData = {
@@ -117,27 +116,6 @@ class _EditItemPageState extends State<EditItemPage> {
     }
   }
 
-  // void handleSubmit() {
-  //   if (_controller.text.isEmpty) {
-  //     // Show validation message if title is empty
-  //     WidgetsBinding.instance.addPostFrameCallback((_) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('Task title cannot be empty'),
-  //           backgroundColor: Colors.red,
-  //         ),
-  //       );
-  //     });
-  //   } else {
-  //     // Proceed with the update if valid
-  //     print('Submitting task...');
-  //     editItemHandler(_controller.text, widget.taskId).then((_) {
-  //       // After editing is done, pop the updated title back to the previous page
-  //       Navigator.pop(context, _controller.text); // Send back updated title
-  //     });
-  //   }
-  // }
-
   void handleSubmit() {
     if (_controller.text.isEmpty) {
       // Show validation message if title is empty
@@ -152,48 +130,15 @@ class _EditItemPageState extends State<EditItemPage> {
     } else {
       // Proceed with the update if valid
       print('Submitting task...');
-      editItemHandler(_controller.text, widget.taskId).then((_) {
-        // After editing is done, pop the updated title back to the previous page
-        Navigator.pop(context, _controller.text); // Send back updated title
-      });
+      editItemHandler(_controller.text, widget.taskId);
     }
   }
-
-  // void handleSubmit() {
-  //   if (_controller.text.isEmpty) {
-  //     // Show validation message if title is empty
-  //     WidgetsBinding.instance.addPostFrameCallback((_) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('Task title cannot be empty'),
-  //           backgroundColor: Colors.red,
-  //         ),
-  //       );
-  //     });
-  //   } else {
-  //     // Proceed with the update if valid
-  //     print('Submitting task...');
-  //     editItemHandler(_controller.text, widget.taskId).then((_) {
-  //       // After editing is done, pop the updated task back to the previous page
-  //       KTask updatedTask = KTask(
-  //         taskId: widget.taskId,
-  //         title: _controller.text, // Updated title
-  //       );
-  //       Navigator.pop(context, updatedTask); // Send back updated task
-  //     });
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Edit Item ${widget.taskId}'),
-        leading: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: Icon(Icons.arrow_back)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

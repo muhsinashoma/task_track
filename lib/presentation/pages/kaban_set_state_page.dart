@@ -34,7 +34,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.34.99/API/get_column_data_kanban.php");
+          await dio.get("http://192.168.33.28/API/get_column_data_kanban.php");
 
       // print('----------Response Data----------------------------');
 
@@ -58,7 +58,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.34.99/API/get_task_data_kanban.php");
+          await dio.get("http://192.168.33.28/API/get_task_data_kanban.php");
 
       //print("--------------All Data-----------------");
 
@@ -150,7 +150,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     });
 
     final dio = Dio();
-    var url = "http://192.168.34.99/API/delete_task_kanban.php";
+    var url = "http://192.168.33.28/API/delete_task_kanban.php";
     print(url);
 
     try {
@@ -197,7 +197,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     });
 
     final dio = Dio();
-    var url = 'http://192.168.34.99/API/add_column_kanban.php';
+    var url = 'http://192.168.33.28/API/add_column_kanban.php';
 
     print(url);
 
@@ -246,7 +246,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     print('------------------------------------------------');
 
     final dio = Dio();
-    var url = "http://192.168.34.99/API/add_task_kanban.php";
+    var url = "http://192.168.33.28/API/add_task_kanban.php";
 
     try {
       var data = {
@@ -303,7 +303,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     // data.from;
 
     final dio = Dio();
-    var url = "http://192.168.34.99/API/drag_drop_kanban.php";
+    var url = "http://192.168.33.28/API/drag_drop_kanban.php";
 
     print(url);
 
