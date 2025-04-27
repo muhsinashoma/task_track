@@ -109,7 +109,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   void _showEditTask(int columnIndex, KTask task) {
     var editableTask = task; // Make a mutable local copy
 
-    //print('----------------------$editableTask');
+    print('----------------------$editableTask');
 
     showModalBottomSheet(
       context: context,

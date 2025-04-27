@@ -20,28 +20,18 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     $edited_at = mysqli_real_escape_string($con, $_POST['edited_at'] ?? '');
     $edited_by = mysqli_real_escape_string($con, $_POST['edited_by'] ?? '');
 
-    // Prepare the update query
-    $sql = "UPDATE tbl_task_name SET  title='$title', edited_at='$edited_at', edited_by='$edited_by' WHERE id = '$id' and status = 1";
+    $sql = "UPDATE tbl_task_name SET  title='$title', edited_at='$edited_at', edited_by='$edited_by' WHERE id = '$id' and status = 1";  //echo $sql;
 
-    //echo $sql;
-
-    // echo '--------------------SQL Query-------------';
-
+    echo $sql;
      if($con->query($sql)===TRUE){
-        //Ture Response
-        echo json_encode(["success"=>true, "message"=>"Task Updated Successfully"]);
+        echo json_encode(["success"=>true, "message"=>"Task Updated Successfully"]);  //Ture Response
       }
       else{
-        //Error Response
-        echo json_encode(["success"=>false, "message"=>"Error". $con->error]);
+        echo json_encode(["success"=>false, "message"=>"Error". $con->error]);    //Error Response
       }
 } else{
-         // Invalid request method response
-         echo json_encode(["success"=>false, "message"=>"Invalid Request Method"]);
-
-         //Close Database Connection
-
-         $con->close();
+         echo json_encode(["success"=>false, "message"=>"Invalid Request Method"]);     // Invalid request method response
+         $con->close();    //Close Database Connection
 }
 
 ?>

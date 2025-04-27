@@ -6,4 +6,5 @@ abstract class KanbanBoardController {
   void dragHandler(KData data, int index);
   void addColumn(String title);
   void addTask(String title, int column);
+  void updateItem(int columnIndex, KTask task); // 👈 Add this
 }

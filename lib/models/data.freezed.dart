@@ -1,20 +1,24 @@
+// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'data.dart';
 
+// **************************************************************************
+// FreezedGenerator
 // **************************************************************************
 
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
 mixin _$KData {
   int get from => throw _privateConstructorUsedError;
   KTask get task => throw _privateConstructorUsedError;
-  String get taskId =>
-      throw _privateConstructorUsedError; // Include taskId here
+  String get taskId => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $KDataCopyWith<KData> get copyWith => throw _privateConstructorUsedError;
@@ -25,7 +29,7 @@ abstract class $KDataCopyWith<$Res> {
   factory $KDataCopyWith(KData value, $Res Function(KData) then) =
       _$KDataCopyWithImpl<$Res, KData>;
   @useResult
-  $Res call({int from, KTask task, String taskId}); // Update call method
+  $Res call({int from, KTask task, String taskId});
 
   $KTaskCopyWith<$Res> get task;
 }
@@ -73,21 +77,24 @@ class _$KDataCopyWithImpl<$Res, $Val extends KData>
 }
 
 /// @nodoc
-abstract class _$$_KDataCopyWith<$Res> implements $KDataCopyWith<$Res> {
-  factory _$$_KDataCopyWith(_$_KData value, $Res Function(_$_KData) then) =
-      __$$_KDataCopyWithImpl<$Res>;
+abstract class _$$KDataImplCopyWith<$Res> implements $KDataCopyWith<$Res> {
+  factory _$$KDataImplCopyWith(
+          _$KDataImpl value, $Res Function(_$KDataImpl) then) =
+      __$$KDataImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int from, KTask task, String taskId}); // Update call method
+  $Res call({int from, KTask task, String taskId});
 
   @override
   $KTaskCopyWith<$Res> get task;
 }
 
 /// @nodoc
-class __$$_KDataCopyWithImpl<$Res> extends _$KDataCopyWithImpl<$Res, _$_KData>
-    implements _$$_KDataCopyWith<$Res> {
-  __$$_KDataCopyWithImpl(_$_KData _value, $Res Function(_$_KData) _then)
+class __$$KDataImplCopyWithImpl<$Res>
+    extends _$KDataCopyWithImpl<$Res, _$KDataImpl>
+    implements _$$KDataImplCopyWith<$Res> {
+  __$$KDataImplCopyWithImpl(
+      _$KDataImpl _value, $Res Function(_$KDataImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -97,7 +104,7 @@ class __$$_KDataCopyWithImpl<$Res> extends _$KDataCopyWithImpl<$Res, _$_KData>
     Object? task = null,
     Object? taskId = null,
   }) {
-    return _then(_$_KData(
+    return _then(_$KDataImpl(
       from: null == from
           ? _value.from
           : from // ignore: cast_nullable_to_non_nullable
@@ -116,8 +123,8 @@ class __$$_KDataCopyWithImpl<$Res> extends _$KDataCopyWithImpl<$Res, _$_KData>
 
 /// @nodoc
 
-class _$_KData implements _KData {
-  const _$_KData(
+class _$KDataImpl implements _KData {
+  const _$KDataImpl(
       {required this.from, required this.task, required this.taskId});
 
   @override
@@ -133,10 +140,10 @@ class _$_KData implements _KData {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_KData &&
+            other is _$KDataImpl &&
             (identical(other.from, from) || other.from == from) &&
             (identical(other.task, task) || other.task == task) &&
             (identical(other.taskId, taskId) || other.taskId == taskId));
@@ -148,15 +155,15 @@ class _$_KData implements _KData {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_KDataCopyWith<_$_KData> get copyWith =>
-      __$$_KDataCopyWithImpl<_$_KData>(this, _$identity);
+  _$$KDataImplCopyWith<_$KDataImpl> get copyWith =>
+      __$$KDataImplCopyWithImpl<_$KDataImpl>(this, _$identity);
 }
 
 abstract class _KData implements KData {
   const factory _KData(
-      {required int from,
-      required KTask task,
-      required String taskId}) = _$_KData;
+      {required final int from,
+      required final KTask task,
+      required final String taskId}) = _$KDataImpl;
 
   @override
   int get from;
@@ -166,6 +173,6 @@ abstract class _KData implements KData {
   String get taskId;
   @override
   @JsonKey(ignore: true)
-  _$$_KDataCopyWith<_$_KData> get copyWith =>
+  _$$KDataImplCopyWith<_$KDataImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
