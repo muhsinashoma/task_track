@@ -58,6 +58,17 @@ class TaskCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     InkWell(
+                      onTap: () {
+                        updateItemHandler(columnIndex, task);
+                      },
+                      child: const Icon(
+                        Icons.edit,
+                        color: Colors.white,
+                        size: 18.0,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
                       onTap: () => showModalBottomSheet(
                         context: context,
                         builder: (context) => TaskMenu(
@@ -69,21 +80,6 @@ class TaskCard extends StatelessWidget {
                         Icons.delete,
                         color: Colors.white,
                         size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () {
-                        // print('📌 Tapped Edit:');
-                        // print('👉 Column Index: $columnIndex');
-                        // print('👉 Task Title: ${task.title}');
-                        // print('👉 Task ID: ${task.taskId}');
-                        updateItemHandler(columnIndex, task);
-                      },
-                      child: const Icon(
-                        Icons.edit,
-                        color: Colors.white,
-                        size: 18.0,
                       ),
                     ),
                   ],

@@ -253,6 +253,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     } catch (e) {
       print('Unexpected Error: $e');
     }
+
+    await getTaskData(); // refresh after submit
   }
 
   @override

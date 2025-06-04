@@ -22,7 +22,7 @@ if ($res->num_rows > 0) {
 $columnIdsStr = implode(',', $columnIds);
 
 // Prepare the query to get tasks for the collected column ids
-$sql = "SELECT * FROM tbl_task_name WHERE column_name IN ($columnIdsStr) AND status = 1";
+$sql = "SELECT * FROM tbl_task_name WHERE column_name IN ($columnIdsStr) AND status = 1 order by id desc";
 $tasksRes = $con->query($sql);
 
 if ($tasksRes->num_rows > 0) {
