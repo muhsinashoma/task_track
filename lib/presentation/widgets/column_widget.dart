@@ -4,7 +4,7 @@ import '../../models/models.dart';
 import 'card_column.dart';
 import 'task_card_widget.dart';
 
-class KanbanColumn extends StatelessWidget {
+class KanbanColumn extends StatefulWidget {
   final KColumn column;
   final int index;
   final Function dragHandler;
@@ -12,7 +12,7 @@ class KanbanColumn extends StatelessWidget {
   final Function addTaskHandler;
   final Function(DragUpdateDetails) dragListener;
   final Function deleteItemHandler;
-  final void Function(int, KTask) updateItemHandler; // ✅ Properly typed
+  final void Function(int, KTask) updateItemHandler;
 
   const KanbanColumn({
     super.key,
@@ -27,6 +27,38 @@ class KanbanColumn extends StatelessWidget {
   });
 
   @override
+  State<KanbanColumn> createState() => _KanbanColumnState();
+}
+
+class _KanbanColumnState extends State<KanbanColumn> {
+  TextEditingController _searchController = TextEditingController();
+  String _searchText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchText = _searchController.text;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<KTask> getFilteredTasks() {
+    if (_searchText.isEmpty) return widget.column.children;
+    return widget.column.children
+        .where((task) =>
+            task.title.toLowerCase().contains(_searchText.toLowerCase()))
+        .toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
@@ -37,27 +69,22 @@ class KanbanColumn extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 _buildTitleColumn(),
+                _buildSearchBar(),
                 _buildListItemsColumn(),
-                _buildButtonNewTask(index),
+                _buildButtonNewTask(widget.index),
               ],
             ),
           ),
         ),
         Positioned.fill(
           child: DragTarget<KData>(
-            onWillAccept: (data) {
-              return true;
-            },
-            onLeave: (data) {},
+            onWillAccept: (data) => true,
+            onLeave: (_) {},
             onAccept: (data) {
-              if (data.from == index) {
-                return;
-              }
-              dragHandler(data, index);
+              if (data.from == widget.index) return;
+              widget.dragHandler(data, widget.index);
             },
-            builder: (context, accept, reject) {
-              return const SizedBox();
-            },
+            builder: (context, accept, reject) => const SizedBox(),
           ),
         ),
       ],
@@ -68,7 +95,7 @@ class KanbanColumn extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Text(
-        column.title,
+        widget.column.title,
         style: const TextStyle(
           fontSize: 20,
           color: Colors.black,
@@ -78,23 +105,46 @@ class KanbanColumn extends StatelessWidget {
     );
   }
 
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search tasks...',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchText.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                  },
+                )
+              : null,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
   Widget _buildListItemsColumn() {
+    final filteredTasks = getFilteredTasks();
     return Expanded(
       child: ReorderableListView(
         onReorder: (oldIndex, newIndex) {
-          if (newIndex < column.children.length) {
-            reorderHandler(oldIndex, newIndex, index);
+          if (newIndex < widget.column.children.length) {
+            widget.reorderHandler(oldIndex, newIndex, widget.index);
           }
         },
         children: [
-          for (final task in column.children)
+          for (final task in filteredTasks)
             TaskCard(
               key: ValueKey(task),
               task: task,
-              columnIndex: index,
-              dragListener: dragListener,
-              deleteItemHandler: deleteItemHandler,
-              updateItemHandler: updateItemHandler, // <-- pass here
+              columnIndex: widget.index,
+              dragListener: widget.dragListener,
+              deleteItemHandler: widget.deleteItemHandler,
+              updateItemHandler: widget.updateItemHandler,
             )
         ],
       ),
@@ -104,22 +154,142 @@ class KanbanColumn extends StatelessWidget {
   Widget _buildButtonNewTask(int index) {
     return ListTile(
       dense: true,
-      onTap: () {
-        addTaskHandler(index);
-      },
-      leading: const Icon(
-        Icons.add_circle_outline,
-        color: Colors.black45,
-        size: 24.0,
-      ),
+      onTap: () => widget.addTaskHandler(index),
+      leading: const Icon(Icons.add_circle_outline, color: Colors.black45),
       title: const Text(
         'Add Task',
         style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: Colors.black45,
-        ),
+            fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black45),
       ),
     );
   }
 }
+
+
+
+
+// import 'package:flutter/material.dart';
+
+// import '../../models/models.dart';
+// import 'card_column.dart';
+// import 'task_card_widget.dart';
+
+// class KanbanColumn extends StatelessWidget {
+//   final KColumn column;
+//   final int index;
+//   final Function dragHandler;
+//   final Function reorderHandler;
+//   final Function addTaskHandler;
+//   final Function(DragUpdateDetails) dragListener;
+//   final Function deleteItemHandler;
+//   final void Function(int, KTask) updateItemHandler; // ✅ Properly typed
+
+//   const KanbanColumn({
+//     super.key,
+//     required this.column,
+//     required this.index,
+//     required this.dragHandler,
+//     required this.reorderHandler,
+//     required this.addTaskHandler,
+//     required this.dragListener,
+//     required this.deleteItemHandler,
+//     required this.updateItemHandler,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Stack(
+//       children: <Widget>[
+//         CardColumn(
+//           child: Padding(
+//             padding: const EdgeInsets.all(8.0),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: <Widget>[
+//                 _buildTitleColumn(),
+//                 _buildListItemsColumn(),
+//                 _buildButtonNewTask(index),
+//               ],
+//             ),
+//           ),
+//         ),
+//         Positioned.fill(
+//           child: DragTarget<KData>(
+//             onWillAccept: (data) {
+//               return true;
+//             },
+//             onLeave: (data) {},
+//             onAccept: (data) {
+//               if (data.from == index) {
+//                 return;
+//               }
+//               dragHandler(data, index);
+//             },
+//             builder: (context, accept, reject) {
+//               return const SizedBox();
+//             },
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget _buildTitleColumn() {
+//     return Padding(
+//       padding: const EdgeInsets.all(8.0),
+//       child: Text(
+//         column.title,
+//         style: const TextStyle(
+//           fontSize: 20,
+//           color: Colors.black,
+//           fontWeight: FontWeight.w700,
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget _buildListItemsColumn() {
+//     return Expanded(
+//       child: ReorderableListView(
+//         onReorder: (oldIndex, newIndex) {
+//           if (newIndex < column.children.length) {
+//             reorderHandler(oldIndex, newIndex, index);
+//           }
+//         },
+//         children: [
+//           for (final task in column.children)
+//             TaskCard(
+//               key: ValueKey(task),
+//               task: task,
+//               columnIndex: index,
+//               dragListener: dragListener,
+//               deleteItemHandler: deleteItemHandler,
+//               updateItemHandler: updateItemHandler, // <-- pass here
+//             )
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildButtonNewTask(int index) {
+//     return ListTile(
+//       dense: true,
+//       onTap: () {
+//         addTaskHandler(index);
+//       },
+//       leading: const Icon(
+//         Icons.add_circle_outline,
+//         color: Colors.black45,
+//         size: 24.0,
+//       ),
+//       title: const Text(
+//         'Add Task',
+//         style: TextStyle(
+//           fontSize: 14,
+//           fontWeight: FontWeight.w600,
+//           color: Colors.black45,
+//         ),
+//       ),
+//     );
+//   }
+// }
