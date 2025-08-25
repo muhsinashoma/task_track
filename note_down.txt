@@ -1,0 +1,46 @@
+showing all data in column_widget.dart
+
+
+
+woking the below functions inside column_widget.dart
+
+
+                _buildTitleColumn(),
+                _buildSearchBar(),
+                _buildListItemsColumn(),
+                _buildButtonNewTask(widget.index),
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        CardColumn(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _buildTitleColumn(),
+                _buildSearchBar(),
+                _buildListItemsColumn(),
+                _buildButtonNewTask(widget.index),
+              ],
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: DragTarget<KData>(
+            onWillAccept: (data) => true,
+            onLeave: (_) {},
+            onAccept: (data) {
+              if (data.from == widget.index) return;
+              widget.dragHandler(data, widget.index);
+            },
+            builder: (context, accept, reject) => const SizedBox(),
+          ),
+        ),
+      ],
+    );
+  }

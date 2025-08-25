@@ -50,7 +50,8 @@ class TaskCard extends StatelessWidget {
               taskId: task.taskId,
             ),
             child: Container(
-              color: Colors.red,
+              color:
+                  Color.fromARGB(255, 228, 51, 24), //To set task board colour
               child: ListTile(
                 dense: true,
                 title: TaskText(title: task.title),
