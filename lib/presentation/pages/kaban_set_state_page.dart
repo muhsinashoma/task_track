@@ -90,11 +90,72 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     return [];
   }
 
+  // previous code without drawer - August 25, 2025
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     appBar: AppBar(
+  //       title: const Text('ITM Task Status'),
+  //     ),
+  //     body: SafeArea(
+  //       child: KanbanBoard(
+  //         columns: columns,
+  //         controller: this,
+  //         updateItemHandler: _showEditTask,
+  //       ),
+  //     ),
+  //   );
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ITM Task Status'),
+      ),
+      drawer: Drawer(
+        // <-- Add this drawer
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text(
+                'Menu',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.dashboard),
+              title: const Text('Dashboard'),
+              onTap: () {
+                Navigator.pop(context); // close the drawer
+                // Navigate to dashboard or other page if needed
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text('Add Column'),
+              onTap: () {
+                Navigator.pop(context);
+                _showAddColumnDialog();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('About'),
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to About page if needed
+              },
+            ),
+          ],
+        ),
       ),
       body: SafeArea(
         child: KanbanBoard(
@@ -103,6 +164,41 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           updateItemHandler: _showEditTask,
         ),
       ),
+    );
+  } //end bulid
+
+// Example: show dialog to add column from drawer
+  void _showAddColumnDialog() {
+    TextEditingController _controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add Column'),
+          content: TextField(
+            controller: _controller,
+            decoration: const InputDecoration(hintText: 'Column Name'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (_controller.text.isNotEmpty) {
+                  addColumn(_controller.text);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
     );
   }
 

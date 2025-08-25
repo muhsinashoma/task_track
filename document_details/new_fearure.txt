@@ -1,0 +1,86 @@
+https://chatgpt.com/c/68ac3b3e-cec0-8333-9f78-e4f5e2a001cf
+
+
+
+Thanks for sharing the project structure screenshot. From what I see:
+
+Your columns widget is in widgets/column_widget.dart.
+
+You have a page file called pages/kaban_set_state_page.dart.
+
+Other widgets like task_card_widget.dart, card_column.dart are in widgets/.
+
+Best place to add the Drawer
+
+You should not add the Drawer inside column_widget.dart because:
+
+KanbanColumn is a single column widget, and the drawer should be global for the whole page.
+
+If you add a Scaffold inside the column, it will create nested Scaffolds which is not standard and may cause UI issues.
+
+✅ Instead, add the Scaffold + Drawer in kaban_set_state_page.dart, like this:
+
+class KabanSetStatePage extends StatelessWidget {
+  final List<KColumn> columns; // Your list of columns
+
+  const KabanSetStatePage({super.key, required this.columns});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Kanban Board")),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text(
+                "Menu",
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.dashboard),
+              title: const Text("Dashboard"),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text("Settings"),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+      body: Row(
+        children: columns
+            .map(
+              (column) => Expanded(
+                child: KanbanColumn(
+                  column: column,
+                  index: columns.indexOf(column),
+                  dragHandler: (data, newIndex) {},
+                  reorderHandler: (oldIndex, newIndex, columnIndex) {},
+                  addTaskHandler: (columnIndex) {},
+                  dragListener: (details) {},
+                  deleteItemHandler: (task) {},
+                  updateItemHandler: (index, task) {},
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}
+
+Summary
+
+Drawer → parent page (kaban_set_state_page.dart) ✅
+
+KanbanColumn → only column logic ✅
+
+Keeps code clean, reusable, and standard ✅
+
+If you want, I can refactor your kaban_set_state_page.dart fully with a working drawer and multiple Kanban columns so you can just plug it into your project.
