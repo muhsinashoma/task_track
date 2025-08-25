@@ -164,6 +164,79 @@ class _KanbanColumnState extends State<KanbanColumn> {
     );
   }
 
+  // Widget _buildListItemsColumn() {
+  //   final filteredTasks = getFilteredTasks();
+  //   return Expanded(
+  //     child: ReorderableListView(
+  //       onReorder: (oldIndex, newIndex) {
+  //         if (newIndex < widget.column.children.length) {
+  //           widget.reorderHandler(oldIndex, newIndex, widget.index);
+  //         }
+  //       },
+  //       children: [
+  //         for (final task in filteredTasks)
+  //           TaskCard(
+  //             key: ValueKey(task),
+  //             task: task,
+  //             columnIndex: widget.index,
+  //             dragListener: widget.dragListener,
+  //             deleteItemHandler: widget.deleteItemHandler,
+  //             updateItemHandler: widget.updateItemHandler,
+  //           )
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // Widget _buildListItemsColumn() {
+  //   final filteredTasks = getFilteredTasks();
+  //   return Expanded(
+  //     child: ReorderableListView(
+  //       onReorder: (oldIndex, newIndex) {
+  //         if (newIndex < widget.column.children.length) {
+  //           widget.reorderHandler(oldIndex, newIndex, widget.index);
+  //         }
+  //       },
+  //       children: [
+  //         for (final task in filteredTasks)
+  //           Tooltip(
+  //             key: ValueKey(
+  //                 //  "${task.title}-${task.createdAt}"), // unique key from available fields
+  //                 "${task.title}"),
+  //             message: task.title,
+  //             padding: const EdgeInsets.all(12),
+  //             decoration: BoxDecoration(
+  //               color: const Color.fromARGB(255, 106, 103, 103),
+  //               borderRadius: BorderRadius.circular(10),
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: Colors.black26,
+  //                   blurRadius: 6,
+  //                   offset: Offset(2, 3),
+  //                 ),
+  //               ],
+  //             ),
+  //             textStyle: const TextStyle(
+  //               color: Colors.white,
+  //               fontSize: 14,
+  //               fontWeight: FontWeight.w500,
+  //             ),
+  //             waitDuration: const Duration(milliseconds: 300),
+  //             showDuration: const Duration(seconds: 3),
+  //             preferBelow: false,
+  //             child: TaskCard(
+  //               task: task,
+  //               columnIndex: widget.index,
+  //               dragListener: widget.dragListener,
+  //               deleteItemHandler: widget.deleteItemHandler,
+  //               updateItemHandler: widget.updateItemHandler,
+  //             ),
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildListItemsColumn() {
     final filteredTasks = getFilteredTasks();
     return Expanded(
@@ -175,14 +248,24 @@ class _KanbanColumnState extends State<KanbanColumn> {
         },
         children: [
           for (final task in filteredTasks)
-            TaskCard(
-              key: ValueKey(task),
-              task: task,
-              columnIndex: widget.index,
-              dragListener: widget.dragListener,
-              deleteItemHandler: widget.deleteItemHandler,
-              updateItemHandler: widget.updateItemHandler,
-            )
+            Tooltip(
+              key: ValueKey(task), // 👈 Add key here
+              message: task.title, // only show task title
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(221, 161, 153, 153),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(color: Colors.white, fontSize: 13),
+              waitDuration: const Duration(milliseconds: 400),
+              child: TaskCard(
+                task: task,
+                columnIndex: widget.index,
+                dragListener: widget.dragListener,
+                deleteItemHandler: widget.deleteItemHandler,
+                updateItemHandler: widget.updateItemHandler,
+              ),
+            ),
         ],
       ),
     );

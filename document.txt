@@ -6,3 +6,8 @@
 
 --git status
 
+3. git add .    or git add .\commad.md
+
+4. git commit -m "To Show Task Count with Title"
+
+5. git push
