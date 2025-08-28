@@ -35,7 +35,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.32.48/API/get_column_data_kanban.php");
+          await dio.get("http://192.168.34.167/API/get_column_data_kanban.php");
 
       columns = Data.getColumns(response.data); //print(columns);
 
@@ -49,7 +49,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.32.48/API/get_task_data_kanban.php");
+          await dio.get("http://192.168.34.167/API/get_task_data_kanban.php");
       // print(response);
 
       if (response.statusCode == 200) {
@@ -242,7 +242,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     });
 
     final dio = Dio();
-    var url = "http://192.168.32.48/API/delete_task_kanban.php";
+    var url = "http://192.168.34.167/API/delete_task_kanban.php";
     print(url);
 
     try {
@@ -285,7 +285,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     });
 
     final dio = Dio();
-    var url = 'http://192.168.32.48/API/add_column_kanban.php'; //   print(url);
+    var url =
+        'http://192.168.34.167/API/add_column_kanban.php'; //   print(url);
 
     try {
       var data = {
@@ -320,7 +321,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         .id; // print(columnId); // This is where you get the column ID
 
     final dio = Dio();
-    var url = "http://192.168.32.48/API/add_task_kanban.php";
+    var url = "http://192.168.34.167/API/add_task_kanban.php";
 
     try {
       var data = {
@@ -365,7 +366,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     });
 
     final dio = Dio();
-    var url = "http://192.168.32.48/API/drag_drop_kanban.php";
+    var url = "http://192.168.34.167/API/drag_drop_kanban.php";
 
     print(url);
 
@@ -400,7 +401,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     String updatedAt = DateTime.now().toString(); //print('--$updatedAt');
     final dio = Dio();
 
-    var url = "http://192.168.32.48/API/update_task_kanban.php";
+    var url = "http://192.168.34.167/API/update_task_kanban.php";
 
     print(url);
 

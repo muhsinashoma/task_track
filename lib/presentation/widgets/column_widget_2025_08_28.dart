@@ -149,7 +149,6 @@ class _KanbanColumnState extends State<KanbanColumn> {
     );
   }
 
-  // To Show Task as a Mini Card using Hover Tooltip
   Widget _buildListItemsColumn() {
     final filteredTasks = getFilteredTasks();
     return Expanded(
@@ -162,37 +161,15 @@ class _KanbanColumnState extends State<KanbanColumn> {
         children: [
           for (final task in filteredTasks)
             Tooltip(
-              key: ValueKey(task),
-              // Instead of 'message', we use 'richMessage' to wrap in a container like a card
-              richMessage: WidgetSpan(
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: 200, // 👈 max width of tooltip card
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300], // light gray
-                    borderRadius: BorderRadius.circular(6),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 6,
-                        offset: Offset(2, 4),
-                      )
-                    ],
-                  ),
-                  child: Text(
-                    task.title,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
+              key: ValueKey(task), // 👈 Add key here
+              message: task.title, // only show task title
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(221, 161, 153, 153),
+                borderRadius: BorderRadius.circular(8),
               ),
-              preferBelow: false,
-              waitDuration: const Duration(milliseconds: 300),
+              textStyle: const TextStyle(color: Colors.white, fontSize: 13),
+              waitDuration: const Duration(milliseconds: 400),
               child: TaskCard(
                 task: task,
                 columnIndex: widget.index,
@@ -205,53 +182,6 @@ class _KanbanColumnState extends State<KanbanColumn> {
       ),
     );
   }
-
-  //backup 28 August, 2025
-  // Widget _buildListItemsColumn() {
-  //   final filteredTasks = getFilteredTasks();
-  //   return Expanded(
-  //     child: ReorderableListView(
-  //       onReorder: (oldIndex, newIndex) {
-  //         if (newIndex < widget.column.children.length) {
-  //           widget.reorderHandler(oldIndex, newIndex, widget.index);
-  //         }
-  //       },
-  //       children: [
-  //         for (final task in filteredTasks)
-  //           Tooltip(
-  //             key: ValueKey(task),
-  //             message: task.title,
-  //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-  //             decoration: BoxDecoration(
-  //               color: Colors.black87,
-  //               borderRadius: BorderRadius.circular(12),
-  //               boxShadow: [
-  //                 BoxShadow(
-  //                   color: Colors.black26,
-  //                   blurRadius: 8,
-  //                   offset: Offset(2, 4),
-  //                 )
-  //               ],
-  //             ),
-  //             textStyle: const TextStyle(
-  //               color: Colors.white,
-  //               fontSize: 14,
-  //               fontWeight: FontWeight.w500,
-  //             ),
-  //             preferBelow: false,
-  //             waitDuration: const Duration(milliseconds: 300),
-  //             child: TaskCard(
-  //               task: task,
-  //               columnIndex: widget.index,
-  //               dragListener: widget.dragListener,
-  //               deleteItemHandler: widget.deleteItemHandler,
-  //               updateItemHandler: widget.updateItemHandler,
-  //             ),
-  //           ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildButtonNewTask(int index) {
     return ListTile(
