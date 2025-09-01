@@ -13,10 +13,10 @@ class TaskText extends StatelessWidget {
     return Text(
       title,
       style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: Colors.white,
-      ),
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          //color: Colors.white,
+          color: Colors.black),
     );
   }
 }

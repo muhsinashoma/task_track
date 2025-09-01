@@ -52,7 +52,7 @@ class TaskCard extends StatelessWidget {
             child: Container(
               color:
                   //  Color.fromARGB(255, 228, 51, 24), //To set task board colour
-                  Color.fromARGB(255, 6, 232, 134), //To set task board colour
+                  Color.fromARGB(255, 234, 237, 237), //To set task board colour
               child: ListTile(
                 dense: true,
                 title: TaskText(title: task.title),
@@ -65,7 +65,7 @@ class TaskCard extends StatelessWidget {
                       },
                       child: const Icon(
                         Icons.edit,
-                        color: Colors.white,
+                        color: Color.fromARGB(255, 163, 233, 175),
                         size: 18.0,
                       ),
                     ),
@@ -80,7 +80,7 @@ class TaskCard extends StatelessWidget {
                       ),
                       child: const Icon(
                         Icons.delete,
-                        color: Colors.white,
+                        color: Color.fromARGB(255, 125, 220, 128),
                         size: 18,
                       ),
                     ),

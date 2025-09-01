@@ -14,11 +14,18 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
+KTask _$KTaskFromJson(Map<String, dynamic> json) {
+  return _KTask.fromJson(json);
+}
+
 /// @nodoc
 mixin _$KTask {
   String get title => throw _privateConstructorUsedError;
   String get taskId => throw _privateConstructorUsedError;
+  String get createdBy => throw _privateConstructorUsedError; // new field
+  String get createdAt => throw _privateConstructorUsedError;
 
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $KTaskCopyWith<KTask> get copyWith => throw _privateConstructorUsedError;
 }
@@ -28,7 +35,7 @@ abstract class $KTaskCopyWith<$Res> {
   factory $KTaskCopyWith(KTask value, $Res Function(KTask) then) =
       _$KTaskCopyWithImpl<$Res, KTask>;
   @useResult
-  $Res call({String title, String taskId});
+  $Res call({String title, String taskId, String createdBy, String createdAt});
 }
 
 /// @nodoc
@@ -46,6 +53,8 @@ class _$KTaskCopyWithImpl<$Res, $Val extends KTask>
   $Res call({
     Object? title = null,
     Object? taskId = null,
+    Object? createdBy = null,
+    Object? createdAt = null,
   }) {
     return _then(_value.copyWith(
       title: null == title
@@ -55,6 +64,14 @@ class _$KTaskCopyWithImpl<$Res, $Val extends KTask>
       taskId: null == taskId
           ? _value.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
+              as String,
+      createdBy: null == createdBy
+          ? _value.createdBy
+          : createdBy // ignore: cast_nullable_to_non_nullable
+              as String,
+      createdAt: null == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
               as String,
     ) as $Val);
   }
@@ -67,7 +84,7 @@ abstract class _$$KTaskImplCopyWith<$Res> implements $KTaskCopyWith<$Res> {
       __$$KTaskImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String title, String taskId});
+  $Res call({String title, String taskId, String createdBy, String createdAt});
 }
 
 /// @nodoc
@@ -83,6 +100,8 @@ class __$$KTaskImplCopyWithImpl<$Res>
   $Res call({
     Object? title = null,
     Object? taskId = null,
+    Object? createdBy = null,
+    Object? createdAt = null,
   }) {
     return _then(_$KTaskImpl(
       title: null == title
@@ -93,23 +112,43 @@ class __$$KTaskImplCopyWithImpl<$Res>
           ? _value.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
               as String,
+      createdBy: null == createdBy
+          ? _value.createdBy
+          : createdBy // ignore: cast_nullable_to_non_nullable
+              as String,
+      createdAt: null == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
 
 /// @nodoc
-
+@JsonSerializable()
 class _$KTaskImpl implements _KTask {
-  const _$KTaskImpl({required this.title, required this.taskId});
+  const _$KTaskImpl(
+      {required this.title,
+      required this.taskId,
+      required this.createdBy,
+      required this.createdAt});
+
+  factory _$KTaskImpl.fromJson(Map<String, dynamic> json) =>
+      _$$KTaskImplFromJson(json);
 
   @override
   final String title;
   @override
   final String taskId;
+  @override
+  final String createdBy;
+// new field
+  @override
+  final String createdAt;
 
   @override
   String toString() {
-    return 'KTask(title: $title, taskId: $taskId)';
+    return 'KTask(title: $title, taskId: $taskId, createdBy: $createdBy, createdAt: $createdAt)';
   }
 
   @override
@@ -118,28 +157,49 @@ class _$KTaskImpl implements _KTask {
         (other.runtimeType == runtimeType &&
             other is _$KTaskImpl &&
             (identical(other.title, title) || other.title == title) &&
-            (identical(other.taskId, taskId) || other.taskId == taskId));
+            (identical(other.taskId, taskId) || other.taskId == taskId) &&
+            (identical(other.createdBy, createdBy) ||
+                other.createdBy == createdBy) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt));
   }
 
+  @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, title, taskId);
+  int get hashCode =>
+      Object.hash(runtimeType, title, taskId, createdBy, createdAt);
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$KTaskImplCopyWith<_$KTaskImpl> get copyWith =>
       __$$KTaskImplCopyWithImpl<_$KTaskImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$KTaskImplToJson(
+      this,
+    );
+  }
 }
 
 abstract class _KTask implements KTask {
   const factory _KTask(
       {required final String title,
-      required final String taskId}) = _$KTaskImpl;
+      required final String taskId,
+      required final String createdBy,
+      required final String createdAt}) = _$KTaskImpl;
+
+  factory _KTask.fromJson(Map<String, dynamic> json) = _$KTaskImpl.fromJson;
 
   @override
   String get title;
   @override
   String get taskId;
+  @override
+  String get createdBy;
+  @override // new field
+  String get createdAt;
   @override
   @JsonKey(ignore: true)
   _$$KTaskImplCopyWith<_$KTaskImpl> get copyWith =>

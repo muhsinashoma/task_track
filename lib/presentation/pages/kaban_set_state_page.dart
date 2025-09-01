@@ -8,7 +8,6 @@ import '../../models/models.dart';
 import '../widgets/edit_task_widget.dart';
 import '../widgets/kanban_board.dart';
 import 'kanban_board_controller.dart';
-
 import 'package:uuid/uuid.dart';
 
 class KanbanSetStatePage extends StatefulWidget {
@@ -35,7 +34,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.34.167/API/get_column_data_kanban.php");
+          await dio.get("http://192.168.22.217/API/get_column_data_kanban.php");
 
       columns = Data.getColumns(response.data); //print(columns);
 
@@ -49,7 +48,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.34.167/API/get_task_data_kanban.php");
+          await dio.get("http://192.168.22.217/API/get_task_data_kanban.php");
       // print(response);
 
       if (response.statusCode == 200) {
@@ -60,15 +59,29 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         for (var board in taskData) {
           var tasks = board['tasks'] as List;
 
+          // tasksForColumns.add({
+          //   'id': int.tryParse(board['id'].toString()) ??
+          //       0, // Ensure it's an integer
+          //   'title': board['title'],
+          //   'tasks': tasks
+          //       .map((task) => {
+          //             'id': int.tryParse(task['id'].toString()) ??
+          //                 0, // Ensure task id is an integer
+          //             'title': task['title']
+          //           })
+          //       .toList()
+          // });
+
           tasksForColumns.add({
-            'id': int.tryParse(board['id'].toString()) ??
-                0, // Ensure it's an integer
+            'id': int.tryParse(board['id'].toString()) ?? 0,
             'title': board['title'],
             'tasks': tasks
                 .map((task) => {
-                      'id': int.tryParse(task['id'].toString()) ??
-                          0, // Ensure task id is an integer
-                      'title': task['title']
+                      'id': int.tryParse(task['id'].toString()) ?? 0,
+                      'title': task['title'],
+                      'taskId': task['task_id'], // uuid
+                      'createdBy': task['created_by'] ?? 'Unknown',
+                      'createdAt': task['created_at'] ?? '',
                     })
                 .toList()
           });
@@ -242,7 +255,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     });
 
     final dio = Dio();
-    var url = "http://192.168.34.167/API/delete_task_kanban.php";
+    var url = "http://192.168.22.217/API/delete_task_kanban.php";
     print(url);
 
     try {
@@ -286,7 +299,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
     final dio = Dio();
     var url =
-        'http://192.168.34.167/API/add_column_kanban.php'; //   print(url);
+        'http://192.168.22.217/API/add_column_kanban.php'; //   print(url);
 
     try {
       var data = {
@@ -314,14 +327,24 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   void addTask(String title, int column) async {
     final String taskId = Uuid().v4(); // Generate a unique ID
     setState(() {
-      columns[column].children.add(KTask(title: title, taskId: taskId));
+      //previous 2025-08-31  backup
+      // columns[column].children.add(KTask(title: title, taskId: taskId));
+
+      columns[column].children.add(
+            KTask(
+              title: title,
+              taskId: taskId,
+              createdBy: "muhsina", // or fetch from logged-in user
+              createdAt: DateTime.now().toIso8601String(), // current time
+            ),
+          );
     });
 
     int columnId = columns[column]
         .id; // print(columnId); // This is where you get the column ID
 
     final dio = Dio();
-    var url = "http://192.168.34.167/API/add_task_kanban.php";
+    var url = "http://192.168.22.217/API/add_task_kanban.php";
 
     try {
       var data = {
@@ -366,7 +389,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     });
 
     final dio = Dio();
-    var url = "http://192.168.34.167/API/drag_drop_kanban.php";
+    var url = "http://192.168.22.217/API/drag_drop_kanban.php";
 
     print(url);
 
@@ -401,7 +424,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     String updatedAt = DateTime.now().toString(); //print('--$updatedAt');
     final dio = Dio();
 
-    var url = "http://192.168.34.167/API/update_task_kanban.php";
+    var url = "http://192.168.22.217/API/update_task_kanban.php";
 
     print(url);
 

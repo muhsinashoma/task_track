@@ -14,11 +14,23 @@ class Data {
 
       // Check if there are tasks in this column
       if (item['tasks'] != null) {
+        //previous 2025-08-31  backup
+        // tasks = (item['tasks'] as List).map((task) {
+        //   // Create KTask with title and taskId
+        //   return KTask(
+        //     title: task['title'],
+        //     taskId: task['id'].toString(), // Assuming 'id' is the taskId
+        //   );
+        // }).toList();
+
         tasks = (item['tasks'] as List).map((task) {
-          // Create KTask with title and taskId
+          // Create KTask with all required fields
           return KTask(
             title: task['title'],
-            taskId: task['id'].toString(), // Assuming 'id' is the taskId
+            taskId: task['id'].toString(),
+            createdBy: task['createdBy'] ?? "unknown", // 👈 fallback if missing
+            createdAt: task['createdAt'] ??
+                DateTime.now().toIso8601String(), // 👈 fallback
           );
         }).toList();
       }

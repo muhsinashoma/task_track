@@ -110,7 +110,8 @@ class _KanbanColumnState extends State<KanbanColumn> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Color.fromARGB(255, 115, 221, 173),
+              // color: Color.fromARGB(255, 224, 226, 226),
+              color: Color.fromARGB(255, 189, 237, 190),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -165,29 +166,69 @@ class _KanbanColumnState extends State<KanbanColumn> {
               key: ValueKey(task),
               // Instead of 'message', we use 'richMessage' to wrap in a container like a card
               richMessage: WidgetSpan(
+                //previous 2025-08-31  backup
+                // child: Container(
+                //   constraints: BoxConstraints(
+                //     maxWidth: 200, // 👈 max width of tooltip card
+                //   ),
+                //   padding: const EdgeInsets.all(12),
+                //   decoration: BoxDecoration(
+                //     color: Colors.grey[300], // light gray
+                //     borderRadius: BorderRadius.circular(6),
+                //     boxShadow: [
+                //       BoxShadow(
+                //         color: Colors.black26,
+                //         blurRadius: 6,
+                //         offset: Offset(2, 4),
+                //       )
+                //     ],
+                //   ),
+                //   child: Text(
+                //     task.title,
+                //     style: const TextStyle(
+                //       color: Colors.black87,
+                //       fontSize: 14,
+                //       fontWeight: FontWeight.w500,
+                //     ),
+                //   ),
+                // ),
+
                 child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: 200, // 👈 max width of tooltip card
-                  ),
+                  constraints: BoxConstraints(maxWidth: 220),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300], // light gray
-                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 6,
-                        offset: Offset(2, 4),
-                      )
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(2, 3))
                     ],
                   ),
-                  child: Text(
-                    task.title,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        task.title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "By: ${task.createdBy}",
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black54),
+                      ),
+                      Text(
+                        "At: ${task.createdAt}",
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black54),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -205,53 +246,6 @@ class _KanbanColumnState extends State<KanbanColumn> {
       ),
     );
   }
-
-  //backup 28 August, 2025
-  // Widget _buildListItemsColumn() {
-  //   final filteredTasks = getFilteredTasks();
-  //   return Expanded(
-  //     child: ReorderableListView(
-  //       onReorder: (oldIndex, newIndex) {
-  //         if (newIndex < widget.column.children.length) {
-  //           widget.reorderHandler(oldIndex, newIndex, widget.index);
-  //         }
-  //       },
-  //       children: [
-  //         for (final task in filteredTasks)
-  //           Tooltip(
-  //             key: ValueKey(task),
-  //             message: task.title,
-  //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-  //             decoration: BoxDecoration(
-  //               color: Colors.black87,
-  //               borderRadius: BorderRadius.circular(12),
-  //               boxShadow: [
-  //                 BoxShadow(
-  //                   color: Colors.black26,
-  //                   blurRadius: 8,
-  //                   offset: Offset(2, 4),
-  //                 )
-  //               ],
-  //             ),
-  //             textStyle: const TextStyle(
-  //               color: Colors.white,
-  //               fontSize: 14,
-  //               fontWeight: FontWeight.w500,
-  //             ),
-  //             preferBelow: false,
-  //             waitDuration: const Duration(milliseconds: 300),
-  //             child: TaskCard(
-  //               task: task,
-  //               columnIndex: widget.index,
-  //               dragListener: widget.dragListener,
-  //               deleteItemHandler: widget.deleteItemHandler,
-  //               updateItemHandler: widget.updateItemHandler,
-  //             ),
-  //           ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildButtonNewTask(int index) {
     return ListTile(
