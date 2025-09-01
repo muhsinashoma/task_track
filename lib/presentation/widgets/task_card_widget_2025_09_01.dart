@@ -6,7 +6,7 @@ import 'taks_menu.widget.dart';
 class TaskCard extends StatelessWidget {
   final KTask task;
   final int columnIndex;
-  final void Function(int, KTask) updateItemHandler;
+  final void Function(int, KTask) updateItemHandler; // ✅ Correct type
   final Function deleteItemHandler;
   final Function(DragUpdateDetails) dragListener;
 
@@ -14,7 +14,7 @@ class TaskCard extends StatelessWidget {
     super.key,
     required this.task,
     required this.columnIndex,
-    required this.updateItemHandler,
+    required this.updateItemHandler, // ✅ now strongly typed
     required this.deleteItemHandler,
     required this.dragListener,
   });
@@ -24,6 +24,7 @@ class TaskCard extends StatelessWidget {
     return LayoutBuilder(
       builder: (BuildContext _, BoxConstraints constraints) {
         return Container(
+          height: 50,
           clipBehavior: Clip.hardEdge,
           margin: const EdgeInsets.symmetric(vertical: 6.0),
           decoration: BoxDecoration(
@@ -35,7 +36,7 @@ class TaskCard extends StatelessWidget {
               color: Colors.red,
               borderRadius: BorderRadius.circular(10.0),
               child: Container(
-                height: 70,
+                height: 50,
                 width: constraints.maxWidth,
                 alignment: Alignment.centerLeft,
                 padding: const EdgeInsets.only(left: 16),
@@ -49,31 +50,12 @@ class TaskCard extends StatelessWidget {
               taskId: task.taskId,
             ),
             child: Container(
-              color: const Color.fromARGB(255, 234, 237, 237),
+              color:
+                  //  Color.fromARGB(255, 228, 51, 24), //To set task board colour
+                  Color.fromARGB(255, 234, 237, 237), //To set task board colour
               child: ListTile(
                 dense: true,
                 title: TaskText(title: task.title),
-                subtitle: Column(
-                  // ✅ Added subtitle
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 6),
-                    Text(
-                      "By: ${task.createdBy}",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    Text(
-                      "At: ${task.createdAt}",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
