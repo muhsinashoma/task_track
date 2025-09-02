@@ -26,58 +26,53 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   @override
   void initState() {
     super.initState();
-    loadColumnsAndTasks();
+    getColumnData();
+    getTaskData();
   }
 
-  void loadColumnsAndTasks() async {
-    await getColumnData(); // wait until columns are fetched
-    await getTaskData(); // then fetch tasks
-  }
-
-  // previous 2025-08-31 backup
-  // getColumnData() async {
-  //   try {
-  //     final dio = Dio();
-  //     var response =
-  //         await dio.get("http://192.168.33.174/API/get_column_data_kanban.php");
-
-  //     columns = Data.getColumns(response.data); //print(columns);
-
-  //     setState(() {});
-  //   } catch (e) {
-  //     print(e);
-  //   }
-  // }
-
-  Future<void> getColumnData() async {
+  getColumnData() async {
     try {
       final dio = Dio();
       var response =
           await dio.get("http://192.168.33.174/API/get_column_data_kanban.php");
 
-      columns = Data.getColumns(response.data);
+      columns = Data.getColumns(response.data); //print(columns);
 
-      setState(() {}); // refresh UI
+      setState(() {});
     } catch (e) {
       print(e);
     }
   }
 
-  Future<void> getTaskData() async {
+//backkup 2025-08-31
+  getTaskData() async {
     try {
-      if (columns.isEmpty) return;
-
       final dio = Dio();
       var response =
           await dio.get("http://192.168.33.174/API/get_task_data_kanban.php");
+      // print(response);
 
       if (response.statusCode == 200) {
-        var taskData = response.data['task_boards'] as List;
+        var taskData = response.data['task_boards'] as List; // print(taskData);
 
         List<Map<String, dynamic>> tasksForColumns = [];
 
         for (var board in taskData) {
           var tasks = board['tasks'] as List;
+
+          // tasksForColumns.add({
+          //   'id': int.tryParse(board['id'].toString()) ??
+          //       0, // Ensure it's an integer
+          //   'title': board['title'],
+          //   'tasks': tasks
+          //       .map((task) => {
+          //             'id': int.tryParse(task['id'].toString()) ??
+          //                 0, // Ensure task id is an integer
+          //             'title': task['title']
+          //           })
+          //       .toList()
+          // });
+
           tasksForColumns.add({
             'id': int.tryParse(board['id'].toString()) ?? 0,
             'title': board['title'],
@@ -85,7 +80,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 .map((task) => {
                       'id': int.tryParse(task['id'].toString()) ?? 0,
                       'title': task['title'],
-                      'taskId': task['task_id'],
+                      'taskId': task['task_id'], // uuid
                       'createdBy': task['created_by'] ?? 'Unknown',
                       'createdAt': task['created_at'] ?? '',
                     })
@@ -93,60 +88,21 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           });
         }
 
-        columns = Data.getColumns(jsonEncode(tasksForColumns));
+        var finalData = Data.getColumns(
+            jsonEncode(tasksForColumns)); //To fetch data form data.dart
 
-        setState(() {}); // refresh UI with tasks
+        columns = finalData;
+
+        // print(columns);
+
+        setState(() {}); //for loading task data
       }
     } catch (e) {
       print(e);
     }
+
+    return [];
   }
-
-  // previous 2025-08-31 backup
-  // getTaskData() async {
-  //   try {
-  //     final dio = Dio();
-  //     var response =
-  //         await dio.get("http://192.168.33.174/API/get_task_data_kanban.php");
-  //     // print(response);
-
-  //     if (response.statusCode == 200) {
-  //       var taskData = response.data['task_boards'] as List; // print(taskData);
-
-  //       List<Map<String, dynamic>> tasksForColumns = [];
-
-  //       for (var board in taskData) {
-  //         var tasks = board['tasks'] as List;
-  //         tasksForColumns.add({
-  //           'id': int.tryParse(board['id'].toString()) ?? 0,
-  //           'title': board['title'],
-  //           'tasks': tasks
-  //               .map((task) => {
-  //                     'id': int.tryParse(task['id'].toString()) ?? 0,
-  //                     'title': task['title'],
-  //                     'taskId': task['task_id'], // uuid
-  //                     'createdBy': task['created_by'] ?? 'Unknown',
-  //                     'createdAt': task['created_at'] ?? '',
-  //                   })
-  //               .toList()
-  //         });
-  //       }
-
-  //       var finalData = Data.getColumns(
-  //           jsonEncode(tasksForColumns)); //To fetch data form data.dart
-
-  //       columns = finalData;
-
-  //       // print(columns);
-
-  //       setState(() {}); //for loading task data
-  //     }
-  //   } catch (e) {
-  //     print(e);
-  //   }
-
-  //   return [];
-  // }
 
   @override
   Widget build(BuildContext context) {

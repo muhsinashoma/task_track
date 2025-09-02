@@ -17,7 +17,8 @@ class MyApp extends StatelessWidget {
       title: 'Flutterban',
       theme: AppTheme.lightTheme(),
       debugShowCheckedModeBanner: false,
-      home: const HomePage(),
+      //home: const HomePage(),
+      home: KanbanSetStatePage(),
     );
   }
 }
