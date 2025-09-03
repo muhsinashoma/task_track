@@ -166,33 +166,6 @@ class _KanbanColumnState extends State<KanbanColumn> {
               key: ValueKey(task),
               // Instead of 'message', we use 'richMessage' to wrap in a container like a card
               richMessage: WidgetSpan(
-                //previous 2025-08-31  backup
-                // child: Container(
-                //   constraints: BoxConstraints(
-                //     maxWidth: 200, // 👈 max width of tooltip card
-                //   ),
-                //   padding: const EdgeInsets.all(12),
-                //   decoration: BoxDecoration(
-                //     color: Colors.grey[300], // light gray
-                //     borderRadius: BorderRadius.circular(6),
-                //     boxShadow: [
-                //       BoxShadow(
-                //         color: Colors.black26,
-                //         blurRadius: 6,
-                //         offset: Offset(2, 4),
-                //       )
-                //     ],
-                //   ),
-                //   child: Text(
-                //     task.title,
-                //     style: const TextStyle(
-                //       color: Colors.black87,
-                //       fontSize: 14,
-                //       fontWeight: FontWeight.w500,
-                //     ),
-                //   ),
-                // ),
-
                 child: Container(
                   constraints: BoxConstraints(maxWidth: 220),
                   padding: const EdgeInsets.all(12),
