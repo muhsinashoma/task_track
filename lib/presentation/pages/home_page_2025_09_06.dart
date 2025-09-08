@@ -1,6 +1,11 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
+
+// import 'package:bangla_utilities/bangla_utilities.dart';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../data/data.dart';
@@ -18,9 +23,71 @@ class KanbanSetStatePage extends StatefulWidget {
 
 class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     implements KanbanBoardController {
-  // ---------- Selected period ----------
+  // ---------- Dates ----------
+
+  // ---------- Dates ----------
+  Future<String> getTodayDate() async {
+    DateTime now = DateTime.now();
+
+    // English (Gregorian)
+    String englishDate = DateFormat('MMM dd, yyyy').format(now);
+
+    // Arabic (Hijri) via API
+    String arabicDate = await getHijriDate(now);
+
+    // Bangla (Bengali)
+    String banglaDate = getBanglaDate(now);
+
+    return "📅 English: $englishDate\n🕌 Arabic: $arabicDate\n🇧🇩 Bangla: $banglaDate";
+  }
+
+  // ---------------- Hijri Date using API ----------------
+  Future<String> getHijriDate(DateTime date) async {
+    try {
+      final dio = Dio();
+      final formatted = DateFormat('dd-MM-yyyy').format(date);
+      final response = await dio.get(
+        'http://api.aladhan.com/v1/gToH',
+        queryParameters: {'date': formatted},
+      );
+      final hijri = response.data['data']['hijri'];
+      return "${hijri['day']} ${hijri['month']['en']} ${hijri['year']} هـ";
+    } catch (e) {
+      return "Hijri date error";
+    }
+  }
+
+  // ---------------- Bangla Date Conversion ----------------
+  String getBanglaDate(DateTime date) {
+    List<String> banglaMonths = [
+      "বৈশাখ",
+      "জ্যৈষ্ঠ",
+      "আষাঢ়",
+      "শ্রাবণ",
+      "ভাদ্র",
+      "আশ্বিন",
+      "কার্তিক",
+      "অগ্রহায়ণ",
+      "পৌষ",
+      "মাঘ",
+      "ফাল্গুন",
+      "চৈত্র"
+    ];
+
+    DateTime banglaNewYear = DateTime(date.year, 4, 14);
+    int daysDiff = date.difference(banglaNewYear).inDays;
+
+    int monthIndex = (daysDiff ~/ 30) % 12; // approximate month
+    int day = (daysDiff % 30) + 1;
+    int banglaYear = date.year - 593;
+    if (daysDiff < 0) banglaYear -= 1; // before Bangla New Year
+
+    return "$day ${banglaMonths[monthIndex]} $banglaYear বঙ্গাব্দ";
+  }
+
+  // ---------- Period Selection ----------
   int selectedNumber = 1;
-  String selectedUnit = "Days"; // default period
+  String selectedUnit = "Days";
 
   final List<int> numbers = List.generate(10, (i) => i + 1);
   final List<String> units = [
@@ -34,7 +101,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
   String get periodText => "$selectedNumber $selectedUnit";
 
-  // ---------- Kanban columns ----------
+  // ---------- Kanban Data ----------
   List<KColumn> columns = [];
 
   @override
@@ -44,12 +111,12 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     getTaskData();
   }
 
-  // ---------- Fetch columns ----------
+  // Fetch column data
   Future<void> getColumnData() async {
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.1.102/API/get_column_data_kanban.php");
+          await dio.get("http://192.168.1.106/API/get_column_data_kanban.php");
 
       columns = Data.getColumns(response.data)
           .map((col) => col.copyWith(children: col.children ?? []))
@@ -57,16 +124,16 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
       setState(() {});
     } catch (e) {
-      print("Error fetching columns: $e");
+      debugPrint("Error fetching columns: $e");
     }
   }
 
-  // ---------- Fetch tasks ----------
+  // Fetch task data
   Future<void> getTaskData() async {
     try {
       final dio = Dio();
       var response = await dio.get(
-        "http://192.168.1.102/API/get_task_data_kanban.php",
+        "http://192.168.1.106/API/get_task_data_kanban.php",
         queryParameters: {
           "period": selectedNumber,
           "unit": selectedUnit.toLowerCase(),
@@ -77,7 +144,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         var taskData = response.data['task_boards'] as List;
 
         List<Map<String, dynamic>> tasksForColumns = [];
-
         for (var board in taskData) {
           var tasks = board['tasks'] as List;
           tasksForColumns.add({
@@ -102,7 +168,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         setState(() {});
       }
     } catch (e) {
-      print("Error fetching tasks: $e");
+      debugPrint("Error fetching tasks: $e");
     }
   }
 
@@ -111,10 +177,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(255, 158, 223, 180),
+        backgroundColor: const Color.fromARGB(255, 158, 223, 180),
         title: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Text(
               'ITM',
@@ -124,7 +188,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                   fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 16),
-            // Period filter
+
+            // Period Filter
             GestureDetector(
               onTap: _showPeriodDialog,
               child: Row(
@@ -139,10 +204,12 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 ],
               ),
             ),
+
             const SizedBox(width: 16),
-            // Schedule icon example
+
+            // Schedule Button
             GestureDetector(
-              onTap: () {},
+              onTap: _showScheduleDialog,
               child: Row(
                 children: const [
                   Icon(Icons.calendar_today,
@@ -200,7 +267,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-  // ------------------ Period Dialog ------------------
+  // ------------------ Dialogs ------------------
   void _showPeriodDialog() {
     showDialog(
       context: context,
@@ -248,9 +315,9 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
               child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () {
-              setState(() {}); // update AppBar
+              setState(() {});
               Navigator.pop(context);
-              getTaskData(); // fetch tasks instantly
+              getTaskData();
             },
             child: const Text("Apply"),
           ),
@@ -259,7 +326,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-  // ------------------ Add Column ------------------
   void _showAddColumnDialog() {
     TextEditingController _controller = TextEditingController();
     showDialog(
@@ -287,7 +353,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-  // ------------------ Edit Task ------------------
   void _showEditTask(int columnIndex, KTask task) {
     showModalBottomSheet(
       context: context,
@@ -309,6 +374,39 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
+  // 🔥 Schedule Dialog
+  void _showScheduleDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Today's Date"),
+        content: FutureBuilder<String>(
+          future: getTodayDate(), // async function
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                height: 50,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            } else if (snapshot.hasError) {
+              return Text('Error fetching date');
+            } else {
+              return Text(
+                snapshot.data ?? '',
+                style: const TextStyle(fontSize: 16, height: 1.5),
+              );
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Close")),
+        ],
+      ),
+    );
+  }
+
   // ------------------ KanbanBoardController Implementation ------------------
   @override
   Future<void> deleteItem(int columnIndex, KTask task) async {
@@ -316,13 +414,13 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.1.102/API/delete_task_kanban.php",
+        "http://192.168.1.106/API/delete_task_kanban.php",
         data: {"id": task.taskId, "deleted_by": "muhsina"},
         options: Options(
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
       );
     } catch (e) {
-      print("Delete error: $e");
+      debugPrint("Delete error: $e");
     }
   }
 
@@ -343,13 +441,13 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        'http://192.168.1.102/API/add_column_kanban.php',
+        'http://192.168.1.106/API/add_column_kanban.php',
         data: {"title": title, "created_by": "muhsina"},
         options: Options(
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
       );
     } catch (e) {
-      print("Add column error: $e");
+      debugPrint("Add column error: $e");
     }
   }
 
@@ -362,17 +460,13 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       createdBy: "muhsina",
       createdAt: DateTime.now().toIso8601String(),
     );
-
-    // Add locally for instant display
-    //setState(() => columns[column].children.add(newTask));
-    setState(
-        () => columns[column].children.insert(0, newTask)); //Add on the top
+    setState(() => columns[column].children.add(newTask));
 
     final dio = Dio();
     try {
       int columnId = columns[column].id;
       await dio.post(
-        "http://192.168.1.102/API/add_task_kanban.php",
+        "http://192.168.1.106/API/add_task_kanban.php",
         data: {
           "title": title,
           "task_id": taskId,
@@ -385,7 +479,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
       );
     } catch (e) {
-      print("Add task error: $e");
+      debugPrint("Add task error: $e");
     }
   }
 
@@ -398,7 +492,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.1.102/API/drag_drop_kanban.php",
+        "http://192.168.1.106/API/drag_drop_kanban.php",
         data: {
           "id": data.taskId,
           "column_name": index + 1,
@@ -411,7 +505,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
       );
     } catch (e) {
-      print("Drag error: $e");
+      debugPrint("Drag error: $e");
     }
   }
 
@@ -420,7 +514,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.1.102/API/update_task_kanban.php",
+        "http://192.168.1.106/API/update_task_kanban.php",
         data: {
           "id": task.taskId,
           "title": task.title,
@@ -431,7 +525,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
       );
     } catch (e) {
-      print("Update error: $e");
+      debugPrint("Update error: $e");
     }
   }
 }
