@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
+import 'package:hijri/hijri_calendar.dart';
 
 import '../../data/data.dart';
 import '../../models/models.dart';
@@ -18,10 +20,11 @@ class KanbanSetStatePage extends StatefulWidget {
 
 class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     implements KanbanBoardController {
+  // ------------------ Add this ------------------
+  DateTime selectedDate = DateTime.now();
   // ---------- Selected period ----------
   int selectedNumber = 1;
   String selectedUnit = "Days"; // default period
-
   final List<int> numbers = List.generate(10, (i) => i + 1);
   final List<String> units = [
     "Days",
@@ -31,7 +34,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     "Last Months",
     "Last Years"
   ];
-
   String get periodText => "$selectedNumber $selectedUnit";
 
   // ---------- Kanban columns ----------
@@ -49,7 +51,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.1.102/API/get_column_data_kanban.php");
+          await dio.get("http://192.168.0.104/API/get_column_data_kanban.php");
 
       columns = Data.getColumns(response.data)
           .map((col) => col.copyWith(children: col.children ?? []))
@@ -66,7 +68,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response = await dio.get(
-        "http://192.168.1.102/API/get_task_data_kanban.php",
+        "http://192.168.0.104/API/get_task_data_kanban.php",
         queryParameters: {
           "period": selectedNumber,
           "unit": selectedUnit.toLowerCase(),
@@ -106,25 +108,106 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     }
   }
 
-  // ---------- Build UI ----------
+  // ------------------- Date Suffix -------------------
+  String suffix(int day) {
+    if (day == 1 || day == 21 || day == 31) return 'st';
+    if (day == 2 || day == 22) return 'nd';
+    if (day == 3 || day == 23) return 'rd';
+    return 'th';
+  }
+
+  // ------------------ Build UI ------------------
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+
+    // English
+    final englishDate = DateFormat('MMMM dd, yyyy').format(now);
+
+    // Bangla
+    final banglaDate = DateFormat('d MMMM yyyy', 'bn').format(now);
+
+    // Hijri
+    final hijri = HijriCalendar.fromDate(now);
+    final hijriDate =
+        "${hijri.hDay}${suffix(hijri.hDay)} ${hijri.longMonthName} ${hijri.hYear} AH";
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(255, 158, 223, 180),
+        backgroundColor: const Color.fromARGB(255, 158, 223, 180),
+
+        // title: Row(
+        //   children: [
+        //     // ----------- Left: Period Filter ----------
+        //     GestureDetector(
+        //       onTap: _showPeriodDialog,
+        //       child: Row(
+        //         children: [
+        //           const Icon(Icons.filter_alt, color: Colors.green, size: 20),
+        //           const SizedBox(width: 4),
+        //           Text(
+        //             periodText,
+        //             style: const TextStyle(
+        //                 color: Colors.green, fontWeight: FontWeight.bold),
+        //           ),
+        //         ],
+        //       ),
+        //     ),
+        //     const Spacer(),
+        //     // ----------- Right: Calendars ----------
+        //     GestureDetector(
+        //       onTap: _showCalendarModal,
+        //       child: Row(
+        //         children: [
+        //           Column(
+        //             crossAxisAlignment: CrossAxisAlignment.end,
+        //             children: [
+        //               Text(
+        //                 englishDate,
+        //                 style: const TextStyle(
+        //                     fontFamily: 'Montserrat',
+        //                     color: Colors.white,
+        //                     fontSize: 12),
+        //               ),
+        //               Text(
+        //                 banglaDate,
+        //                 style: const TextStyle(
+        //                     fontFamily: 'NotoSansBengali',
+        //                     color: Colors.white,
+        //                     fontSize: 12),
+        //               ),
+        //               Text(
+        //                 hijriDate,
+        //                 style: const TextStyle(
+        //                     fontFamily: 'NotoSansArabic',
+        //                     color: Colors.white,
+        //                     fontSize: 12),
+        //               ),
+        //             ],
+        //           ),
+        //           const SizedBox(width: 8),
+        //           const Icon(Icons.calendar_today,
+        //               color: Colors.white, size: 20),
+        //         ],
+        //       ),
+        //     ),
+        //   ],
+        // ),
+
         title: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // ----------- Left: Project Name / ITM ----------
             const Text(
-              'ITM',
+              'ITM', // or replace with your project name
               style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold),
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(width: 16),
-            // Period filter
+
+            // ----------- Left: Period Filter ----------
             GestureDetector(
               onTap: _showPeriodDialog,
               child: Row(
@@ -139,20 +222,42 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 ],
               ),
             ),
-            const SizedBox(width: 16),
-            // Schedule icon example
+            const Spacer(),
+
+            // ----------- Right: Calendars ----------
             GestureDetector(
-              onTap: () {},
+              onTap: _showCalendarModal,
               child: Row(
-                children: const [
-                  Icon(Icons.calendar_today,
-                      color: Color.fromARGB(255, 19, 12, 9), size: 20),
-                  SizedBox(width: 4),
-                  Text(
-                    "Schedule",
-                    style: TextStyle(
-                        color: Colors.green, fontWeight: FontWeight.bold),
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        englishDate,
+                        style: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            color: Color.fromARGB(255, 47, 46, 46),
+                            fontSize: 12),
+                      ),
+                      Text(
+                        banglaDate,
+                        style: const TextStyle(
+                            fontFamily: 'NotoSansBengali',
+                            color: Color.fromARGB(255, 47, 46, 46),
+                            fontSize: 12),
+                      ),
+                      Text(
+                        hijriDate,
+                        style: const TextStyle(
+                            fontFamily: 'NotoSansArabic',
+                            color: Color.fromARGB(255, 47, 46, 46),
+                            fontSize: 12),
+                      ),
+                    ],
                   ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.calendar_today,
+                      color: Color.fromARGB(255, 5, 144, 46), size: 20),
                 ],
               ),
             ),
@@ -259,6 +364,124 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
+  // ------------------ Calendar Modal ------------------
+  // void _showCalendarModal() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //       title: const Text("Select Date"),
+  //       content: SizedBox(
+  //         width: double.maxFinite,
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             const Text("English, Bangla & Hijri calendars"),
+  //             const SizedBox(height: 12),
+  //             // You can add Dropdowns for Years here
+  //             // Example for English year
+  //             Row(
+  //               children: [
+  //                 const Text("Year: "),
+  //                 DropdownButton<int>(
+  //                   value: DateTime.now().year,
+  //                   items: List.generate(
+  //                       20,
+  //                       (i) => DropdownMenuItem(
+  //                             value: 2025 - i,
+  //                             child: Text("${2025 - i}"),
+  //                           )),
+  //                   onChanged: (val) {},
+  //                 ),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //             onPressed: () => Navigator.pop(context),
+  //             child: const Text("Close")),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  void _showCalendarModal() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SizedBox(
+          height: 400,
+          child: DefaultTabController(
+            length: 3,
+            child: Column(
+              children: [
+                TabBar(
+                  tabs: const [
+                    Tab(text: 'English'),
+                    Tab(text: 'Bangla'),
+                    Tab(text: 'Hijri'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _buildEnglishCalendar(),
+                      _buildBanglaCalendar(),
+                      _buildHijriCalendar(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+// ---------------- Calendar Builders ----------------
+
+  Widget _buildEnglishCalendar() {
+    return CalendarDatePicker(
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      onDateChanged: (date) {
+        setState(() => selectedDate = date);
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  Widget _buildBanglaCalendar() {
+    return CalendarDatePicker(
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      onDateChanged: (date) {
+        setState(() => selectedDate = date);
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  Widget _buildHijriCalendar() {
+    return CalendarDatePicker(
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      onDateChanged: (date) {
+        setState(() => selectedDate = date);
+        Navigator.pop(context);
+      },
+    );
+  }
+
   // ------------------ Add Column ------------------
   void _showAddColumnDialog() {
     TextEditingController _controller = TextEditingController();
@@ -309,14 +532,14 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-  // ------------------ KanbanBoardController Implementation ------------------
+  // ------------------ KanbanBoardController ------------------
   @override
   Future<void> deleteItem(int columnIndex, KTask task) async {
     setState(() => columns[columnIndex].children.remove(task));
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.1.102/API/delete_task_kanban.php",
+        "http://192.168.0.104/API/delete_task_kanban.php",
         data: {"id": task.taskId, "deleted_by": "muhsina"},
         options: Options(
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
@@ -343,7 +566,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        'http://192.168.1.102/API/add_column_kanban.php',
+        'http://192.168.0.104/API/add_column_kanban.php',
         data: {"title": title, "created_by": "muhsina"},
         options: Options(
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
@@ -362,17 +585,13 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       createdBy: "muhsina",
       createdAt: DateTime.now().toIso8601String(),
     );
-
-    // Add locally for instant display
-    //setState(() => columns[column].children.add(newTask));
-    setState(
-        () => columns[column].children.insert(0, newTask)); //Add on the top
+    setState(() => columns[column].children.insert(0, newTask));
 
     final dio = Dio();
     try {
       int columnId = columns[column].id;
       await dio.post(
-        "http://192.168.1.102/API/add_task_kanban.php",
+        "http://192.168.0.104/API/add_task_kanban.php",
         data: {
           "title": title,
           "task_id": taskId,
@@ -398,7 +617,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.1.102/API/drag_drop_kanban.php",
+        "http://192.168.0.104/API/drag_drop_kanban.php",
         data: {
           "id": data.taskId,
           "column_name": index + 1,
@@ -420,7 +639,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.1.102/API/update_task_kanban.php",
+        "http://192.168.0.104/API/update_task_kanban.php",
         data: {
           "id": task.taskId,
           "title": task.title,
