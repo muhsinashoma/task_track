@@ -116,6 +116,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     return 'th';
   }
 
+// Add a variable in your StatefulWidget
+  String _currentProjectName = ''; // stores the project name
   // ------------------ Build UI ------------------
   @override
   Widget build(BuildContext context) {
@@ -135,65 +137,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
-
-        // title: Row(
-        //   children: [
-        //     // ----------- Left: Period Filter ----------
-        //     GestureDetector(
-        //       onTap: _showPeriodDialog,
-        //       child: Row(
-        //         children: [
-        //           const Icon(Icons.filter_alt, color: Colors.green, size: 20),
-        //           const SizedBox(width: 4),
-        //           Text(
-        //             periodText,
-        //             style: const TextStyle(
-        //                 color: Colors.green, fontWeight: FontWeight.bold),
-        //           ),
-        //         ],
-        //       ),
-        //     ),
-        //     const Spacer(),
-        //     // ----------- Right: Calendars ----------
-        //     GestureDetector(
-        //       onTap: _showCalendarModal,
-        //       child: Row(
-        //         children: [
-        //           Column(
-        //             crossAxisAlignment: CrossAxisAlignment.end,
-        //             children: [
-        //               Text(
-        //                 englishDate,
-        //                 style: const TextStyle(
-        //                     fontFamily: 'Montserrat',
-        //                     color: Colors.white,
-        //                     fontSize: 12),
-        //               ),
-        //               Text(
-        //                 banglaDate,
-        //                 style: const TextStyle(
-        //                     fontFamily: 'NotoSansBengali',
-        //                     color: Colors.white,
-        //                     fontSize: 12),
-        //               ),
-        //               Text(
-        //                 hijriDate,
-        //                 style: const TextStyle(
-        //                     fontFamily: 'NotoSansArabic',
-        //                     color: Colors.white,
-        //                     fontSize: 12),
-        //               ),
-        //             ],
-        //           ),
-        //           const SizedBox(width: 8),
-        //           const Icon(Icons.calendar_today,
-        //               color: Colors.white, size: 20),
-        //         ],
-        //       ),
-        //     ),
-        //   ],
-        // ),
-
         title: Row(
           children: [
             // ----------- Left: Project Name / ITM ----------
@@ -275,36 +218,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             //       style: TextStyle(color: Colors.black, fontSize: 24)),
             // ),
 
-            // DrawerHeader(
-            //   decoration: const BoxDecoration(
-            //     color: Color.fromARGB(255, 171, 250, 172),
-            //   ),
-            //   child: Column(
-            //     mainAxisAlignment: MainAxisAlignment.center,
-            //     crossAxisAlignment:
-            //         CrossAxisAlignment.center, // center horizontally
-            //     children: [
-            //       SizedBox(
-            //         width: 60,
-            //         height: 60,
-            //         child: Image.asset(
-            //           'assets/icons/task_management.png',
-            //           fit: BoxFit.contain, // ensures the image fits the box
-            //         ),
-            //       ),
-            //       const SizedBox(height: 10),
-            //       const Text(
-            //         'Task Management',
-            //         style: TextStyle(
-            //           color: Colors.black,
-            //           fontSize: 24,
-            //         ),
-            //         textAlign: TextAlign.center, // center the text
-            //       ),
-            //     ],
-            //   ),
-            // ),
-
             DrawerHeader(
               padding: EdgeInsets.zero, // remove default padding
               child: Stack(
@@ -375,6 +288,191 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           updateItemHandler: _showEditTask,
         ),
       ),
+
+      // ---------- Add floating + button ----------
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showAddProjectDialog(); // your add project dialog
+        },
+        backgroundColor: const Color.fromARGB(255, 147, 229, 150),
+        child: const Icon(Icons.add),
+        tooltip: 'Add Project',
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+
+// ---------- Project Dialog ---------
+  void _showAddProjectDialog() {
+    final _projectController = TextEditingController();
+    final _ownerController = TextEditingController();
+    final _contactController = TextEditingController();
+    final _emailController = TextEditingController();
+    final _addressController = TextEditingController();
+
+    String? _errorMessage;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Add Project',
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // ----------- Error Message -----------
+                    if (_errorMessage != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(8),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(255, 147, 229, 150),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+
+                    // Project Name
+                    TextField(
+                      controller: _projectController,
+                      decoration: const InputDecoration(
+                        labelText: 'Project Name',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.business),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Owner Name
+                    TextField(
+                      controller: _ownerController,
+                      decoration: const InputDecoration(
+                        labelText:
+                            'Project Owner/Responsible Person/Company Name',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Owner Image
+                    GestureDetector(
+                      onTap: () {
+                        // Image picker logic
+                        print('Pick image');
+                      },
+                      child: CircleAvatar(
+                        radius: 35,
+                        backgroundColor: Colors.grey[300],
+                        child: const Icon(Icons.camera_alt, size: 28),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Contact Number
+                    TextField(
+                      controller: _contactController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Contact Number',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.phone),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Email Address
+                    TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email Address',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.email),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Permanent Address
+                    TextField(
+                      controller: _addressController,
+                      maxLines: 2,
+                      decoration: const InputDecoration(
+                        labelText: 'Permanent Address',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.location_on),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (_projectController.text.isEmpty ||
+                                _ownerController.text.isEmpty ||
+                                _contactController.text.isEmpty ||
+                                _emailController.text.isEmpty) {
+                              setState(() {
+                                _errorMessage =
+                                    'Project name, owner, contact and email required';
+                              });
+                            } else {
+                              setState(() {
+                                _currentProjectName = _projectController
+                                    .text; // update project name
+                                _errorMessage = null;
+                              });
+
+                              // Optional: handle other data
+                              print("Project: ${_projectController.text}");
+                              print("Owner: ${_ownerController.text}");
+                              print("Contact: ${_contactController.text}");
+                              print("Email: ${_emailController.text}");
+                              print("Address: ${_addressController.text}");
+
+                              Navigator.pop(context);
+                            }
+                          },
+                          child: const Text('Add'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -436,49 +534,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       ),
     );
   }
-
-  // ------------------ Calendar Modal ------------------
-  // void _showCalendarModal() {
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) => AlertDialog(
-  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-  //       title: const Text("Select Date"),
-  //       content: SizedBox(
-  //         width: double.maxFinite,
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             const Text("English, Bangla & Hijri calendars"),
-  //             const SizedBox(height: 12),
-  //             // You can add Dropdowns for Years here
-  //             // Example for English year
-  //             Row(
-  //               children: [
-  //                 const Text("Year: "),
-  //                 DropdownButton<int>(
-  //                   value: DateTime.now().year,
-  //                   items: List.generate(
-  //                       20,
-  //                       (i) => DropdownMenuItem(
-  //                             value: 2025 - i,
-  //                             child: Text("${2025 - i}"),
-  //                           )),
-  //                   onChanged: (val) {},
-  //                 ),
-  //               ],
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //       actions: [
-  //         TextButton(
-  //             onPressed: () => Navigator.pop(context),
-  //             child: const Text("Close")),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   void _showCalendarModal() {
     showModalBottomSheet(
