@@ -1,3 +1,12 @@
+
+http://192.168.0.104/API/add_project_kanban.php
+
+------------------------------------------------------
+laragon:
+
+Username : root
+Password : ""
+
 showing all data in column_widget.dart
 
 
@@ -5,9 +14,7 @@ showing data inside these page
 -----------------------------------------------------
 
 
-woking the below functions inside column_widget.dart
-
-
+working the below functions inside column_widget.dart
                 _buildTitleColumn(),
                 _buildSearchBar(),
                 _buildListItemsColumn(),

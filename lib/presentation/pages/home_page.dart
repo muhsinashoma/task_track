@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'dart:io';
+
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import 'package:hijri/hijri_calendar.dart';
@@ -10,6 +12,28 @@ import '../../models/models.dart';
 import '../widgets/edit_task_widget.dart';
 import '../widgets/kanban_board.dart';
 import 'kanban_board_controller.dart';
+import 'package:file_picker/file_picker.dart';
+
+List<Project> projects = [];
+
+// Put this at the top of your file, before the widget class
+class Project {
+  final String projectName;
+  final String ownerName;
+  final String contact;
+  final String email;
+  final String address;
+  final String? attachedFile; // optional filename
+
+  Project({
+    required this.projectName,
+    required this.ownerName,
+    required this.contact,
+    required this.email,
+    required this.address,
+    this.attachedFile,
+  });
+}
 
 class KanbanSetStatePage extends StatefulWidget {
   const KanbanSetStatePage({super.key});
@@ -118,6 +142,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
 // Add a variable in your StatefulWidget
   String _currentProjectName = ''; // stores the project name
+
   // ------------------ Build UI ------------------
   @override
   Widget build(BuildContext context) {
@@ -310,7 +335,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final _emailController = TextEditingController();
     final _addressController = TextEditingController();
 
-    String? _errorMessage;
+    File? selectedFile;
 
     showDialog(
       context: context,
@@ -322,7 +347,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             constraints: const BoxConstraints(maxWidth: 400),
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -331,36 +356,15 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                       style:
                           TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 10),
-
-                    // ----------- Error Message -----------
-                    if (_errorMessage != null)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(8),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 147, 229, 150),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _errorMessage!,
-                          style: const TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
+                    const SizedBox(height: 12),
 
                     // Project Name
                     TextField(
                       controller: _projectController,
                       decoration: const InputDecoration(
-                        labelText: 'Project Name',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.business),
-                      ),
+                          labelText: 'Project Name',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.business)),
                     ),
                     const SizedBox(height: 12),
 
@@ -368,65 +372,67 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     TextField(
                       controller: _ownerController,
                       decoration: const InputDecoration(
-                        labelText:
-                            'Project Owner/Responsible Person/Company Name',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
-                      ),
+                          labelText: 'Project Owner Name',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.person)),
                     ),
                     const SizedBox(height: 12),
 
-                    // Owner Image
-                    GestureDetector(
-                      onTap: () {
-                        // Image picker logic
-                        print('Pick image');
+                    // File picker
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        FilePickerResult? result =
+                            await FilePicker.platform.pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: ['png', 'jpg', 'jpeg', 'xlsx'],
+                        );
+                        if (result != null) {
+                          selectedFile = File(result.files.single.path!);
+                          setState(() {}); // refresh button text
+                        }
                       },
-                      child: CircleAvatar(
-                        radius: 35,
-                        backgroundColor: Colors.grey[300],
-                        child: const Icon(Icons.camera_alt, size: 28),
-                      ),
+                      icon: const Icon(Icons.attach_file),
+                      label: Text(selectedFile == null
+                          ? "Pick File"
+                          : "Selected: ${selectedFile!.path.split('/').last}"),
                     ),
+
                     const SizedBox(height: 12),
 
-                    // Contact Number
+                    // Contact
                     TextField(
                       controller: _contactController,
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(
-                        labelText: 'Contact Number',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.phone),
-                      ),
+                          labelText: 'Contact Number',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.phone)),
                     ),
                     const SizedBox(height: 12),
 
-                    // Email Address
+                    // Email
                     TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
-                        labelText: 'Email Address',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email),
-                      ),
+                          labelText: 'Email Address',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.email)),
                     ),
                     const SizedBox(height: 12),
 
-                    // Permanent Address
+                    // Address
                     TextField(
                       controller: _addressController,
                       maxLines: 2,
                       decoration: const InputDecoration(
-                        labelText: 'Permanent Address',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.location_on),
-                      ),
+                          labelText: 'Permanent Address',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.location_on)),
                     ),
                     const SizedBox(height: 20),
 
-                    // Buttons
+                    //To Add Project Buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -436,36 +442,80 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
+                            // Validate required fields
                             if (_projectController.text.isEmpty ||
                                 _ownerController.text.isEmpty ||
                                 _contactController.text.isEmpty ||
                                 _emailController.text.isEmpty) {
-                              setState(() {
-                                _errorMessage =
-                                    'Project name, owner, contact and email required';
-                              });
-                            } else {
-                              setState(() {
-                                _currentProjectName = _projectController
-                                    .text; // update project name
-                                _errorMessage = null;
-                              });
+                              showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                        title: const Text("Error"),
+                                        content: const Text(
+                                            "Project name, owner, contact and email are required"),
+                                        actions: [
+                                          TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              child: const Text("OK"))
+                                        ],
+                                      ));
+                              return;
+                            }
 
-                              // Optional: handle other data
-                              print("Project: ${_projectController.text}");
-                              print("Owner: ${_ownerController.text}");
-                              print("Contact: ${_contactController.text}");
-                              print("Email: ${_emailController.text}");
-                              print("Address: ${_addressController.text}");
+                            // Call upload function
+                            try {
+                              final res = await addProjectDetails(
+                                projectName: _projectController.text.trim(),
+                                ownerName: _ownerController.text.trim(),
+                                contact: _contactController.text.trim(),
+                                email: _emailController.text.trim(),
+                                address: _addressController.text.trim(),
+                                file: selectedFile,
+                              );
 
-                              Navigator.pop(context);
+                              print("Response: $res"); // log full response
+
+                              // Show success/error in SnackBar
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      res['message'] ?? "Upload completed"),
+                                  backgroundColor: res['success']
+                                      ? Colors.green
+                                      : Colors.red,
+                                ),
+                              );
+
+                              if (res['success'] == true) {
+                                // Clear form fields
+                                _projectController.clear();
+                                _ownerController.clear();
+                                _contactController.clear();
+                                _emailController.clear();
+                                _addressController.clear();
+                                setState(() {
+                                  selectedFile = null;
+                                });
+
+                                // Close dialog
+                                Navigator.pop(context);
+                              }
+                            } catch (e) {
+                              print("Upload error: $e");
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Upload failed: $e"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
                             }
                           },
-                          child: const Text('Add'),
+                          child: const Text("Add"),
                         ),
                       ],
-                    ),
+                    )
                   ],
                 ),
               ),
@@ -636,6 +686,54 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         ],
       ),
     );
+  }
+
+  // ------------------ Add Project ------------------
+
+  Future<Map<String, dynamic>> addProjectDetails({
+    required String projectName,
+    required String ownerName,
+    required String contact,
+    required String email,
+    required String address,
+    File? file,
+  }) async {
+    FormData formData = FormData.fromMap({
+      "project_name": projectName,
+      "project_owner_name": ownerName,
+      "contact_number": contact,
+      "email_address": email,
+      "permanent_address": address,
+      "created_by": ownerName,
+      if (file != null)
+        "attached_file": await MultipartFile.fromFile(
+          file.path,
+          filename: file.path.split('/').last,
+        ),
+    });
+
+    final dio = Dio();
+
+    try {
+      final response = await dio.post(
+        "http://192.168.0.104/API/add_project_kanban.php",
+        data: formData,
+        options: Options(
+          headers: {'Content-Type': 'multipart/form-data'},
+          responseType: ResponseType.plain, // 👈 treat as plain text first
+        ),
+      );
+
+      print("✅ Raw Response: ${response.data}");
+
+      // Decode manually
+      final Map<String, dynamic> decoded = jsonDecode(response.data);
+
+      return decoded;
+    } catch (e) {
+      print("❌ Upload error: $e");
+      return {"success": false, "message": "Upload failed: $e"};
+    }
   }
 
   // ------------------ Edit Task ------------------

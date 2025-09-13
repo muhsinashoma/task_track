@@ -15,3 +15,17 @@ Author: muhsinashoma <muhsina.akter2@gmail.com>
 4. git commit -m "To Show Task Count with Title"
 
 5. git push
+--------------------------------------------------------------
+6. git log
+
+PS D:\Flutter-Project\task_track> git log
+commit b4d279baa3c67f9bf4b1cd42ba5f834702fdd642 (HEAD -> master, origin/master, origin/HEAD)
+Author: muhsinashoma <muhsina.akter2@gmail.com>
+commit b4d279baa3c67f9bf4b1cd42ba5f834702fdd642 (HEAD -> master, origin/master, origin/HEAD)
+Author: muhsinashoma <muhsina.akter2@gmail.com>
+Date:   Sat Sep 13 18:55:08 2025 +0600
+
+    To Add Project Details
+
+-------------------------------------------------------------------
+
