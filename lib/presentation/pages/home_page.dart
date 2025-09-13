@@ -268,12 +268,76 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration:
-                  BoxDecoration(color: Color.fromARGB(255, 189, 237, 190)),
-              child: Text('Menu',
-                  style: TextStyle(color: Colors.black, fontSize: 24)),
+            // const DrawerHeader(
+            //   decoration:
+            //       BoxDecoration(color: Color.fromARGB(255, 171, 250, 172)),
+            //   child: Text('Menu',
+            //       style: TextStyle(color: Colors.black, fontSize: 24)),
+            // ),
+
+            // DrawerHeader(
+            //   decoration: const BoxDecoration(
+            //     color: Color.fromARGB(255, 171, 250, 172),
+            //   ),
+            //   child: Column(
+            //     mainAxisAlignment: MainAxisAlignment.center,
+            //     crossAxisAlignment:
+            //         CrossAxisAlignment.center, // center horizontally
+            //     children: [
+            //       SizedBox(
+            //         width: 60,
+            //         height: 60,
+            //         child: Image.asset(
+            //           'assets/icons/task_management.png',
+            //           fit: BoxFit.contain, // ensures the image fits the box
+            //         ),
+            //       ),
+            //       const SizedBox(height: 10),
+            //       const Text(
+            //         'Task Management',
+            //         style: TextStyle(
+            //           color: Colors.black,
+            //           fontSize: 24,
+            //         ),
+            //         textAlign: TextAlign.center, // center the text
+            //       ),
+            //     ],
+            //   ),
+            // ),
+
+            DrawerHeader(
+              padding: EdgeInsets.zero, // remove default padding
+              child: Stack(
+                fit: StackFit.expand, // fill the entire DrawerHeader
+                children: [
+                  // Background image
+                  Image.asset(
+                    'assets/icons/task_management.png',
+                    fit: BoxFit.cover, // fills the entire header
+                  ),
+                  // Title at the bottom
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: double.infinity,
+                      color: Colors
+                          .black54, // optional: semi-transparent background for text
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: const Text(
+                        'Task Management',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
+
             ListTile(
               leading: const Icon(Icons.dashboard),
               title: const Text('Dashboard'),
@@ -289,7 +353,16 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             ),
             ListTile(
               leading: const Icon(Icons.info),
-              title: const Text('About'),
+              title: const Text('About Me'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: CircleAvatar(
+                radius: 18,
+                backgroundImage: const AssetImage('assets/icons/app_icon.png'),
+                backgroundColor: Colors.transparent, // optional
+              ),
+              title: const Text('More App'),
               onTap: () => Navigator.pop(context),
             ),
           ],
