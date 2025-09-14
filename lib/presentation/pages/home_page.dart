@@ -65,6 +65,27 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     getProjectListData();
   }
 
+// ---------- 13 Project Colors for static----------
+  List<Color> projectColors = [
+    Colors.red,
+    Colors.blue,
+    Colors.green,
+    Colors.orange,
+    Colors.purple,
+    Colors.teal,
+    Colors.brown,
+    Colors.cyan,
+    Colors.indigo,
+    Colors.amber,
+    Colors.deepOrange,
+    Colors.lightGreen,
+    Color.fromARGB(255, 233, 171, 192),
+  ];
+
+  Color getProjectColor(int index) {
+    return projectColors[index % projectColors.length]; // cycles through colors
+  }
+
   // ------------------- Fetch Projects---------------------
   List<ProjectListItem> _projects = [];
   bool _isLoadingProjects = true;
@@ -352,10 +373,14 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 child: Text("No projects found."),
               )
             else
-              ..._projects.map((project) {
+              ..._projects.asMap().entries.map((entry) {
+                int index = entry.key;
+                var project = entry.value;
                 return ListTile(
-                  leading: const Icon(Icons.folder,
-                      color: Color.fromARGB(255, 153, 247, 163)),
+                  leading: Icon(
+                    Icons.folder,
+                    color: getProjectColor(index),
+                  ),
                   title: Text(project.name),
                   onTap: () {
                     Navigator.pop(context);
@@ -365,6 +390,20 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                   },
                 );
               }).toList(),
+
+            // ..._projects.map((project) {
+            //   return ListTile(
+            //     leading: const Icon(Icons.folder,
+            //         color: Color.fromARGB(255, 153, 247, 163)),
+            //     title: Text(project.name),
+            //     onTap: () {
+            //       Navigator.pop(context);
+            //       debugPrint(
+            //           "Selected Project: ${project.id} - ${project.name}");
+            //       // TODO: Navigate to project Kanban/tasks
+            //     },
+            //   );
+            // }).toList(),
           ],
         ),
       ),
