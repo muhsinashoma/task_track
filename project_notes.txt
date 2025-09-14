@@ -1,0 +1,20 @@
+1. meaning of HSVColor
+
+
+HSVColor is a class in Flutter that represents a color using the HSV color model, which stands for:
+
+H — Hue (the type of color, measured in degrees from 0° to 360°; e.g., 0° = red, 120° = green, 240° = blue)
+
+S — Saturation (how vivid or “pure” the color is; ranges from 0.0 to 1.0; 0 = gray, 1 = fully saturated)
+
+V — Value (brightness; ranges from 0.0 to 1.0; 0 = black, 1 = full brightness)
+
+Why use HSV instead of RGB
+
+RGB (Red, Green, Blue) is great for defining exact colors, but if you want many distinct colors dynamically, HSV is easier because you can:
+
+Vary hue to get completely different colors.
+
+Keep saturation and value consistent so all colors look balanced.
+
+Cycle through hues to generate unique colors for lists of items (like projects) automatically.

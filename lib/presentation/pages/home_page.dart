@@ -65,25 +65,15 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     getProjectListData();
   }
 
-// ---------- 13 Project Colors for static----------
-  List<Color> projectColors = [
-    Colors.red,
-    Colors.blue,
-    Colors.green,
-    Colors.orange,
-    Colors.purple,
-    Colors.teal,
-    Colors.brown,
-    Colors.cyan,
-    Colors.indigo,
-    Colors.amber,
-    Colors.deepOrange,
-    Colors.lightGreen,
-    Color.fromARGB(255, 233, 171, 192),
-  ];
+// Generates a unique color for each project based on its index
 
-  Color getProjectColor(int index) {
-    return projectColors[index % projectColors.length]; // cycles through colors
+  Color generateProjectColor(int index) {
+    // Hue cycles through 0-360 degrees
+    double hue =
+        (index * 45) % 360; // change 45 to smaller/larger to control spacing
+    double saturation = 0.6; // how vivid the color is
+    double value = 0.85; // brightness of the color
+    return HSVColor.fromAHSV(1, hue, saturation, value).toColor();
   }
 
   // ------------------- Fetch Projects---------------------
@@ -376,10 +366,15 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
               ..._projects.asMap().entries.map((entry) {
                 int index = entry.key;
                 var project = entry.value;
+
+                // Use dynamic HSV color generator instead of static color list
+                Color projectColor =
+                    generateProjectColor(index); // <-- dynamic color
+
                 return ListTile(
                   leading: Icon(
                     Icons.folder,
-                    color: getProjectColor(index),
+                    color: projectColor,
                   ),
                   title: Text(project.name),
                   onTap: () {
@@ -390,20 +385,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                   },
                 );
               }).toList(),
-
-            // ..._projects.map((project) {
-            //   return ListTile(
-            //     leading: const Icon(Icons.folder,
-            //         color: Color.fromARGB(255, 153, 247, 163)),
-            //     title: Text(project.name),
-            //     onTap: () {
-            //       Navigator.pop(context);
-            //       debugPrint(
-            //           "Selected Project: ${project.id} - ${project.name}");
-            //       // TODO: Navigate to project Kanban/tasks
-            //     },
-            //   );
-            // }).toList(),
           ],
         ),
       ),
