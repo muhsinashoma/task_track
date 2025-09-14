@@ -1,0 +1,14 @@
+-------------------------------------------------------
+
+ssh username@server_ip
+
+-------------------------------------------------------
+
+Manually SSH into the server (to test raw connection):
+From Windows (Command Prompt / PowerShell):
+
+
+--------------------------------------------------------
+ssh root1@192.168.41.56
+
+If this works → connection is fine, problem is libraries.

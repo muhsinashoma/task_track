@@ -14,25 +14,19 @@ import '../widgets/kanban_board.dart';
 import 'kanban_board_controller.dart';
 import 'package:file_picker/file_picker.dart';
 
-List<Project> projects = [];
+// For project list from Drawer
+class ProjectListItem {
+  final String id;
+  final String name;
 
-// Put this at the top of your file, before the widget class
-class Project {
-  final String projectName;
-  final String ownerName;
-  final String contact;
-  final String email;
-  final String address;
-  final String? attachedFile; // optional filename
+  ProjectListItem({required this.id, required this.name});
 
-  Project({
-    required this.projectName,
-    required this.ownerName,
-    required this.contact,
-    required this.email,
-    required this.address,
-    this.attachedFile,
-  });
+  factory ProjectListItem.fromJson(Map<String, dynamic> json) {
+    return ProjectListItem(
+      id: json['id'].toString(),
+      name: json['project_name'] ?? "Unnamed Project",
+    );
+  }
 }
 
 class KanbanSetStatePage extends StatefulWidget {
@@ -68,6 +62,36 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     super.initState();
     getColumnData();
     getTaskData();
+    getProjectListData();
+  }
+
+  // ------------------- Fetch Projects---------------------
+  List<ProjectListItem> _projects = [];
+  bool _isLoadingProjects = true;
+
+  Future<void> getProjectListData() async {
+    try {
+      final dio = Dio();
+      var response = await dio.get(
+        "http://192.168.33.29/API/get_project_list_kanban.php",
+      );
+
+      // Decode JSON string into a List
+      List data = jsonDecode(response.data);
+
+      _projects = data.map((json) => ProjectListItem.fromJson(json)).toList();
+
+      setState(() {
+        _isLoadingProjects = false;
+      });
+
+      print("Projects loaded: ${_projects.length}");
+    } catch (e) {
+      print("Error fetching projects: $e");
+      setState(() {
+        _isLoadingProjects = false;
+      });
+    }
   }
 
   // ---------- Fetch columns ----------
@@ -75,7 +99,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.0.104/API/get_column_data_kanban.php");
+          await dio.get("http://192.168.33.29/API/get_column_data_kanban.php");
 
       columns = Data.getColumns(response.data)
           .map((col) => col.copyWith(children: col.children ?? []))
@@ -92,7 +116,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response = await dio.get(
-        "http://192.168.0.104/API/get_task_data_kanban.php",
+        "http://192.168.33.29/API/get_task_data_kanban.php",
         queryParameters: {
           "period": selectedNumber,
           "unit": selectedUnit.toLowerCase(),
@@ -232,34 +256,28 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           ],
         ),
       ),
+
+      //---------Start Drawer----------
+
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            // const DrawerHeader(
-            //   decoration:
-            //       BoxDecoration(color: Color.fromARGB(255, 171, 250, 172)),
-            //   child: Text('Menu',
-            //       style: TextStyle(color: Colors.black, fontSize: 24)),
-            // ),
-
+            // ---------- Drawer Header ----------
             DrawerHeader(
-              padding: EdgeInsets.zero, // remove default padding
+              padding: EdgeInsets.zero,
               child: Stack(
-                fit: StackFit.expand, // fill the entire DrawerHeader
+                fit: StackFit.expand,
                 children: [
-                  // Background image
                   Image.asset(
                     'assets/icons/task_management.png',
-                    fit: BoxFit.cover, // fills the entire header
+                    fit: BoxFit.cover,
                   ),
-                  // Title at the bottom
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
                       width: double.infinity,
-                      color: Colors
-                          .black54, // optional: semi-transparent background for text
+                      color: Colors.black54,
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: const Text(
                         'Task Management',
@@ -276,6 +294,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
               ),
             ),
 
+            // ---------- Default Menu ----------
             ListTile(
               leading: const Icon(Icons.dashboard),
               title: const Text('Dashboard'),
@@ -294,18 +313,64 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
               title: const Text('About Me'),
               onTap: () => Navigator.pop(context),
             ),
+
             ListTile(
               leading: CircleAvatar(
                 radius: 18,
                 backgroundImage: const AssetImage('assets/icons/app_icon.png'),
-                backgroundColor: Colors.transparent, // optional
+                backgroundColor: Colors.transparent,
               ),
               title: const Text('More App'),
               onTap: () => Navigator.pop(context),
             ),
+
+            const Divider(),
+
+            // ---------- Projects Section ----------
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                "My Projects",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+
+            if (_isLoadingProjects)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_projects.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text("No projects found."),
+              )
+            else
+              ..._projects.map((project) {
+                return ListTile(
+                  leading: const Icon(Icons.folder,
+                      color: Color.fromARGB(255, 153, 247, 163)),
+                  title: Text(project.name),
+                  onTap: () {
+                    Navigator.pop(context);
+                    debugPrint(
+                        "Selected Project: ${project.id} - ${project.name}");
+                    // TODO: Navigate to project Kanban/tasks
+                  },
+                );
+              }).toList(),
           ],
         ),
       ),
+
+      //---------End Drawer----------
+
       body: SafeArea(
         child: KanbanBoard(
           columns: columns,
@@ -716,7 +781,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
     try {
       final response = await dio.post(
-        "http://192.168.0.104/API/add_project_kanban.php",
+        "http://192.168.33.29/API/add_project_kanban.php",
         data: formData,
         options: Options(
           headers: {'Content-Type': 'multipart/form-data'},
@@ -765,7 +830,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.0.104/API/delete_task_kanban.php",
+        "http://192.168.33.29/API/delete_task_kanban.php",
         data: {"id": task.taskId, "deleted_by": "muhsina"},
         options: Options(
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
@@ -792,7 +857,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        'http://192.168.0.104/API/add_column_kanban.php',
+        'http://192.168.33.29/API/add_column_kanban.php',
         data: {"title": title, "created_by": "muhsina"},
         options: Options(
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
@@ -817,7 +882,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       int columnId = columns[column].id;
       await dio.post(
-        "http://192.168.0.104/API/add_task_kanban.php",
+        "http://192.168.33.29/API/add_task_kanban.php",
         data: {
           "title": title,
           "task_id": taskId,
@@ -843,7 +908,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.0.104/API/drag_drop_kanban.php",
+        "http://192.168.33.29/API/drag_drop_kanban.php",
         data: {
           "id": data.taskId,
           "column_name": index + 1,
@@ -865,7 +930,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.0.104/API/update_task_kanban.php",
+        "http://192.168.33.29/API/update_task_kanban.php",
         data: {
           "id": task.taskId,
           "title": task.title,
