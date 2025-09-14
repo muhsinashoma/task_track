@@ -96,7 +96,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         _isLoadingProjects = false;
       });
 
-      print("Projects loaded: ${_projects.length}");
+      //print("Projects loaded: ${_projects.length}");
     } catch (e) {
       print("Error fetching projects: $e");
       setState(() {
@@ -518,6 +518,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     const SizedBox(height: 20),
 
                     //To Add Project Buttons
+
+// ---------------- Add Project Buttons ----------------
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -528,39 +530,46 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                         const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () async {
-                            // Validate required fields
-                            if (_projectController.text.isEmpty ||
-                                _ownerController.text.isEmpty ||
-                                _contactController.text.isEmpty ||
-                                _emailController.text.isEmpty) {
-                              showDialog(
-                                  context: context,
-                                  builder: (_) => AlertDialog(
-                                        title: const Text("Error"),
-                                        content: const Text(
-                                            "Project name, owner, contact and email are required"),
-                                        actions: [
-                                          TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context),
-                                              child: const Text("OK"))
-                                        ],
-                                      ));
+                            final projectName = _projectController.text.trim();
+                            final ownerName = _ownerController.text.trim();
+                            final contact = _contactController.text.trim();
+                            final email = _emailController.text.trim();
+                            final address = _addressController.text.trim();
+
+                            // --- Field Validations ---
+                            if (projectName.isEmpty ||
+                                ownerName.isEmpty ||
+                                contact.isEmpty ||
+                                email.isEmpty) {
+                              _showErrorDialog(context,
+                                  "Project name, owner, contact and email are required.");
                               return;
                             }
 
-                            // Call upload function
+                            if (!phoneRegex.hasMatch(contact)) {
+                              _showErrorDialog(context,
+                                  "Please enter a valid Bangladeshi mobile number (11 digits, starts with 01).");
+                              return;
+                            }
+
+                            if (!emailRegex.hasMatch(email)) {
+                              _showErrorDialog(context,
+                                  "Please enter a valid email address.");
+                              return;
+                            }
+
+                            // --- API Call ---
                             try {
                               final res = await addProjectDetails(
-                                projectName: _projectController.text.trim(),
-                                ownerName: _ownerController.text.trim(),
-                                contact: _contactController.text.trim(),
-                                email: _emailController.text.trim(),
-                                address: _addressController.text.trim(),
+                                projectName: projectName,
+                                ownerName: ownerName,
+                                contact: contact,
+                                email: email,
+                                address: address,
                                 file: selectedFile,
                               );
 
-                              print("Response: $res"); // log full response
+                              print("Response: $res");
 
                               // Show success/error in SnackBar
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -586,6 +595,9 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
                                 // Close dialog
                                 Navigator.pop(context);
+
+                                // Refresh project list instantly
+                                await getProjectListData();
                               }
                             } catch (e) {
                               print("Upload error: $e");
@@ -600,7 +612,96 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                           child: const Text("Add"),
                         ),
                       ],
-                    )
+                    ),
+
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.end,
+                    //   children: [
+                    //     TextButton(
+                    //       onPressed: () => Navigator.pop(context),
+                    //       child: const Text('Cancel'),
+                    //     ),
+                    //     const SizedBox(width: 8),
+                    //     ElevatedButton(
+                    //       onPressed: () async {
+                    //         // Validate required fields
+                    //         if (_projectController.text.isEmpty ||
+                    //             _ownerController.text.isEmpty ||
+                    //             _contactController.text.isEmpty ||
+                    //             _emailController.text.isEmpty) {
+                    //           showDialog(
+                    //               context: context,
+                    //               builder: (_) => AlertDialog(
+                    //                     title: const Text("Error"),
+                    //                     content: const Text(
+                    //                         "Project name, owner, contact and email are required"),
+                    //                     actions: [
+                    //                       TextButton(
+                    //                           onPressed: () =>
+                    //                               Navigator.pop(context),
+                    //                           child: const Text("OK"))
+                    //                     ],
+                    //                   ));
+                    //           return;
+                    //         }
+
+                    //         // Call upload function
+                    //         try {
+                    //           final res = await addProjectDetails(
+                    //             projectName: _projectController.text.trim(),
+                    //             ownerName: _ownerController.text.trim(),
+                    //             contact: _contactController.text.trim(),
+                    //             email: _emailController.text.trim(),
+                    //             address: _addressController.text.trim(),
+                    //             file: selectedFile,
+                    //           );
+
+                    //           print("Response: $res"); // log full response
+
+                    //           // Show success/error in SnackBar
+                    //           ScaffoldMessenger.of(context).showSnackBar(
+                    //             SnackBar(
+                    //               content: Text(
+                    //                   res['message'] ?? "Upload completed"),
+                    //               backgroundColor: res['success']
+                    //                   ? Colors.green
+                    //                   : Colors.red,
+                    //             ),
+                    //           );
+
+                    //           if (res['success'] == true) {
+                    //             // Clear form fields
+                    //             _projectController.clear();
+                    //             _ownerController.clear();
+                    //             _contactController.clear();
+                    //             _emailController.clear();
+                    //             _addressController.clear();
+                    //             setState(() {
+                    //               selectedFile = null;
+                    //             });
+
+                    //             // Close dialog
+                    //             Navigator.pop(context);
+
+                    //             // --- Fetch updated projects to show instantly ---
+                    //             await getProjectListData(); // 🔥 refresh project list
+                    //           }
+                    //         } catch (e) {
+                    //           print("Upload error: $e");
+                    //           ScaffoldMessenger.of(context).showSnackBar(
+                    //             SnackBar(
+                    //               content: Text("Upload failed: $e"),
+                    //               backgroundColor: Colors.red,
+                    //             ),
+                    //           );
+                    //         }
+                    //       },
+                    //       child: const Text("Add"),
+                    //     ),
+                    //   ],
+                    // ),
+
+                    //To End add Project Buttons
                   ],
                 ),
               ),
@@ -610,6 +711,27 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       ),
     );
   }
+
+// utils.dart (or top of your widget file, before the class)
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Error"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+// Regex validators
+  final phoneRegex = RegExp(r'^(01)[0-9]{9}$'); // Bangladeshi 11-digit number
+  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
   // ------------------ Period Dialog ------------------
   void _showPeriodDialog() {
@@ -774,7 +896,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   }
 
   // ------------------ Add Project ------------------
-
   Future<Map<String, dynamic>> addProjectDetails({
     required String projectName,
     required String ownerName,
