@@ -1,0 +1,65 @@
+
+
+
+// ---------- Projects Section ----------
+            // const Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            //   child: Text(
+            //     "My Projects",
+            //     style: TextStyle(
+            //       fontSize: 16,
+            //       fontWeight: FontWeight.bold,
+            //       color: Colors.black54,
+            //     ),
+            //   ),
+            // ),
+
+            // if (_isLoadingProjects)
+            //   const Center(
+            //     child: Padding(
+            //       padding: EdgeInsets.all(16.0),
+            //       child: CircularProgressIndicator(),
+            //     ),
+            //   )
+            // else if (_projects.isEmpty)
+            //   const Padding(
+            //     padding: EdgeInsets.all(16.0),
+            //     child: Text("No projects found."),
+            //   )
+            // else
+            //   ..._projects.asMap().entries.map((entry) {
+            //     int index = entry.key;
+            //     var project = entry.value;
+
+            //     // Use dynamic HSV color generator instead of static color list
+            //     Color projectColor = generateProjectColor(index);
+
+            //     return ListTile(
+            //       leading: (project.attached_file != null &&
+            //               project.attached_file!.isNotEmpty)
+            //           ? CircleAvatar(
+            //               radius: 18,
+            //               backgroundImage: AssetImage(
+            //                   "assets/uploads/${project.attached_file}"),
+            //             )
+            //           : CircleAvatar(
+            //               radius: 18,
+            //               backgroundColor: projectColor,
+            //               child: Text(
+            //                 getInitials(project.project_owner_name),
+            //                 style: const TextStyle(
+            //                   color: Colors.white,
+            //                   fontWeight: FontWeight.bold,
+            //                 ),
+            //               ),
+            //             ),
+            //       title: Text(project.name),
+            //       subtitle: Text("Owner: ${project.project_owner_name}"),
+            //       onTap: () {
+            //         Navigator.pop(context);
+            //         debugPrint(
+            //             "Selected Project: ${project.id} - ${project.name}");
+            //         // TODO: Navigate to project Kanban/tasks
+            //       },
+            //     );
+            //   }).toList(),

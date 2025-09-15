@@ -14,6 +14,21 @@ import '../widgets/kanban_board.dart';
 import 'kanban_board_controller.dart';
 import 'package:file_picker/file_picker.dart';
 
+// For project list from Drawer
+// class ProjectListItem {
+//   final String id;
+//   final String name;
+
+//   ProjectListItem({required this.id, required this.name});
+
+//   factory ProjectListItem.fromJson(Map<String, dynamic> json) {
+//     return ProjectListItem(
+//       id: json['id'].toString(),
+//       name: json['project_name'] ?? "Unnamed Project",
+//     );
+//   }
+// }
+
 class ProjectListItem {
   final String id;
   final String name;
@@ -71,17 +86,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     getColumnData();
     getTaskData();
     getProjectListData();
-  }
-
-  String getFirstAndLastLetter(String name) {
-    if (name.isEmpty) return "";
-    if (name.length == 1) return name.toUpperCase();
-
-    var parts = name.trim().split(" ");
-    if (parts.length > 1) {
-      return "${parts.first[0].toUpperCase()}${parts.last[0].toUpperCase()}";
-    }
-    return "${name[0].toUpperCase()}${name[name.length - 1].toUpperCase()}";
   }
 
 // Generates a unique color for each project based on its index
@@ -371,31 +375,79 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             const Divider(),
 
             // ---------- Projects Section ----------
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "My Projects",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  if (_projects.isNotEmpty)
-                    Text(
-                      // "Owner: ${_projects.first.project_owner_name}", // show beside My Projects
 
-                      "Owner",
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
-                    ),
-                ],
+// ---------- Projects Section ----------
+            // const Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            //   child: Text(
+            //     "My Projects",
+            //     style: TextStyle(
+            //       fontSize: 16,
+            //       fontWeight: FontWeight.bold,
+            //       color: Colors.black54,
+            //     ),
+            //   ),
+            // ),
+
+            // if (_isLoadingProjects)
+            //   const Center(
+            //     child: Padding(
+            //       padding: EdgeInsets.all(16.0),
+            //       child: CircularProgressIndicator(),
+            //     ),
+            //   )
+            // else if (_projects.isEmpty)
+            //   const Padding(
+            //     padding: EdgeInsets.all(16.0),
+            //     child: Text("No projects found."),
+            //   )
+            // else
+            //   ..._projects.asMap().entries.map((entry) {
+            //     int index = entry.key;
+            //     var project = entry.value;
+
+            //     // Use dynamic HSV color generator instead of static color list
+            //     Color projectColor = generateProjectColor(index);
+
+            //     return ListTile(
+            //       leading: (project.attached_file != null &&
+            //               project.attached_file!.isNotEmpty)
+            //           ? CircleAvatar(
+            //               radius: 18,
+            //               backgroundImage: AssetImage(
+            //                   "assets/uploads/${project.attached_file}"),
+            //             )
+            //           : CircleAvatar(
+            //               radius: 18,
+            //               backgroundColor: projectColor,
+            //               child: Text(
+            //                 getInitials(project.project_owner_name),
+            //                 style: const TextStyle(
+            //                   color: Colors.white,
+            //                   fontWeight: FontWeight.bold,
+            //                 ),
+            //               ),
+            //             ),
+            //       title: Text(project.name),
+            //       subtitle: Text("Owner: ${project.project_owner_name}"),
+            //       onTap: () {
+            //         Navigator.pop(context);
+            //         debugPrint(
+            //             "Selected Project: ${project.id} - ${project.name}");
+            //         // TODO: Navigate to project Kanban/tasks
+            //       },
+            //     );
+            //   }).toList(),
+
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                "My Projects",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black54,
+                ),
               ),
             ),
 
@@ -416,35 +468,16 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 int index = entry.key;
                 var project = entry.value;
 
-                // Dynamic HSV-based color
-                Color projectColor = generateProjectColor(index);
+                // Use dynamic HSV color generator instead of static color list
+                Color projectColor =
+                    generateProjectColor(index); // <-- dynamic color
 
                 return ListTile(
                   leading: Icon(
                     Icons.folder,
                     color: projectColor,
                   ),
-                  title: Text(
-                    project.name,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  trailing: Tooltip(
-                    message:
-                        project.project_owner_name, // hover shows full name
-                    child: CircleAvatar(
-                      radius: 16, // 👈 slightly smaller, standard size
-                      backgroundColor:
-                          projectColor, // 🔥 unique color for each owner
-                      child: Text(
-                        getFirstAndLastLetter(project.project_owner_name),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500, // medium
-                          fontSize: 13, // 👈 balanced for radius 16
-                        ),
-                      ),
-                    ),
-                  ),
+                  title: Text(project.name),
                   onTap: () {
                     Navigator.pop(context);
                     debugPrint(
@@ -585,7 +618,9 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     ),
                     const SizedBox(height: 20),
 
-                    // ---------------- Add Project Buttons ----------------
+                    //To Add Project Buttons
+
+// ---------------- Add Project Buttons ----------------
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -679,6 +714,93 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                         ),
                       ],
                     ),
+
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.end,
+                    //   children: [
+                    //     TextButton(
+                    //       onPressed: () => Navigator.pop(context),
+                    //       child: const Text('Cancel'),
+                    //     ),
+                    //     const SizedBox(width: 8),
+                    //     ElevatedButton(
+                    //       onPressed: () async {
+                    //         // Validate required fields
+                    //         if (_projectController.text.isEmpty ||
+                    //             _ownerController.text.isEmpty ||
+                    //             _contactController.text.isEmpty ||
+                    //             _emailController.text.isEmpty) {
+                    //           showDialog(
+                    //               context: context,
+                    //               builder: (_) => AlertDialog(
+                    //                     title: const Text("Error"),
+                    //                     content: const Text(
+                    //                         "Project name, owner, contact and email are required"),
+                    //                     actions: [
+                    //                       TextButton(
+                    //                           onPressed: () =>
+                    //                               Navigator.pop(context),
+                    //                           child: const Text("OK"))
+                    //                     ],
+                    //                   ));
+                    //           return;
+                    //         }
+
+                    //         // Call upload function
+                    //         try {
+                    //           final res = await addProjectDetails(
+                    //             projectName: _projectController.text.trim(),
+                    //             ownerName: _ownerController.text.trim(),
+                    //             contact: _contactController.text.trim(),
+                    //             email: _emailController.text.trim(),
+                    //             address: _addressController.text.trim(),
+                    //             file: selectedFile,
+                    //           );
+
+                    //           print("Response: $res"); // log full response
+
+                    //           // Show success/error in SnackBar
+                    //           ScaffoldMessenger.of(context).showSnackBar(
+                    //             SnackBar(
+                    //               content: Text(
+                    //                   res['message'] ?? "Upload completed"),
+                    //               backgroundColor: res['success']
+                    //                   ? Colors.green
+                    //                   : Colors.red,
+                    //             ),
+                    //           );
+
+                    //           if (res['success'] == true) {
+                    //             // Clear form fields
+                    //             _projectController.clear();
+                    //             _ownerController.clear();
+                    //             _contactController.clear();
+                    //             _emailController.clear();
+                    //             _addressController.clear();
+                    //             setState(() {
+                    //               selectedFile = null;
+                    //             });
+
+                    //             // Close dialog
+                    //             Navigator.pop(context);
+
+                    //             // --- Fetch updated projects to show instantly ---
+                    //             await getProjectListData(); // 🔥 refresh project list
+                    //           }
+                    //         } catch (e) {
+                    //           print("Upload error: $e");
+                    //           ScaffoldMessenger.of(context).showSnackBar(
+                    //             SnackBar(
+                    //               content: Text("Upload failed: $e"),
+                    //               backgroundColor: Colors.red,
+                    //             ),
+                    //           );
+                    //         }
+                    //       },
+                    //       child: const Text("Add"),
+                    //     ),
+                    //   ],
+                    // ),
 
                     //To End add Project Buttons
                   ],
