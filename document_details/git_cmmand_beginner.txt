@@ -1,0 +1,124 @@
+Great! Here’s a beginner-friendly Git branch workflow from start to finish, step by step.
+
+Step 1: Check Current Branch
+git branch
+
+
+* shows your current branch.
+
+Example output:
+
+  master
+* muhsina
+  submaster
+
+Step 2: Switch to Base Branch
+
+Decide which branch you want to branch from (usually master):
+
+git switch master
+
+Step 3: Create a New Branch
+
+Create a branch for your feature/work and switch to it:
+
+git switch -c feature-branch-name
+
+
+Example:
+
+git switch -c muhsina
+
+
+Confirm with:
+
+git branch
+
+
+You should see * muhsina.
+
+Step 4: Make Changes
+
+Edit your files or add new files in your project.
+
+Step 5: Check Status
+
+See which files are modified/untracked:
+
+git status
+
+Step 6: Stage Changes
+
+Add the files you want to commit:
+
+git add .
+
+
+. adds all changes; or specify a file: git add filename.
+
+Step 7: Commit Changes
+
+Save your changes with a message:
+
+git commit -m "Describe what you did"
+
+
+Example:
+
+git commit -m "Added task tracking feature"
+
+Step 8: Push Branch to Remote
+git push -u origin feature-branch-name
+
+
+Example:
+
+git push -u origin muhsina
+
+
+-u sets upstream; next time you can just do git push.
+
+Step 9: Merge Branch Back to Master
+
+Once your work is done:
+
+Switch to master:
+
+git switch master
+
+
+Merge your branch:
+
+git merge muhsina
+
+
+Push the updated master:
+
+git push origin master
+
+Step 10: Delete Branch (Optional)
+
+After merging, you can delete your feature branch locally and remotely:
+
+Locally:
+
+git branch -d muhsina
+
+
+Remotely:
+
+git push origin --delete muhsina
+
+
+✅ Summary Flow:
+
+git switch master
+git switch -c new_branch
+(edit files)
+git add .
+git commit -m "message"
+git push -u origin new_branch
+git switch master
+git merge new_branch
+git push origin master
+git branch -d new_branch
