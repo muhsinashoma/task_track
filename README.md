@@ -1,3 +1,9 @@
+
+https://chatgpt.com/c/68c7e7af-da58-8324-b688-575b1de0fd9c
+
+https://chatgpt.com/c/68c7d7ee-c970-8327-9065-5ffe9d3ed1ac
+
+
 Perfect! ✅
 
 Now you are on the muhsina branch. Any changes you make and commits you create will only affect this branch, leaving master and submaster untouched.
@@ -39,3 +45,96 @@ Merge back to master (when work is done):
 
 git switch master
 git merge muhsina
+
+
+<!-- ------------------------------------- -->
+
+Got it! You want a step-by-step guide for Git branch management, starting from scratch. I'll break it down clearly for you.
+
+1️⃣ View Current Branch
+
+To see which branch you are on and all available branches:
+
+git branch
+
+
+* main → shows your current branch
+
+Other names → other branches
+
+2️⃣ Switch to Another Branch
+
+If you want to move to an existing branch:
+
+git checkout branch_name   # older syntax
+
+
+Or, with the newer syntax:
+
+git switch branch_name
+
+
+Example:
+
+git switch Muhsina
+git switch touhid
+
+3️⃣ Create a New Branch and Switch to It
+
+To make a new branch and move to it immediately:
+
+git switch -c new_branch_name
+
+
+Example:
+
+git switch -c feature-login
+
+
+This creates a branch called feature-login and switches to it.
+
+4️⃣ Merge a Branch into Main
+
+Once your work on a branch is done and you want to merge it into the main branch:
+
+Switch to main first:
+
+git switch main
+
+
+Merge the other branch:
+
+git merge branch_name
+
+
+Example:
+
+git merge Muhsina
+
+
+This merges Muhsina branch into main.
+
+5️⃣ Optional: Push Branch to Remote
+
+If you want your branch to be on GitHub/GitLab:
+
+git push origin branch_name
+
+
+Example:
+
+git push origin feature-login
+
+
+✅ Summary Table
+
+Action	Command
+View branches	git branch
+Switch branch	git switch branch_name
+Create & switch branch	git switch -c new_branch_name
+Merge into main	git switch main → git merge branch_name
+Push branch to remote	git push origin branch_name
+
+If you want, I can make a tiny cheat sheet for you that’s super easy to remember for daily Git branch operations.
+
+Do you want me to do that?

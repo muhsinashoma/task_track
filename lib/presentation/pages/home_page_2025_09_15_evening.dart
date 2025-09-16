@@ -14,34 +14,11 @@ import '../widgets/kanban_board.dart';
 import 'kanban_board_controller.dart';
 import 'package:file_picker/file_picker.dart';
 
-// class ProjectListItem {
-//   final String id;
-//   final String name;
-//   final String project_owner_name; // add this
-//   final String? attached_file; // add this as nullable
-
-//   ProjectListItem({
-//     required this.id,
-//     required this.name,
-//     required this.project_owner_name,
-//     this.attached_file,
-//   });
-
-//   factory ProjectListItem.fromJson(Map<String, dynamic> json) {
-//     return ProjectListItem(
-//       id: json['id'].toString(),
-//       name: json['project_name'] ?? "Unnamed Project",
-//       project_owner_name: json['project_owner_name'] ?? "Unknown",
-//       attached_file: json['attached_file'], // nullable
-//     );
-//   }
-// }
-
 class ProjectListItem {
-  final int id;
+  final String id;
   final String name;
-  final String project_owner_name;
-  final String? attached_file;
+  final String project_owner_name; // add this
+  final String? attached_file; // add this as nullable
 
   ProjectListItem({
     required this.id,
@@ -52,16 +29,13 @@ class ProjectListItem {
 
   factory ProjectListItem.fromJson(Map<String, dynamic> json) {
     return ProjectListItem(
-      id: int.tryParse(json['id'].toString()) ?? 0, // safe parsing
+      id: json['id'].toString(),
       name: json['project_name'] ?? "Unnamed Project",
       project_owner_name: json['project_owner_name'] ?? "Unknown",
-      attached_file: json['attached_file'],
+      attached_file: json['attached_file'], // nullable
     );
   }
 }
-
-String? _selectedProjectName;
-int? _selectedProjectId;
 
 class KanbanSetStatePage extends StatefulWidget {
   const KanbanSetStatePage({super.key});
@@ -258,10 +232,10 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
         title: Row(
           children: [
-            Text(
-              _selectedProjectName ??
-                  '', // <-- dynamic name, fallback to empty Project
-              style: const TextStyle(
+            // ----------- Left: Project Name / ITM ----------
+            const Text(
+              'ITM', // or replace with your project name
+              style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -269,7 +243,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             ),
             const SizedBox(width: 16),
 
-            // ----------- Period Filter ----------
+            // ----------- Left: Period Filter ----------
             GestureDetector(
               onTap: _showPeriodDialog,
               child: Row(
@@ -279,16 +253,14 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                   Text(
                     periodText,
                     style: const TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        color: Colors.green, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             ),
             const Spacer(),
 
-            // ----------- Calendar ----------
+            // ----------- Right: Calendars ----------
             GestureDetector(
               onTap: _showCalendarModal,
               child: Row(
@@ -329,80 +301,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         ),
       ),
 
-      // appBar: AppBar(
-      //   backgroundColor: const Color.fromARGB(255, 158, 223, 180),
-      //   title: Row(
-      //     children: [
-      //       // ----------- Left: Project Name / ITM ----------
-      //       const Text(
-      //         'ITM', // or replace with your project name
-      //         style: TextStyle(
-      //           color: Colors.white,
-      //           fontSize: 20,
-      //           fontWeight: FontWeight.bold,
-      //         ),
-      //       ),
-      //       const SizedBox(width: 16),
-
-      //       // ----------- Left: Period Filter ----------
-      //       GestureDetector(
-      //         onTap: _showPeriodDialog,
-      //         child: Row(
-      //           children: [
-      //             const Icon(Icons.filter_alt, color: Colors.green, size: 20),
-      //             const SizedBox(width: 4),
-      //             Text(
-      //               periodText,
-      //               style: const TextStyle(
-      //                   color: Colors.green, fontWeight: FontWeight.bold),
-      //             ),
-      //           ],
-      //         ),
-      //       ),
-      //       const Spacer(),
-
-      //       // ----------- Right: Calendars ----------
-      //       GestureDetector(
-      //         onTap: _showCalendarModal,
-      //         child: Row(
-      //           children: [
-      //             Column(
-      //               crossAxisAlignment: CrossAxisAlignment.end,
-      //               children: [
-      //                 Text(
-      //                   englishDate,
-      //                   style: const TextStyle(
-      //                       fontFamily: 'Montserrat',
-      //                       color: Color.fromARGB(255, 47, 46, 46),
-      //                       fontSize: 12),
-      //                 ),
-      //                 Text(
-      //                   banglaDate,
-      //                   style: const TextStyle(
-      //                       fontFamily: 'NotoSansBengali',
-      //                       color: Color.fromARGB(255, 47, 46, 46),
-      //                       fontSize: 12),
-      //                 ),
-      //                 Text(
-      //                   hijriDate,
-      //                   style: const TextStyle(
-      //                       fontFamily: 'NotoSansArabic',
-      //                       color: Color.fromARGB(255, 47, 46, 46),
-      //                       fontSize: 12),
-      //                 ),
-      //               ],
-      //             ),
-      //             const SizedBox(width: 8),
-      //             const Icon(Icons.calendar_today,
-      //                 color: Color.fromARGB(255, 5, 144, 46), size: 20),
-      //           ],
-      //         ),
-      //       ),
-      //     ],
-      //   ),
-      // ),
-
       //---------Start Drawer----------
+
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -545,32 +445,18 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                       ),
                     ),
                   ),
-
                   onTap: () {
                     Navigator.pop(context);
                     debugPrint(
                         "Selected Project: ${project.id} - ${project.name}");
-
-                    setState(() {
-                      _selectedProjectName =
-                          project.name; // 👈 updates the appBar title
-                    });
-
-                    // TODO: Navigate to project Kanban/tasks or fetch tasks
-                    // _fetchTasksByProject(project.id);
+                    // TODO: Navigate to project Kanban/tasks
                   },
-
-                  // onTap: () {
-                  //   Navigator.pop(context);
-                  //   debugPrint(
-                  //       "Selected Project: ${project.id} - ${project.name}");
-                  //   // TODO: Navigate to project Kanban/tasks
-                  // },
                 );
               }).toList(),
           ],
         ),
       ),
+
       //---------End Drawer----------
 
       body: SafeArea(
@@ -1035,55 +921,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     }
   }
 
-  @override
-  void addColumn(String title) async {
-    int newId = columns.length + 1;
-    setState(() => columns.add(KColumn(id: newId, title: title, children: [])));
-    final dio = Dio();
-    try {
-      await dio.post(
-        'http://192.168.33.29/API/add_column_kanban.php',
-        data: {"title": title, "created_by": "muhsina"},
-        options: Options(
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
-      );
-    } catch (e) {
-      print("Add column error: $e");
-    }
-  }
-
-  @override
-  void addTask(String title, int column) async {
-    final taskId = Uuid().v4();
-    final newTask = KTask(
-      title: title,
-      taskId: taskId,
-      createdBy: "muhsina",
-      createdAt: DateTime.now().toIso8601String(),
-    );
-    setState(() => columns[column].children.insert(0, newTask));
-
-    final dio = Dio();
-    try {
-      int columnId = columns[column].id;
-      await dio.post(
-        "http://192.168.33.29/API/add_task_kanban.php",
-        data: {
-          "title": title,
-          "task_id": taskId,
-          "column_id": columnId,
-          "model_name": 1,
-          "project_name": 1,
-          "created_by": "muhsina"
-        },
-        options: Options(
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
-      );
-    } catch (e) {
-      print("Add task error: $e");
-    }
-  }
-
   // ------------------ Edit Task ------------------
   void _showEditTask(int columnIndex, KTask task) {
     showModalBottomSheet(
@@ -1131,6 +968,55 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         columns[index].children.insert(newIndex, task);
       }
     });
+  }
+
+  @override
+  void addColumn(String title) async {
+    int newId = columns.length + 1;
+    setState(() => columns.add(KColumn(id: newId, title: title, children: [])));
+    final dio = Dio();
+    try {
+      await dio.post(
+        'http://192.168.33.29/API/add_column_kanban.php',
+        data: {"title": title, "created_by": "muhsina"},
+        options: Options(
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
+      );
+    } catch (e) {
+      print("Add column error: $e");
+    }
+  }
+
+  @override
+  void addTask(String title, int column) async {
+    final taskId = Uuid().v4();
+    final newTask = KTask(
+      title: title,
+      taskId: taskId,
+      createdBy: "muhsina",
+      createdAt: DateTime.now().toIso8601String(),
+    );
+    setState(() => columns[column].children.insert(0, newTask));
+
+    final dio = Dio();
+    try {
+      int columnId = columns[column].id;
+      await dio.post(
+        "http://192.168.33.29/API/add_task_kanban.php",
+        data: {
+          "title": title,
+          "task_id": taskId,
+          "column_id": columnId,
+          "model_name": 1,
+          "project_name": 1,
+          "created_by": "muhsina"
+        },
+        options: Options(
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
+      );
+    } catch (e) {
+      print("Add task error: $e");
+    }
   }
 
   @override

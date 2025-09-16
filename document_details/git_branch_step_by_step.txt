@@ -1,0 +1,46 @@
+ ~/tu/git-branch    main ▓▒░ git switch towhid  ░▒▓ ✔  10:54:40 AM  
+branch 'towhid' set up to track 'origin/towhid'.
+Switched to a new branch 'towhid'
+
+    ~/tu/git-branch    towhid ▓▒░ git branch       ░▒▓ ✔  10:54:47 AM  
+
+    ~/tu/git-branch    towhid ▓▒░ touch file.txt   ░▒▓ ✔  10:54:52 AM  
+
+    ~/tu/git-branch    towhid ?1 ▓▒░ git status    ░▒▓ ✔  10:54:59 AM  
+On branch towhid
+Your branch is up to date with 'origin/towhid'.
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	file.txt
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+    ~/tu/git-branch    towhid ?1 ▓▒░ git status    ░▒▓ ✔  10:55:04 AM  
+On branch towhid
+Your branch is up to date with 'origin/towhid'.
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	file.md
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+    ~/tu/git-branch    towhid ?1 ▓▒░ git add .     ░▒▓ ✔  10:55:29 AM  
+
+    ~/tu/git-branch    towhid +1 ▓▒░ git commit -m "Add test file"   
+[towhid 0fddbe4] Add test file
+ 1 file changed, 1 insertion(+)
+ create mode 100644 file.md
+
+    ~/tu/git-branch    towhid ⇡1 ▓▒░ git push origin towhid
+Enumerating objects: 4, done.
+Counting objects: 100% (4/4), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (2/2), done.
+Writing objects: 100% (3/3), 285 bytes | 285.00 KiB/s, done.
+Total 3 (delta 0), reused 0 (delta 0), pack-reused 0
+To github.com:muhsinashoma/git-branch.git
+   45489e8..0fddbe4  towhid -> towhid
+
+    ~/tu/git-branch    towhid ▓▒░           ░▒▓ ✔  3s   10:56:11 AM 
