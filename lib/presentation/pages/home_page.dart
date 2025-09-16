@@ -62,6 +62,7 @@ class ProjectListItem {
 
 String? _selectedProjectName;
 int? _selectedProjectId;
+String? _projectOwnerName;
 
 class KanbanSetStatePage extends StatefulWidget {
   const KanbanSetStatePage({super.key});
@@ -168,12 +169,14 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   }
 
   // ---------- Fetch tasks ----------
+
   Future<void> getTaskData() async {
     try {
       final dio = Dio();
       var response = await dio.get(
         "http://192.168.33.29/API/get_task_data_kanban.php",
         queryParameters: {
+          "project_id": _selectedProjectId ?? 0,
           "period": selectedNumber,
           "unit": selectedUnit.toLowerCase(),
         },
@@ -211,6 +214,50 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       print("Error fetching tasks: $e");
     }
   }
+
+  // Future<void> getTaskData() async {
+  //   try {
+  //     final dio = Dio();
+  //     var response = await dio.get(
+  //       "http://192.168.33.29/API/get_task_data_kanban.php",
+  //       queryParameters: {
+  //         "period": selectedNumber,
+  //         "unit": selectedUnit.toLowerCase(),
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       var taskData = response.data['task_boards'] as List;
+
+  //       List<Map<String, dynamic>> tasksForColumns = [];
+
+  //       for (var board in taskData) {
+  //         var tasks = board['tasks'] as List;
+  //         tasksForColumns.add({
+  //           'id': int.tryParse(board['id'].toString()) ?? 0,
+  //           'title': board['title'],
+  //           'tasks': tasks
+  //               .map((task) => {
+  //                     'id': int.tryParse(task['id'].toString()) ?? 0,
+  //                     'title': task['title'],
+  //                     'taskId': task['task_id'],
+  //                     'createdBy': task['created_by'] ?? 'Unknown',
+  //                     'createdAt': task['created_at'] ?? '',
+  //                   })
+  //               .toList(),
+  //         });
+  //       }
+
+  //       columns = Data.getColumns(jsonEncode(tasksForColumns))
+  //           .map((col) => col.copyWith(children: col.children ?? []))
+  //           .toList();
+
+  //       setState(() {});
+  //     }
+  //   } catch (e) {
+  //     print("Error fetching tasks: $e");
+  //   }
+  // }
 
   // ------------------- Date Suffix -------------------
   String suffix(int day) {
@@ -254,19 +301,102 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         "${hijri.hDay}${suffix(hijri.hDay)} ${hijri.longMonthName} ${hijri.hYear} AH";
 
     return Scaffold(
+      // appBar: AppBar(
+      //   backgroundColor: const Color.fromARGB(255, 158, 223, 180),
+      //   title: Row(
+      //     children: [
+      //       Text(
+      //         _selectedProjectName ??
+      //             '', // <-- dynamic name, fallback to empty Project
+      //         style: const TextStyle(
+      //           color: Colors.white,
+      //           fontSize: 20,
+      //           fontWeight: FontWeight.bold,
+      //         ),
+      //       ),
+
+      //       const SizedBox(width: 16),
+
+      //       // ----------- Period Filter ----------
+      //       GestureDetector(
+      //         onTap: _showPeriodDialog,
+      //         child: Row(
+      //           children: [
+      //             const Icon(Icons.filter_alt, color: Colors.green, size: 20),
+      //             const SizedBox(width: 4),
+      //             Text(
+      //               periodText,
+      //               style: const TextStyle(
+      //                 color: Colors.green,
+      //                 fontWeight: FontWeight.bold,
+      //               ),
+      //             ),
+      //           ],
+      //         ),
+      //       ),
+      //       const Spacer(),
+
+      //       // ----------- Calendar ----------
+      //       GestureDetector(
+      //         onTap: _showCalendarModal,
+      //         child: Row(
+      //           children: [
+      //             Column(
+      //               crossAxisAlignment: CrossAxisAlignment.end,
+      //               children: [
+      //                 Text(
+      //                   englishDate,
+      //                   style: const TextStyle(
+      //                       fontFamily: 'Montserrat',
+      //                       color: Color.fromARGB(255, 47, 46, 46),
+      //                       fontSize: 12),
+      //                 ),
+      //                 Text(
+      //                   banglaDate,
+      //                   style: const TextStyle(
+      //                       fontFamily: 'NotoSansBengali',
+      //                       color: Color.fromARGB(255, 47, 46, 46),
+      //                       fontSize: 12),
+      //                 ),
+      //                 Text(
+      //                   hijriDate,
+      //                   style: const TextStyle(
+      //                       fontFamily: 'NotoSansArabic',
+      //                       color: Color.fromARGB(255, 47, 46, 46),
+      //                       fontSize: 12),
+      //                 ),
+      //               ],
+      //             ),
+      //             const SizedBox(width: 8),
+      //             const Icon(Icons.calendar_today,
+      //                 color: Color.fromARGB(255, 5, 144, 46), size: 20),
+      //           ],
+      //         ),
+      //       ),
+      //     ],
+      //   ),
+      // ),
+
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
         title: Row(
           children: [
+            // --------- Project Name & ID ----------
             Text(
-              _selectedProjectName ??
-                  '', // <-- dynamic name, fallback to empty Project
+              _selectedProjectName != null && _selectedProjectId != null
+                  ? "${_selectedProjectName} (#${_selectedProjectId})"
+                  : 'Select Project',
+
+              // _selectedProjectName != null && _selectedProjectId != null
+              //     ? "${_selectedProjectName} (#${_selectedProjectId})"
+              //     : 'Select Project', // fallback text if nothing selected
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
+
             const SizedBox(width: 16),
 
             // ----------- Period Filter ----------
@@ -328,79 +458,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           ],
         ),
       ),
-
-      // appBar: AppBar(
-      //   backgroundColor: const Color.fromARGB(255, 158, 223, 180),
-      //   title: Row(
-      //     children: [
-      //       // ----------- Left: Project Name / ITM ----------
-      //       const Text(
-      //         'ITM', // or replace with your project name
-      //         style: TextStyle(
-      //           color: Colors.white,
-      //           fontSize: 20,
-      //           fontWeight: FontWeight.bold,
-      //         ),
-      //       ),
-      //       const SizedBox(width: 16),
-
-      //       // ----------- Left: Period Filter ----------
-      //       GestureDetector(
-      //         onTap: _showPeriodDialog,
-      //         child: Row(
-      //           children: [
-      //             const Icon(Icons.filter_alt, color: Colors.green, size: 20),
-      //             const SizedBox(width: 4),
-      //             Text(
-      //               periodText,
-      //               style: const TextStyle(
-      //                   color: Colors.green, fontWeight: FontWeight.bold),
-      //             ),
-      //           ],
-      //         ),
-      //       ),
-      //       const Spacer(),
-
-      //       // ----------- Right: Calendars ----------
-      //       GestureDetector(
-      //         onTap: _showCalendarModal,
-      //         child: Row(
-      //           children: [
-      //             Column(
-      //               crossAxisAlignment: CrossAxisAlignment.end,
-      //               children: [
-      //                 Text(
-      //                   englishDate,
-      //                   style: const TextStyle(
-      //                       fontFamily: 'Montserrat',
-      //                       color: Color.fromARGB(255, 47, 46, 46),
-      //                       fontSize: 12),
-      //                 ),
-      //                 Text(
-      //                   banglaDate,
-      //                   style: const TextStyle(
-      //                       fontFamily: 'NotoSansBengali',
-      //                       color: Color.fromARGB(255, 47, 46, 46),
-      //                       fontSize: 12),
-      //                 ),
-      //                 Text(
-      //                   hijriDate,
-      //                   style: const TextStyle(
-      //                       fontFamily: 'NotoSansArabic',
-      //                       color: Color.fromARGB(255, 47, 46, 46),
-      //                       fontSize: 12),
-      //                 ),
-      //               ],
-      //             ),
-      //             const SizedBox(width: 8),
-      //             const Icon(Icons.calendar_today,
-      //                 color: Color.fromARGB(255, 5, 144, 46), size: 20),
-      //           ],
-      //         ),
-      //       ),
-      //     ],
-      //   ),
-      // ),
 
       //---------Start Drawer----------
       drawer: Drawer(
@@ -545,27 +602,16 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                       ),
                     ),
                   ),
-
                   onTap: () {
-                    Navigator.pop(context);
-                    debugPrint(
-                        "Selected Project: ${project.id} - ${project.name}");
-
+                    Navigator.pop(context); // close drawer
                     setState(() {
-                      _selectedProjectName =
-                          project.name; // 👈 updates the appBar title
+                      _selectedProjectId = project.id;
+                      _selectedProjectName = project.name;
                     });
 
-                    // TODO: Navigate to project Kanban/tasks or fetch tasks
-                    // _fetchTasksByProject(project.id);
+                    // fetch tasks for this project
+                    getTaskData();
                   },
-
-                  // onTap: () {
-                  //   Navigator.pop(context);
-                  //   debugPrint(
-                  //       "Selected Project: ${project.id} - ${project.name}");
-                  //   // TODO: Navigate to project Kanban/tasks
-                  // },
                 );
               }).toList(),
           ],
@@ -1073,8 +1119,11 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           "task_id": taskId,
           "column_id": columnId,
           "model_name": 1,
-          "project_name": 1,
-          "created_by": "muhsina"
+          //"project_name": 1,
+          "project_id": 1,
+          "created_by": "muhsina",
+          // "project_name": _selectedProjectId, // 👈 link to project
+          // "created_by": _projectOwnerName,
         },
         options: Options(
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
