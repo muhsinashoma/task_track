@@ -60,14 +60,9 @@ class ProjectListItem {
   }
 }
 
-// Format today's date
-// DateTime now = DateTime.now();
-// String englishDate = DateFormat("MMM dd, yyyy").format(now);
-
 String? _selectedProjectName;
 int? _selectedProjectId;
 String? _projectOwnerName;
-int _selectedProjectTaskCount = 0; // 👈 default 0
 
 class KanbanSetStatePage extends StatefulWidget {
   const KanbanSetStatePage({super.key});
@@ -135,7 +130,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response = await dio.get(
-        "http://192.168.0.100/API/get_project_list_kanban.php",
+        "http://192.168.33.29/API/get_project_list_kanban.php",
       );
 
       // Decode JSON string into a List
@@ -161,7 +156,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response =
-          await dio.get("http://192.168.0.100/API/get_column_data_kanban.php");
+          await dio.get("http://192.168.33.29/API/get_column_data_kanban.php");
 
       columns = Data.getColumns(response.data)
           .map((col) => col.copyWith(children: col.children ?? []))
@@ -179,7 +174,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response = await dio.get(
-        "http://192.168.0.100/API/get_task_data_kanban.php",
+        "http://192.168.33.29/API/get_task_data_kanban.php",
         queryParameters: {
           "project_id": _selectedProjectId ?? 0,
           "period": selectedNumber,
@@ -191,12 +186,9 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         var taskData = response.data['task_boards'] as List;
 
         List<Map<String, dynamic>> tasksForColumns = [];
-        int totalTaskCount = 0; // 👈 new counter
 
         for (var board in taskData) {
           var tasks = board['tasks'] as List;
-          totalTaskCount += tasks.length; // 👈 count tasks
-
           tasksForColumns.add({
             'id': int.tryParse(board['id'].toString()) ?? 0,
             'title': board['title'],
@@ -212,20 +204,60 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           });
         }
 
-        // Update columns
         columns = Data.getColumns(jsonEncode(tasksForColumns))
             .map((col) => col.copyWith(children: col.children ?? []))
             .toList();
 
-        // Update task count 👇
-        setState(() {
-          _selectedProjectTaskCount = totalTaskCount;
-        });
+        setState(() {});
       }
     } catch (e) {
       print("Error fetching tasks: $e");
     }
   }
+
+  // Future<void> getTaskData() async {
+  //   try {
+  //     final dio = Dio();
+  //     var response = await dio.get(
+  //       "http://192.168.33.29/API/get_task_data_kanban.php",
+  //       queryParameters: {
+  //         "period": selectedNumber,
+  //         "unit": selectedUnit.toLowerCase(),
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       var taskData = response.data['task_boards'] as List;
+
+  //       List<Map<String, dynamic>> tasksForColumns = [];
+
+  //       for (var board in taskData) {
+  //         var tasks = board['tasks'] as List;
+  //         tasksForColumns.add({
+  //           'id': int.tryParse(board['id'].toString()) ?? 0,
+  //           'title': board['title'],
+  //           'tasks': tasks
+  //               .map((task) => {
+  //                     'id': int.tryParse(task['id'].toString()) ?? 0,
+  //                     'title': task['title'],
+  //                     'taskId': task['task_id'],
+  //                     'createdBy': task['created_by'] ?? 'Unknown',
+  //                     'createdAt': task['created_at'] ?? '',
+  //                   })
+  //               .toList(),
+  //         });
+  //       }
+
+  //       columns = Data.getColumns(jsonEncode(tasksForColumns))
+  //           .map((col) => col.copyWith(children: col.children ?? []))
+  //           .toList();
+
+  //       setState(() {});
+  //     }
+  //   } catch (e) {
+  //     print("Error fetching tasks: $e");
+  //   }
+  // }
 
   // ------------------- Date Suffix -------------------
   String suffix(int day) {
@@ -269,207 +301,121 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         "${hijri.hDay}${suffix(hijri.hDay)} ${hijri.longMonthName} ${hijri.hYear} AH";
 
     return Scaffold(
-      // ---------- App Bar ----------
+      // appBar: AppBar(
+      //   backgroundColor: const Color.fromARGB(255, 158, 223, 180),
+      //   title: Row(
+      //     children: [
+      //       Text(
+      //         _selectedProjectName ??
+      //             '', // <-- dynamic name, fallback to empty Project
+      //         style: const TextStyle(
+      //           color: Colors.white,
+      //           fontSize: 20,
+      //           fontWeight: FontWeight.bold,
+      //         ),
+      //       ),
+
+      //       const SizedBox(width: 16),
+
+      //       // ----------- Period Filter ----------
+      //       GestureDetector(
+      //         onTap: _showPeriodDialog,
+      //         child: Row(
+      //           children: [
+      //             const Icon(Icons.filter_alt, color: Colors.green, size: 20),
+      //             const SizedBox(width: 4),
+      //             Text(
+      //               periodText,
+      //               style: const TextStyle(
+      //                 color: Colors.green,
+      //                 fontWeight: FontWeight.bold,
+      //               ),
+      //             ),
+      //           ],
+      //         ),
+      //       ),
+      //       const Spacer(),
+
+      //       // ----------- Calendar ----------
+      //       GestureDetector(
+      //         onTap: _showCalendarModal,
+      //         child: Row(
+      //           children: [
+      //             Column(
+      //               crossAxisAlignment: CrossAxisAlignment.end,
+      //               children: [
+      //                 Text(
+      //                   englishDate,
+      //                   style: const TextStyle(
+      //                       fontFamily: 'Montserrat',
+      //                       color: Color.fromARGB(255, 47, 46, 46),
+      //                       fontSize: 12),
+      //                 ),
+      //                 Text(
+      //                   banglaDate,
+      //                   style: const TextStyle(
+      //                       fontFamily: 'NotoSansBengali',
+      //                       color: Color.fromARGB(255, 47, 46, 46),
+      //                       fontSize: 12),
+      //                 ),
+      //                 Text(
+      //                   hijriDate,
+      //                   style: const TextStyle(
+      //                       fontFamily: 'NotoSansArabic',
+      //                       color: Color.fromARGB(255, 47, 46, 46),
+      //                       fontSize: 12),
+      //                 ),
+      //               ],
+      //             ),
+      //             const SizedBox(width: 8),
+      //             const Icon(Icons.calendar_today,
+      //                 color: Color.fromARGB(255, 5, 144, 46), size: 20),
+      //           ],
+      //         ),
+      //       ),
+      //     ],
+      //   ),
+      // ),
+
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
         title: Row(
           children: [
-            // -------- Project Name ----------
-            // Expanded(
-            //   child: Text(
-            //     _selectedProjectName ?? 'Project',
-            //     overflow: TextOverflow.ellipsis,
-            //     style: const TextStyle(
-            //       color: Colors.white,
-            //       fontSize: 12, // 👈 smaller font to prevent overflow
-            //       fontWeight: FontWeight.w600,
-            //     ),
-            //   ),
-            // ),
+            // --------- Project Name & ID ----------
+            Text(
+              _selectedProjectName != null && _selectedProjectId != null
+                  ? "${_selectedProjectName} (#${_selectedProjectId})"
+                  : 'Select Project',
 
-            // -------- Project Dropdown in AppBar ----------
-            // Expanded(
-            //   child: DropdownButtonHideUnderline(
-            //     child: DropdownButton<int>(
-            //       value: _selectedProjectId,
-            //       hint: const Text(
-            //         "Select Project",
-            //         style: TextStyle(
-            //           color: Colors.white,
-            //           fontSize: 12,
-            //           fontWeight: FontWeight.w600,
-            //         ),
-            //       ),
-            //       isExpanded: true,
-            //       dropdownColor: Colors.white, // dropdown background
-            //       icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-            //       items: _projects.asMap().entries.map((entry) {
-            //         int index = entry.key;
-            //         var project = entry.value;
-
-            //         // Dynamic color per project
-            //         Color projectColor = generateProjectColor(index);
-
-            //         return DropdownMenuItem<int>(
-            //           value: project.id,
-            //           child: Row(
-            //             children: [
-            //               Icon(Icons.folder, color: projectColor, size: 18),
-            //               const SizedBox(width: 6),
-            //               Expanded(
-            //                 child: Text(
-            //                   project.name,
-            //                   overflow: TextOverflow.ellipsis,
-            //                   style: const TextStyle(
-            //                     color: Colors.black87,
-            //                     fontSize: 12,
-            //                     fontWeight: FontWeight.w600,
-            //                   ),
-            //                 ),
-            //               ),
-            //               const SizedBox(width: 6),
-            //               Tooltip(
-            //                 message: project.project_owner_name,
-            //                 child: CircleAvatar(
-            //                   radius: 12,
-            //                   backgroundColor: projectColor,
-            //                   child: Text(
-            //                     getFirstAndLastLetter(
-            //                         project.project_owner_name),
-            //                     style: const TextStyle(
-            //                       color: Colors.white,
-            //                       fontWeight: FontWeight.w500,
-            //                       fontSize: 11,
-            //                     ),
-            //                   ),
-            //                 ),
-            //               ),
-            //             ],
-            //           ),
-            //         );
-            //       }).toList(),
-            //       onChanged: (value) {
-            //         setState(() {
-            //           _selectedProjectId = value;
-            //           _selectedProjectName =
-            //               _projects.firstWhere((p) => p.id == value).name;
-            //         });
-
-            //         // fetch tasks for this project
-            //         getTaskData();
-            //       },
-            //     ),
-            //   ),
-            // ),
-
-// -------- Project Dropdown in AppBar ----------
-            SizedBox(
-              width: 180, // 👈 fixed standard width (tune this value)
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<int>(
-                  value: _selectedProjectId,
-                  hint: const Text(
-                    "Select Project",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  isExpanded: true,
-                  dropdownColor: Colors.white,
-                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                  items: _projects.asMap().entries.map((entry) {
-                    int index = entry.key;
-                    var project = entry.value;
-                    Color projectColor = generateProjectColor(index);
-
-                    return DropdownMenuItem<int>(
-                      value: project.id,
-                      child: Row(
-                        children: [
-                          Icon(Icons.folder, color: projectColor, size: 18),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              project.name,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          CircleAvatar(
-                            radius: 12,
-                            backgroundColor: projectColor,
-                            child: Text(
-                              getFirstAndLastLetter(project.project_owner_name),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedProjectId = value;
-                      _selectedProjectName =
-                          _projects.firstWhere((p) => p.id == value).name;
-                    });
-                    getTaskData();
-                  },
-                ),
+              // _selectedProjectName != null && _selectedProjectId != null
+              //     ? "${_selectedProjectName} (#${_selectedProjectId})"
+              //     : 'Select Project', // fallback text if nothing selected
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
             ),
 
-            const SizedBox(width: 6),
-
-            // -------- Task Count Avatar ----------
-            CircleAvatar(
-              radius: 12,
-              backgroundColor: Colors.white,
-              child: Text(
-                '$_selectedProjectTaskCount',
-                style: const TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 8),
+            const SizedBox(width: 16),
 
             // ----------- Period Filter ----------
             GestureDetector(
               onTap: _showPeriodDialog,
               child: Row(
                 children: [
-                  const Icon(Icons.filter_alt, color: Colors.green, size: 18),
-                  const SizedBox(width: 2),
+                  const Icon(Icons.filter_alt, color: Colors.green, size: 20),
+                  const SizedBox(width: 4),
                   Text(
-                    periodText == "1 days"
-                        ? "1d"
-                        : periodText, // 👈 shorten "1 days" to "1d"
+                    periodText,
                     style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
                     ),
                   ),
                 ],
               ),
             ),
-
             const Spacer(),
 
             // ----------- Calendar ----------
@@ -480,49 +426,32 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      // Text(
-                      //   englishDate,
-                      //   style: const TextStyle(
-                      //     fontFamily: 'Montserrat',
-                      //     color: Color.fromARGB(255, 47, 46, 46),
-                      //     fontSize: 11,
-                      //   ),
-                      // ),
-
                       Text(
-                        DateFormat("MMM dd, yyyy")
-                            .format(DateTime.now()), // 👈 formatted here
+                        englishDate,
                         style: const TextStyle(
-                          fontFamily: 'Montserrat',
-                          color: Color.fromARGB(255, 47, 46, 46),
-                          fontSize: 11,
-                        ),
+                            fontFamily: 'Montserrat',
+                            color: Color.fromARGB(255, 47, 46, 46),
+                            fontSize: 12),
                       ),
-
                       Text(
                         banglaDate,
                         style: const TextStyle(
-                          fontFamily: 'NotoSansBengali',
-                          color: Color.fromARGB(255, 47, 46, 46),
-                          fontSize: 11,
-                        ),
+                            fontFamily: 'NotoSansBengali',
+                            color: Color.fromARGB(255, 47, 46, 46),
+                            fontSize: 12),
                       ),
                       Text(
                         hijriDate,
                         style: const TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          color: Color.fromARGB(255, 47, 46, 46),
-                          fontSize: 11,
-                        ),
+                            fontFamily: 'NotoSansArabic',
+                            color: Color.fromARGB(255, 47, 46, 46),
+                            fontSize: 12),
                       ),
                     ],
                   ),
-                  const SizedBox(width: 6),
-                  const Icon(
-                    Icons.calendar_today,
-                    color: Color.fromARGB(255, 5, 144, 46),
-                    size: 18,
-                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.calendar_today,
+                      color: Color.fromARGB(255, 5, 144, 46), size: 20),
                 ],
               ),
             ),
@@ -1132,7 +1061,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
     try {
       final response = await dio.post(
-        "http://192.168.0.100/API/add_project_kanban.php",
+        "http://192.168.33.29/API/add_project_kanban.php",
         data: formData,
         options: Options(
           headers: {'Content-Type': 'multipart/form-data'},
@@ -1159,7 +1088,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        'http://192.168.0.100/API/add_column_kanban.php',
+        'http://192.168.33.29/API/add_column_kanban.php',
         data: {"title": title, "created_by": "muhsina"},
         options: Options(
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
@@ -1184,7 +1113,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       int columnId = columns[column].id;
       await dio.post(
-        "http://192.168.0.100/API/add_task_kanban.php",
+        "http://192.168.33.29/API/add_task_kanban.php",
         data: {
           "title": title,
           "task_id": taskId,
@@ -1233,7 +1162,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.0.100/API/delete_task_kanban.php",
+        "http://192.168.33.29/API/delete_task_kanban.php",
         data: {"id": task.taskId, "deleted_by": "muhsina"},
         options: Options(
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
@@ -1262,7 +1191,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.0.100/API/drag_drop_kanban.php",
+        "http://192.168.33.29/API/drag_drop_kanban.php",
         data: {
           "id": data.taskId,
           "column_name": index + 1,
@@ -1284,7 +1213,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.0.100/API/update_task_kanban.php",
+        "http://192.168.33.29/API/update_task_kanban.php",
         data: {
           "id": task.taskId,
           "title": task.title,
