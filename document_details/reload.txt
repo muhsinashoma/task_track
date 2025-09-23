@@ -1,0 +1,13 @@
+For Mobile run
+
+
+PS D:\Flutter-Project\task_track> flutter run
+
+-------------------------------------
+Flutter run key commands.
+r Hot reload.
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).

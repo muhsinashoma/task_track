@@ -1,0 +1,37 @@
+
+
+Muhsina@DESKTOP-46GTUQO MINGW64 /d/Flutter-Project/git-branch (main|MERGING)
+$ git branch
+* main
+  muhsina
+
+Muhsina@DESKTOP-46GTUQO MINGW64 /d/Flutter-Project/git-branch (main|MERGING)
+$ git merge muhsina
+fatal: You have not concluded your merge (MERGE_HEAD exists).
+Please, commit your changes before you merge.
+
+Muhsina@DESKTOP-46GTUQO MINGW64 /d/Flutter-Project/git-branch (main|MERGING)
+$ git pull origin main
+error: You have not concluded your merge (MERGE_HEAD exists).
+hint: Please, commit your changes before merging.
+fatal: Exiting because of unfinished merge.
+
+Muhsina@DESKTOP-46GTUQO MINGW64 /d/Flutter-Project/git-branch (main|MERGING)
+$ git commit -m "test test test"
+[main 0bdd974] test test test
+
+Muhsina@DESKTOP-46GTUQO MINGW64 /d/Flutter-Project/git-branch (main)
+$ git merge muhsina
+Already up to date.
+
+Muhsina@DESKTOP-46GTUQO MINGW64 /d/Flutter-Project/git-branch (main)
+$ git push origin main
+Enumerating objects: 4, done.
+Counting objects: 100% (4/4), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (2/2), done.
+Writing objects: 100% (2/2), 286 bytes | 143.00 KiB/s, done.
+Total 2 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To https://github.com/muhsinashoma/git-branch.git
+   28da64c..0bdd974  main -> main

@@ -59,14 +59,14 @@ class TaskCard extends StatelessWidget {
                   children: [
                     const SizedBox(height: 6),
                     Text(
-                      "By: ${task.createdBy}",
+                      "By-: ${task.createdBy}",
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black54,
                       ),
                     ),
                     Text(
-                      "At: ${task.createdAt}",
+                      "At-: ${task.createdAt}",
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black54,

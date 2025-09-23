@@ -1,0 +1,88 @@
+-------- Project Name ----------
+           
+ Expanded(
+              child: Text(
+                _selectedProjectName ?? 'Project',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12, // 👈 smaller font to prevent overflow
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            -------- Project Dropdown in AppBar ----------
+            Expanded(
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value: _selectedProjectId,
+                  hint: const Text(
+                    "Select Project",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  isExpanded: true,
+                  dropdownColor: Colors.white, // dropdown background
+                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                  items: _projects.asMap().entries.map((entry) {
+                    int index = entry.key;
+                    var project = entry.value;
+
+                    // Dynamic color per project
+                    Color projectColor = generateProjectColor(index);
+
+                    return DropdownMenuItem<int>(
+                      value: project.id,
+                      child: Row(
+                        children: [
+                          Icon(Icons.folder, color: projectColor, size: 18),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              project.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Tooltip(
+                            message: project.project_owner_name,
+                            child: CircleAvatar(
+                              radius: 12,
+                              backgroundColor: projectColor,
+                              child: Text(
+                                getFirstAndLastLetter(
+                                    project.project_owner_name),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedProjectId = value;
+                      _selectedProjectName =
+                          _projects.firstWhere((p) => p.id == value).name;
+                    });
+
+                    // fetch tasks for this project
+                    getTaskData();
+                  },
+                ),
+              ),
+            ), // End Expanded

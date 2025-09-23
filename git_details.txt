@@ -1,8 +1,34 @@
 
-https://chatgpt.com/c/68c7e7af-da58-8324-b688-575b1de0fd9c
-
 https://chatgpt.com/c/68c7d7ee-c970-8327-9065-5ffe9d3ed1ac
 
+
+✅ Summary Table
+Action			 		Command
+
+View branches		 		git branch
+
+Switch branch		 		git switch branch_name
+
+Create & switch branch	 		git switch -c new_branch_name
+
+Merge into main	git switch main → 	git merge branch_name
+
+Push branch to remote			git push origin branch_name
+
+-------------------------------------------------------------------------
+
+PS D:\Flutter-Project\task_track> git branch
+* master
+
+PS D:\Flutter-Project\task_track> git switch -c submaster
+Switched to a new branch 'submaster'
+PS D:\Flutter-Project\task_track> git branch
+  master
+* muhsina
+  submaster
+
+PS D:\Flutter-Project\task_track> git status
+-----------------------------------------------------------------
 
 Perfect! ✅
 
@@ -47,7 +73,7 @@ git switch master
 git merge muhsina
 
 
-<!-- ------------------------------------- -->
+-------------------------------------------------------------------------
 
 Got it! You want a step-by-step guide for Git branch management, starting from scratch. I'll break it down clearly for you.
 
@@ -134,7 +160,3 @@ Switch branch	git switch branch_name
 Create & switch branch	git switch -c new_branch_name
 Merge into main	git switch main → git merge branch_name
 Push branch to remote	git push origin branch_name
-
-If you want, I can make a tiny cheat sheet for you that’s super easy to remember for daily Git branch operations.
-
-Do you want me to do that?

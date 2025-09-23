@@ -11,12 +11,12 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
       $title = mysqli_real_escape_string($con, $_POST['title']);
       $column_name = $_POST['column_id'];
       $model_name = $_POST['model_name'];
-      $project_name  = $_POST['project_name'];
+      $project_id  = $_POST['project_id'];
       $created_by = mysqli_real_escape_string($con, $_POST['created_by']);
 
       //Prepare the SQL Statement
 
-      $sql = "INSERT INTO tbl_task_name(title,column_name, model_name,project_name,created_by, edited_at) VALUES('$title', '$column_name', '$model_name', '$project_name', '$created_by', NOW())";
+      $sql = "INSERT INTO tbl_task_name(title,column_name, model_name,project_id,created_by, edited_at) VALUES('$title', '$column_name', '$model_name', '$project_id', '$created_by', NOW())";
 
       //Execute the query and check for errors
 

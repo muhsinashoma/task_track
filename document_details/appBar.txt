@@ -1,0 +1,173 @@
+
+// ---------- App Bar ----------
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 158, 223, 180),
+        title: Row(
+          children: [
+// -------- Project Dropdown in AppBar ----------
+            SizedBox(
+              width: 180, // 👈 fixed standard width (tune this value)
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value: _selectedProjectId,
+                  hint: const Text(
+                    "Select Project",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  isExpanded: true,
+                  dropdownColor: Colors.white,
+                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                  items: _projects.asMap().entries.map((entry) {
+                    int index = entry.key;
+                    var project = entry.value;
+                    Color projectColor = generateProjectColor(index);
+
+                    return DropdownMenuItem<int>(
+                      value: project.id,
+                      child: Row(
+                        children: [
+                          Icon(Icons.folder, color: projectColor, size: 18),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              project.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          CircleAvatar(
+                            radius: 12,
+                            backgroundColor: projectColor,
+                            child: Text(
+                              getFirstAndLastLetter(project.project_owner_name),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedProjectId = value;
+                      _selectedProjectName =
+                          _projects.firstWhere((p) => p.id == value).name;
+                    });
+                    getTaskData();
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 6),
+
+            // -------- Task Count Avatar ----------
+            CircleAvatar(
+              radius: 12,
+              backgroundColor: Colors.white,
+              child: Text(
+                '$_selectedProjectTaskCount',
+                style: const TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            // ----------- Period Filter ----------
+            GestureDetector(
+              onTap: _showPeriodDialog,
+              child: Row(
+                children: [
+                  const Icon(Icons.filter_alt, color: Colors.green, size: 18),
+                  const SizedBox(width: 2),
+                  Text(
+                    periodText == "1 days"
+                        ? "1d"
+                        : periodText, // 👈 shorten "1 days" to "1d"
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Spacer(),
+
+            // ----------- Calendar ----------
+            GestureDetector(
+              onTap: _showCalendarModal,
+              child: Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // Text(
+                      //   englishDate,
+                      //   style: const TextStyle(
+                      //     fontFamily: 'Montserrat',
+                      //     color: Color.fromARGB(255, 47, 46, 46),
+                      //     fontSize: 11,
+                      //   ),
+                      // ),
+
+                      Text(
+                        DateFormat("MMM dd, yyyy")
+                            .format(DateTime.now()), // 👈 formatted here
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          color: Color.fromARGB(255, 47, 46, 46),
+                          fontSize: 11,
+                        ),
+                      ),
+
+                      // Text(
+                      //   banglaDate,
+                      //   style: const TextStyle(
+                      //     fontFamily: 'NotoSansBengali',
+                      //     color: Color.fromARGB(255, 47, 46, 46),
+                      //     fontSize: 11,
+                      //   ),
+                      // ),
+                      Text(
+                        hijriDate,
+                        style: const TextStyle(
+                          fontFamily: 'NotoSansArabic',
+                          color: Color.fromARGB(255, 47, 46, 46),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.calendar_today,
+                    color: Color.fromARGB(255, 5, 144, 46),
+                    size: 18,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
