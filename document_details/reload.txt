@@ -1,3 +1,9 @@
+For Mobile run
+
+
+PS D:\Flutter-Project\task_track> flutter run
+
+-------------------------------------
 Flutter run key commands.
 r Hot reload.
 R Hot restart.
