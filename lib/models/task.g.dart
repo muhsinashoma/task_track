@@ -11,6 +11,7 @@ _$KTaskImpl _$$KTaskImplFromJson(Map<String, dynamic> json) => _$KTaskImpl(
       taskId: json['taskId'] as String,
       createdBy: json['createdBy'] as String,
       createdAt: json['createdAt'] as String,
+      projectId: (json['projectId'] as num).toInt(),
     );
 
 Map<String, dynamic> _$$KTaskImplToJson(_$KTaskImpl instance) =>
@@ -19,4 +20,5 @@ Map<String, dynamic> _$$KTaskImplToJson(_$KTaskImpl instance) =>
       'taskId': instance.taskId,
       'createdBy': instance.createdBy,
       'createdAt': instance.createdAt,
+      'projectId': instance.projectId,
     };

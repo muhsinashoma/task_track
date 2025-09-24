@@ -42,7 +42,7 @@ class ProjectListItem {
   final String name;
   final String project_owner_name;
   final String? attached_file;
-  final int taskCount; // 👈 add this
+  int taskCount; // 👈 add this
 
   ProjectListItem({
     required this.id,
@@ -63,10 +63,6 @@ class ProjectListItem {
     );
   }
 }
-
-// Format today's date
-// DateTime now = DateTime.now();
-// String englishDate = DateFormat("MMM dd, yyyy").format(now);
 
 String? _selectedProjectName;
 int? _selectedProjectId;
@@ -328,242 +324,12 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         "${hijri.hDay}${suffix(hijri.hDay)} ${hijri.longMonthName} ${hijri.hYear} AH";
 
     return Scaffold(
-      // ---------- App Bar ----------
-
-//       appBar: AppBar(
-//         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
-//         title: Row(
-//           children: [
-// // -------- Project Dropdown in AppBar ----------
-//             SizedBox(
-//               width: 180, // 👈 fixed standard width (tune this value)
-//               child: DropdownButtonHideUnderline(
-//                 child: DropdownButton<int>(
-//                   value: _selectedProjectId,
-//                   hint: const Text(
-//                     "Select Project",
-//                     style: TextStyle(
-//                       color: Colors.white,
-//                       fontSize: 12,
-//                       fontWeight: FontWeight.w600,
-//                     ),
-//                     overflow: TextOverflow.ellipsis,
-//                   ),
-//                   isExpanded: true,
-//                   dropdownColor: Colors.white,
-//                   icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-//                   items: _projects.asMap().entries.map((entry) {
-//                     int index = entry.key;
-//                     var project = entry.value;
-//                     Color projectColor = generateProjectColor(index);
-
-//                     return DropdownMenuItem<int>(
-//                       value: project.id,
-//                       child: Row(
-//                         children: [
-//                           Icon(Icons.folder, color: projectColor, size: 18),
-//                           const SizedBox(width: 6),
-//                           Expanded(
-//                             child: Text(
-//                               project.name,
-//                               overflow: TextOverflow.ellipsis,
-//                               style: const TextStyle(
-//                                 color: Colors.black87,
-//                                 fontSize: 12,
-//                                 fontWeight: FontWeight.w600,
-//                               ),
-//                             ),
-//                           ),
-//                           const SizedBox(width: 6),
-//                           CircleAvatar(
-//                             radius: 12,
-//                             backgroundColor: projectColor,
-//                             child: Text(
-//                               getFirstAndLastLetter(project.project_owner_name),
-//                               style: const TextStyle(
-//                                 color: Colors.white,
-//                                 fontWeight: FontWeight.w500,
-//                                 fontSize: 11,
-//                               ),
-//                             ),
-//                           ),
-//                         ],
-//                       ),
-//                     );
-//                   }).toList(),
-//                   onChanged: (value) {
-//                     setState(() {
-//                       _selectedProjectId = value;
-//                       _selectedProjectName =
-//                           _projects.firstWhere((p) => p.id == value).name;
-//                     });
-//                     getTaskData();
-//                   },
-//                 ),
-//               ),
-//             ),
-
-//             const SizedBox(width: 6),
-
-//             // -------- Task Count Avatar ----------
-//             CircleAvatar(
-//               radius: 12,
-//               backgroundColor: Colors.white,
-//               child: Text(
-//                 '$_selectedProjectTaskCount',
-//                 style: const TextStyle(
-//                   color: Colors.green,
-//                   fontWeight: FontWeight.bold,
-//                   fontSize: 12,
-//                 ),
-//               ),
-//             ),
-
-//             const SizedBox(width: 8),
-
-//             // ----------- Period Filter ----------
-//             GestureDetector(
-//               onTap: _showPeriodDialog,
-//               child: Row(
-//                 children: [
-//                   const Icon(Icons.filter_alt, color: Colors.green, size: 18),
-//                   const SizedBox(width: 2),
-//                   Text(
-//                     periodText == "1 days"
-//                         ? "1d"
-//                         : periodText, // 👈 shorten "1 days" to "1d"
-//                     style: const TextStyle(
-//                       color: Colors.green,
-//                       fontWeight: FontWeight.bold,
-//                       fontSize: 13,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-
-//             const Spacer(),
-
-//             // ----------- Calendar ----------
-//             GestureDetector(
-//               onTap: _showCalendarModal,
-//               child: Row(
-//                 children: [
-//                   Column(
-//                     crossAxisAlignment: CrossAxisAlignment.end,
-//                     children: [
-//                       Text(
-//                         DateFormat("MMM dd, yyyy")
-//                             .format(DateTime.now()), // 👈 formatted here
-//                         style: const TextStyle(
-//                           fontFamily: 'Montserrat',
-//                           color: Color.fromARGB(255, 47, 46, 46),
-//                           fontSize: 11,
-//                         ),
-//                       ),
-//                       Text(
-//                         banglaDate,
-//                         style: const TextStyle(
-//                           fontFamily: 'NotoSansBengali',
-//                           color: Color.fromARGB(255, 47, 46, 46),
-//                           fontSize: 11,
-//                         ),
-//                       ),
-//                       Text(
-//                         hijriDate,
-//                         style: const TextStyle(
-//                           fontFamily: 'NotoSansArabic',
-//                           color: Color.fromARGB(255, 47, 46, 46),
-//                           fontSize: 11,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                   const SizedBox(width: 6),
-//                   const Icon(
-//                     Icons.calendar_today,
-//                     color: Color.fromARGB(255, 5, 144, 46),
-//                     size: 18,
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-
-// ---------- App Bar ---------
-
 // ---------- AppBar ----------
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
         title: Row(
           children: [
             // -------- Project Dropdown ----------
-            // SizedBox(
-            //   width: 180,
-            //   child: DropdownButtonHideUnderline(
-            //     child: DropdownButton<int>(
-            //       value: _selectedProjectId,
-            //       hint: const Text(
-            //         "Select Project",
-            //         style: TextStyle(
-            //             color: Colors.white,
-            //             fontSize: 12,
-            //             fontWeight: FontWeight.w600),
-            //         overflow: TextOverflow.ellipsis,
-            //       ),
-            //       isExpanded: true,
-            //       dropdownColor: Colors.white,
-            //       icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-            //       items: _projects.map((project) {
-            //         Color projectColor =
-            //             generateProjectColor(_projects.indexOf(project));
-            //         return DropdownMenuItem<int>(
-            //           value: project.id,
-            //           child: Row(
-            //             children: [
-            //               Icon(Icons.folder, color: projectColor, size: 18),
-            //               const SizedBox(width: 6),
-            //               Expanded(
-            //                 child: Text(
-            //                   project.name,
-            //                   overflow: TextOverflow.ellipsis,
-            //                   style: const TextStyle(
-            //                     color: Colors.black87,
-            //                     fontSize: 12,
-            //                     fontWeight: FontWeight.w600,
-            //                   ),
-            //                 ),
-            //               ),
-            //               const SizedBox(width: 6),
-            //               CircleAvatar(
-            //                 radius: 12,
-            //                 backgroundColor: projectColor,
-            //                 child: Text(
-            //                   getFirstAndLastLetter(project.project_owner_name),
-            //                   style: const TextStyle(
-            //                     color: Colors.white,
-            //                     fontWeight: FontWeight.w500,
-            //                     fontSize: 11,
-            //                   ),
-            //                 ),
-            //               ),
-            //             ],
-            //           ),
-            //         );
-            //       }).toList(),
-            //       onChanged: (value) {
-            //         setState(() {
-            //           _selectedProjectId = value;
-            //           _selectedProjectName =
-            //               _projects.firstWhere((p) => p.id == value).name;
-            //         });
-            //         getTaskData();
-            //       },
-            //     ),
-            //   ),
-            // ),
 
             // -------- Project Dropdown ----------
             SizedBox(
@@ -1463,36 +1229,66 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     }
   }
 
+  // ------------------ Add Task ------------------
+
   @override
   void addTask(String title, int column) async {
+    // 1️⃣ Ensure a project is selected
+    if (_selectedProjectId == null) {
+      print("No project selected!");
+      return; // exit early
+    }
+
     final taskId = Uuid().v4();
+
+    // 2️⃣ Create new task locally
     final newTask = KTask(
       title: title,
       taskId: taskId,
       createdBy: "muhsina",
       createdAt: DateTime.now().toIso8601String(),
+      projectId: _selectedProjectId!, // non-null
     );
+
+    // 3️⃣ Insert task in UI instantly
     setState(() => columns[column].children.insert(0, newTask));
 
+    // 4️⃣ Increment project task count instantly
+    setState(() {
+      final index = _projects.indexWhere((p) => p.id == _selectedProjectId);
+      if (index != -1) {
+        _projects[index].taskCount += 1;
+        _selectedProjectTaskCount = _projects[index].taskCount;
+      }
+    });
+
+    // 5️⃣ Insert task into backend
     final dio = Dio();
     try {
       int columnId = columns[column].id;
-      await dio.post(
+
+      final response = await dio.post(
         "http://192.168.32.105/API/add_task_kanban.php",
         data: {
           "title": title,
           "task_id": taskId,
-          "column_id": columnId,
-          "model_name": 1,
-          //"project_name": 1,
-          "project_id": 1,
+          "column_id": columnId.toString(),
+          "model_name": "1",
+          "project_id": _selectedProjectId.toString(), // send as string
           "created_by": "muhsina",
-          // "project_name": _selectedProjectId, // 👈 link to project
-          // "created_by": _projectOwnerName,
         },
         options: Options(
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
       );
+
+      // Optional: parse response for success
+      final result = response.data;
+      if (result['success'] == true) {
+        print("Task added to backend successfully");
+      } else {
+        print("Backend error: ${result['message']}");
+      }
     } catch (e) {
       print("Add task error: $e");
     }
