@@ -1,5 +1,20 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+// import 'package:freezed_annotation/freezed_annotation.dart';
 
+// import 'task.dart';
+
+// part 'column.freezed.dart';
+
+// @Freezed(makeCollectionsUnmodifiable: false)
+// class KColumn with _$KColumn {
+//   const factory KColumn({
+//     required int id,
+//     required String title,
+//     required List<KTask> children,
+//   }) = _KColumn;
+// }
+
+import 'package:flutter/material.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'task.dart';
 
 part 'column.freezed.dart';
@@ -10,5 +25,6 @@ class KColumn with _$KColumn {
     required int id,
     required String title,
     required List<KTask> children,
+    @Default(Colors.blue) Color color, // ✅ add color with default
   }) = _KColumn;
 }

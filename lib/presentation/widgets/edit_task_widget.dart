@@ -49,17 +49,6 @@ class _EditTaskFormState extends State<EditTaskForm> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
-
-              // TextField(
-              //   controller: _controller,
-              //   decoration: InputDecoration(
-              //     labelText: 'Task Title',
-              //     border: OutlineInputBorder(
-              //       borderRadius: BorderRadius.circular(12),
-              //     ),
-              //   ),
-              // ),
-
               TextField(
                 controller: _controller,
                 maxLines: null, // Allows unlimited lines
@@ -71,7 +60,6 @@ class _EditTaskFormState extends State<EditTaskForm> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
@@ -83,24 +71,6 @@ class _EditTaskFormState extends State<EditTaskForm> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                // onPressed: () {
-                //   widget.onUpdate(_controller.text);
-                //   Navigator.of(context).pop();
-                // },
-
-                // onPressed: () {
-                //   final text = _controller.text.trim();
-                //   if (text.isEmpty) {
-                //     ScaffoldMessenger.of(context).showSnackBar(
-                //       const SnackBar(content: Text('Task cannot be empty')),
-                //     );
-                //     return;
-                //   }
-
-                //   widget.onUpdate(text);
-                //   Navigator.of(context).pop();
-                // },
-
                 onPressed: () {
                   final text = _controller.text.trim();
                   if (text.isEmpty) {
@@ -124,7 +94,6 @@ class _EditTaskFormState extends State<EditTaskForm> {
                     ),
                   );
                 },
-
                 icon: const Icon(Icons.save),
                 label: const Text('Update Task'),
               ),

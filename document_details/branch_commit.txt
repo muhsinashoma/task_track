@@ -1,6 +1,6 @@
 -------------------------------------
-1. git Push for Branch
+1. git Push for any Branch
 
 git add .
 git commit -m "Test Purpose"
-git push origin Muhsina (Branch Name)
+git push origin muhsina (Branch Name)
