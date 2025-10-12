@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Oct 12, 2025 at 11:11 AM
+-- Generation Time: Sep 24, 2025 at 08:45 AM
 -- Server version: 8.4.3
 -- PHP Version: 8.3.16
 
@@ -130,25 +130,19 @@ CREATE TABLE `tbl_project_details` (
   `created_at` datetime NOT NULL,
   `status` int NOT NULL DEFAULT '1',
   `edited_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `edited_at` timestamp NULL DEFAULT NULL,
-  `user_identifier` varchar(100) NOT NULL
+  `edited_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `tbl_project_details`
 --
 
-INSERT INTO `tbl_project_details` (`id`, `project_name`, `project_owner_name`, `attached_file`, `contact_number`, `email_address`, `permanent_address`, `created_by`, `created_at`, `status`, `edited_by`, `edited_at`, `user_identifier`) VALUES
-(1, 'HRIS', 'Md. Masud Rabbi', NULL, '01715022945', 'mrabbi@gmail.com', 'Road#1, House#2, Mirpur-1, Dhaka.', 'Md. Masud Rabbi', '2025-09-16 05:24:27', 1, NULL, NULL, ''),
-(2, 'C-Portal', 'Marketing Department', NULL, '01847102314', 'muhsinaakter3@gmail.com', 'Banani', 'Marketing Department', '2025-09-16 05:25:28', 1, NULL, NULL, ''),
-(3, 'ITM', 'Shakil Akhter Kahn', NULL, '01847102314', 'shaki.khan@gmail.com', 'Banani', 'Shakil Akhter Kahn', '2025-09-16 05:27:44', 1, NULL, NULL, ''),
-(4, 'Billing', 'Murad Ahmrd', NULL, '01715022945', 'murad.ahmed@gmail.com', 'Banai', 'Murad Ahmrd', '2025-09-16 11:58:25', 1, NULL, NULL, ''),
-(5, 'ITM MIS', 'Shakil Bhaia', NULL, '01715022945', 'muhsina.akter2@gmail.com', 'Banani', 'Shakil Bhaia', '2025-09-23 05:58:33', 1, NULL, NULL, ''),
-(6, 'Task Management', 'Muhsina Akter', NULL, '01770168958', 'hellokitty@gmail.com', 'Dhaka.', 'Muhsina Akter', '2025-10-10 19:28:43', 1, NULL, NULL, ''),
-(7, 'Qu\\\'ranic App', 'Almahmud', NULL, '01718849568', 'mahmudeee@gmail.com', 'Kushtia', 'Almahmud', '2025-10-11 11:57:39', 1, NULL, NULL, '38c38e5f-6c5e-4ecb-9051-e64d633507b7'),
-(8, 'Test Project', 'Mariym Binte Mahmud', NULL, '01847102314', 'mariym_binte_mahmud@gmail.com', 'Kushtia', 'Mariym Binte Mahmud', '2025-10-11 17:03:39', 1, NULL, NULL, '67b9fb9f-bc9f-4d02-b679-6fc45120a456'),
-(9, 'Pharmacy', 'Mymuna', NULL, '01715022945', 'mymuna.mahmud@gmaill.com', 'Kushtia', 'Mymuna', '2025-10-11 19:37:58', 1, NULL, NULL, '93a5b9cf-3ef5-4dfd-8738-093325d271e2'),
-(10, 'Pharmay Business', 'Md. Nanif Ali', NULL, '01715368701', 'md.hanif.ali@gmail.com', 'Kushtia', 'Md. Nanif Ali', '2025-10-12 10:18:18', 1, NULL, NULL, 'd9e74811-8bd6-4e63-9b70-e8a71a4b7b9c');
+INSERT INTO `tbl_project_details` (`id`, `project_name`, `project_owner_name`, `attached_file`, `contact_number`, `email_address`, `permanent_address`, `created_by`, `created_at`, `status`, `edited_by`, `edited_at`) VALUES
+(1, 'HRIS', 'Md. Masud Rabbi', NULL, '01715022945', 'mrabbi@gmail.com', 'Road#1, House#2, Mirpur-1, Dhaka.', 'Md. Masud Rabbi', '2025-09-16 05:24:27', 1, NULL, NULL),
+(2, 'C-Portal', 'Marketing Department', NULL, '01847102314', 'muhsinaakter3@gmail.com', 'Banani', 'Marketing Department', '2025-09-16 05:25:28', 1, NULL, NULL),
+(3, 'ITM', 'Shakil Akhter Kahn', NULL, '01847102314', 'shaki.khan@gmail.com', 'Banani', 'Shakil Akhter Kahn', '2025-09-16 05:27:44', 1, NULL, NULL),
+(4, 'Billing', 'Murad Ahmrd', NULL, '01715022945', 'murad.ahmed@gmail.com', 'Banai', 'Murad Ahmrd', '2025-09-16 11:58:25', 1, NULL, NULL),
+(5, 'ITM MIS', 'Shakil Bhaia', NULL, '01715022945', 'muhsina.akter2@gmail.com', 'Banani', 'Shakil Bhaia', '2025-09-23 05:58:33', 1, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -160,31 +154,23 @@ CREATE TABLE `tbl_task_board` (
   `id` int NOT NULL,
   `title` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `status` int NOT NULL DEFAULT '1',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `created_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `edited_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `edited_by` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `user_identifier` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `project_id` int NOT NULL
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tbl_task_board`
 --
 
-INSERT INTO `tbl_task_board` (`id`, `title`, `status`, `created_at`, `created_by`, `edited_at`, `edited_by`, `user_identifier`, `project_id`) VALUES
-(1, 'Test-1', 1, '2025-10-11 17:05:04', 'muhsina', '2025-10-11 13:36:18', 'muhsina', '', 0),
-(2, 'Bangla', 1, '2025-10-11 11:59:04', 'muhsina', '2025-10-11 05:59:04', 'muhsina', '', 0),
-(3, 'English', 1, '2025-10-11 11:59:12', 'muhsina', '2025-10-11 05:59:12', 'muhsina', '', 0),
-(4, 'Done', 1, '2025-10-10 15:01:44', 'muhsina', '2025-10-10 09:01:44', 'muhsina', '', 0),
-(5, 'Pending Task', 1, '2024-11-11 07:02:15', 'muhsina', '2025-10-10 09:01:44', 'muhsina', '', 0),
-(6, 'Approved', 1, '2025-06-15 08:11:15', 'muhsina', '2025-10-10 09:01:44', 'muhsina', '', 0),
-(7, 'today news', 1, '2025-09-13 08:48:30', 'muhsina', '2025-10-10 09:01:44', 'muhsina', '', 0),
-(8, 'test', 1, '2025-09-16 10:43:01', 'muhsina', '2025-10-10 09:01:44', 'muhsina', '', 0),
-(9, 'project-1', 1, '2025-10-11 17:35:31', 'Mariym Binte Mahmud', '2025-10-11 17:35:31', NULL, '67b9fb9f-bc9f-4d02-b679-6fc45120a456', 8),
-(10, 'A Category Medicine', 1, '2025-10-11 19:38:43', 'Mymuna', '2025-10-11 19:38:43', NULL, '93a5b9cf-3ef5-4dfd-8738-093325d271e2', 9),
-(11, 'A-Category', 1, '2025-10-12 10:20:44', 'Md. Nanif Ali', '2025-10-12 10:20:44', NULL, 'd9e74811-8bd6-4e63-9b70-e8a71a4b7b9c', 10),
-(12, 'B-Category', 1, '2025-10-12 10:20:57', 'Md. Nanif Ali', '2025-10-12 10:20:57', NULL, 'd9e74811-8bd6-4e63-9b70-e8a71a4b7b9c', 10);
+INSERT INTO `tbl_task_board` (`id`, `title`, `status`, `created_at`, `created_by`) VALUES
+(1, 'Open', 1, '2024-11-10 07:38:18', 'muhsina'),
+(2, 'Inprogress', 1, '2024-11-10 07:38:40', 'muhsina'),
+(3, 'QA', 1, '2024-11-10 07:38:50', 'muhsina'),
+(4, 'Done', 1, '2024-11-10 07:39:01', 'muhsina'),
+(5, 'Pending Task', 1, '2024-11-11 07:02:15', 'muhsina'),
+(6, 'Approved', 1, '2025-06-15 08:11:15', 'muhsina'),
+(7, 'today news', 1, '2025-09-13 08:48:30', 'muhsina'),
+(8, 'test', 1, '2025-09-16 10:43:01', 'muhsina');
 
 -- --------------------------------------------------------
 
@@ -199,74 +185,53 @@ CREATE TABLE `tbl_task_name` (
   `model_name` int NOT NULL,
   `project_id` int NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `created_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `created_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `status` int NOT NULL DEFAULT '1',
   `edited_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `edited_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `edited_by` varchar(11) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'muhsina',
   `previous_status` int NOT NULL DEFAULT '0',
   `status_change_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `status_change_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status_change_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `deleted_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `deleted_at` datetime DEFAULT NULL,
-  `user_identifier` varchar(100) COLLATE utf8mb4_general_ci NOT NULL
+  `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tbl_task_name`
 --
 
-INSERT INTO `tbl_task_name` (`id`, `title`, `column_name`, `model_name`, `project_id`, `created_at`, `created_by`, `status`, `edited_at`, `edited_by`, `previous_status`, `status_change_time`, `status_change_by`, `deleted_by`, `deleted_at`, `user_identifier`) VALUES
-(1, 'need to add calender with dropdown menu', 4, 1, 1, '2025-09-18 12:09:54', 'muhsina', 1, '2025-09-18 12:09:54', 'muhsina', 1, '2025-09-19 16:34:08', 'muhsina', NULL, NULL, ''),
-(2, 'Need to show project as dropdown in appBar', 1, 1, 2, '2025-09-19 10:06:29', 'muhsina', 1, '2025-09-19 10:06:29', 'muhsina', 0, '2025-09-19 16:06:29', NULL, NULL, NULL, ''),
-(3, 'Test purpose', 2, 1, 4, '2025-09-19 10:17:13', 'muhsina', 1, '2025-09-19 10:17:13', 'muhsina', 0, '2025-09-19 16:17:13', NULL, NULL, NULL, ''),
-(4, 'tesr', 1, 1, 3, '2025-09-19 10:19:57', 'muhsina', 1, '2025-09-19 10:19:57', 'muhsina', 0, '2025-09-19 16:19:57', NULL, NULL, NULL, ''),
-(5, 'need to show enligh, bengali and hirji calender', 1, 1, 1, '2025-09-20 15:15:30', 'muhsina', 1, '2025-09-20 15:15:30', 'muhsina', 0, '2025-09-20 21:15:30', NULL, NULL, NULL, ''),
-(6, 'need to show all total task', 1, 1, 1, '2025-09-20 15:22:18', 'muhsina', 1, '2025-09-20 15:22:18', 'muhsina', 0, '2025-09-20 21:22:18', NULL, NULL, NULL, ''),
-(7, 'To show total task under respective project', 1, 1, 1, '2025-09-23 04:44:49', 'muhsina', 1, '2025-09-23 04:44:49', 'muhsina', 0, '2025-09-23 10:44:49', NULL, NULL, NULL, ''),
-(8, 'need to add total age for each device', 1, 1, 1, '2025-09-23 05:59:31', 'muhsina', 1, '2025-09-23 05:59:31', 'muhsina', 0, '2025-09-23 11:59:31', NULL, NULL, NULL, ''),
-(9, 'Need to show attendance', 1, 1, 1, '2025-09-23 06:01:49', 'muhsina', 1, '2025-09-23 06:01:49', 'muhsina', 0, '2025-09-23 12:01:49', NULL, NULL, NULL, ''),
-(10, 'need to apply salary certificate', 1, 1, 1, '2025-09-23 06:02:32', 'muhsina', 1, '2025-09-23 06:02:32', 'muhsina', 0, '2025-09-23 12:02:32', NULL, NULL, NULL, ''),
-(11, 'To test  only', 1, 1, 1, '2025-09-23 06:14:22', 'muhsina', 1, '2025-09-23 06:14:22', 'muhsina', 0, '2025-09-23 12:14:22', NULL, NULL, NULL, ''),
-(12, 'abc', 1, 1, 1, '2025-09-23 06:14:53', 'muhsina', 1, '2025-09-23 06:14:53', 'muhsina', 0, '2025-09-23 12:14:53', NULL, NULL, NULL, ''),
-(13, 'Task adding count', 2, 1, 1, '2025-09-23 06:18:01', 'muhsina', 1, '2025-09-23 06:18:01', 'muhsina', 0, '2025-09-23 12:18:01', NULL, NULL, NULL, ''),
-(14, 'need to test from QA Side', 3, 1, 1, '2025-09-24 04:44:30', 'muhsina', 1, '2025-09-24 04:44:30', 'muhsina', 0, '2025-09-24 10:44:30', NULL, NULL, NULL, ''),
-(15, 'abc', 3, 1, 1, '2025-09-24 04:45:32', 'muhsina', 1, '2025-09-24 04:45:32', 'muhsina', 0, '2025-09-24 10:45:32', NULL, NULL, NULL, ''),
-(16, 'need to show task count instanlty inside app badge', 3, 1, 1, '2025-09-24 05:00:57', 'muhsina', 1, '2025-09-24 05:00:57', 'muhsina', 0, '2025-09-24 11:00:57', NULL, NULL, NULL, ''),
-(17, 'test purpose', 4, 1, 1, '2025-09-24 05:17:17', 'muhsina', 1, '2025-09-24 05:17:17', 'muhsina', 0, '2025-09-24 11:17:17', NULL, NULL, NULL, ''),
-(18, 'To add a task', 2, 1, 1, '2025-09-24 05:23:40', 'muhsina', 1, '2025-09-24 05:23:40', 'muhsina', 0, '2025-09-24 11:23:40', NULL, NULL, NULL, ''),
-(19, 'pqr', 2, 1, 1, '2025-09-24 05:24:51', 'muhsina', 1, '2025-09-24 05:24:51', 'muhsina', 0, '2025-09-24 11:24:51', NULL, NULL, NULL, ''),
-(20, 'abcdrkl;\';ol;l;l;', 2, 1, 1, '2025-09-24 05:55:43', 'muhsina', 1, '2025-09-24 05:55:43', 'muhsina', 0, '2025-09-24 11:55:43', NULL, NULL, NULL, ''),
-(21, 'need to add project ID for task dynamically', 1, 1, 1, '2025-09-24 05:58:15', 'muhsina', 1, '2025-09-24 05:58:15', 'muhsina', 0, '2025-09-24 11:58:15', NULL, NULL, NULL, ''),
-(22, 'QA Query', 2, 1, 1, '2025-09-24 05:59:39', 'muhsina', 1, '2025-09-24 05:59:39', 'muhsina', 0, '2025-09-24 11:59:39', NULL, NULL, NULL, ''),
-(23, 'Billing Data ID', 1, 1, 1, '2025-09-24 05:59:56', 'muhsina', 1, '2025-09-24 05:59:56', 'muhsina', 0, '2025-09-24 11:59:56', NULL, NULL, NULL, ''),
-(24, 'abcdf', 1, 1, 1, '2025-09-24 06:29:00', 'muhsina', 1, '2025-09-24 06:29:00', 'muhsina', 0, '2025-09-24 12:29:00', NULL, NULL, NULL, ''),
-(25, 'It\'s a test purpose', 1, 1, 2, '2025-09-24 06:58:42', 'muhsina', 1, '2025-09-24 06:58:42', 'muhsina', 0, '2025-09-24 12:58:42', NULL, NULL, NULL, ''),
-(26, 'Need to add total device age for all status', 1, 1, 5, '2025-09-24 07:00:57', 'muhsina', 1, '2025-09-24 07:00:57', 'muhsina', 0, '2025-09-24 13:00:57', NULL, NULL, NULL, ''),
-(27, 'need to test from QA side', 2, 1, 5, '2025-09-24 07:01:28', 'muhsina', 1, '2025-09-24 07:01:28', 'muhsina', 0, '2025-09-24 13:01:28', NULL, NULL, NULL, ''),
-(28, 'billing report generate', 1, 1, 4, '2025-09-24 07:03:05', 'muhsina', 1, '2025-09-24 07:03:05', 'muhsina', 0, '2025-09-24 13:03:05', NULL, NULL, NULL, ''),
-(29, 'need to add MIS for device', 1, 1, 5, '2025-09-24 07:04:12', 'muhsina', 1, '2025-09-24 07:04:12', 'muhsina', 0, '2025-09-24 13:04:12', NULL, NULL, NULL, ''),
-(30, 'Need to show Age Caluculation in MIS', 1, 1, 5, '2025-09-24 08:37:45', 'muhsina', 1, '2025-09-24 08:37:45', 'muhsina', 0, '2025-09-24 14:37:45', NULL, NULL, NULL, ''),
-(31, 'To add billing cost for Task Managment', 1, 1, 4, '2025-09-24 08:41:36', 'muhsina', 1, '2025-09-24 08:41:36', 'muhsina', 0, '2025-09-24 14:41:36', NULL, NULL, NULL, ''),
-(32, 'MIS Report. It\'s a test', 1, 1, 3, '2025-09-24 08:51:01', 'muhsina', 1, '2025-09-24 08:51:01', 'muhsina', 0, '2025-09-24 14:51:01', NULL, NULL, NULL, ''),
-(33, 'mis adding', 1, 1, 3, '2025-09-24 09:04:10', 'muhsina', 1, '2025-09-24 09:04:10', 'muhsina', 0, '2025-09-24 15:04:10', NULL, NULL, NULL, ''),
-(34, 'To upload device requisition module', 1, 1, 3, '2025-10-09 17:32:51', 'muhsina', 1, '2025-10-09 17:32:51', 'muhsina', 0, '2025-10-09 23:32:51', NULL, NULL, NULL, ''),
-(35, 'To Upload Task Managment---1', 1, 1, 0, '2025-10-09 17:38:55', 'muhsina', 1, '2025-10-10 17:13:21', 'muhsina', 0, '2025-10-09 23:38:55', NULL, NULL, NULL, ''),
-(36, 'To add Column Name with multiple colors', 1, 1, 6, '2025-10-10 19:29:21', 'muhsina', 1, '2025-10-10 19:29:21', 'muhsina', 0, '2025-10-11 01:29:21', NULL, NULL, NULL, ''),
-(37, 'tst', 1, 1, 6, '2025-10-10 19:38:09', 'muhsina', 1, '2025-10-10 19:38:09', 'muhsina', 0, '2025-10-11 01:38:09', NULL, NULL, NULL, ''),
-(38, 'To add multiple column title for kanban board', 4, 1, 6, '2025-10-11 05:42:39', 'muhsina', 1, '2025-10-11 05:42:39', 'muhsina', 0, '2025-10-11 11:42:39', NULL, NULL, NULL, ''),
-(39, 'To add colun title color', 4, 1, 6, '2025-10-11 05:59:36', 'muhsina', 1, '2025-10-11 05:59:36', 'muhsina', 0, '2025-10-11 11:59:36', NULL, NULL, NULL, ''),
-(40, 'To add user identifier', 1, 1, 6, '2025-10-11 11:52:04', 'muhsina', 1, '2025-10-11 11:52:04', 'muhsina', 0, '2025-10-11 17:52:04', NULL, NULL, NULL, ''),
-(41, 'Arabic Workd with Ayat', 1, 1, 7, '2025-10-11 11:59:35', 'muhsina', 1, '2025-10-11 11:59:35', 'muhsina', 0, '2025-10-11 17:59:35', NULL, NULL, NULL, ''),
-(42, 'Bangla Meaning', 2, 1, 7, '2025-10-11 11:59:46', 'muhsina', 1, '2025-10-11 11:59:46', 'muhsina', 0, '2025-10-11 17:59:46', NULL, NULL, NULL, ''),
-(43, 'English Meaning', 3, 1, 7, '2025-10-11 11:59:55', 'muhsina', 1, '2025-10-11 11:59:55', 'muhsina', 0, '2025-10-11 17:59:55', NULL, NULL, NULL, ''),
-(44, 'ddfdfdf', 4, 1, 8, '2025-10-11 18:57:43', '0', 1, '2025-10-11 18:57:43', '', 9, '2025-10-12 01:28:53', 'muhsina', NULL, NULL, '67b9fb9f-bc9f-4d02-b679-6fc45120a456'),
-(45, 'Created by 0 showing', 9, 1, 8, '2025-10-11 19:04:45', '0', 1, '2025-10-11 19:04:45', '', 0, '2025-10-12 01:04:45', NULL, NULL, NULL, '67b9fb9f-bc9f-4d02-b679-6fc45120a456'),
-(46, 'test only', 9, 1, 8, '2025-10-11 19:27:05', 'Mariym Binte Mahmud', 1, '2025-10-11 19:27:05', '', 0, '2025-10-12 01:27:05', NULL, NULL, NULL, '67b9fb9f-bc9f-4d02-b679-6fc45120a456'),
-(47, 'abc', 9, 1, 8, '2025-10-11 19:27:19', 'Mariym Binte Mahmud', 1, '2025-10-11 19:27:19', '', 0, '2025-10-12 01:27:19', NULL, NULL, NULL, '67b9fb9f-bc9f-4d02-b679-6fc45120a456'),
-(48, 'need to add manpower', 1, 1, 1, '2025-10-11 19:33:43', 'Md. Masud Rabbi', 1, '2025-10-11 19:33:43', '', 0, '2025-10-12 01:33:43', NULL, NULL, NULL, '93a5b9cf-3ef5-4dfd-8738-093325d271e2'),
-(49, 'price 100 taka', 10, 1, 9, '2025-10-11 19:39:47', 'Mymuna', 1, '2025-10-11 19:39:47', '', 0, '2025-10-12 01:39:47', NULL, NULL, NULL, '93a5b9cf-3ef5-4dfd-8738-093325d271e2'),
-(50, 'Alergic Medicine', 11, 1, 10, '2025-10-12 10:23:33', 'Md. Nanif Ali', 1, '2025-10-12 10:23:33', '', 0, '2025-10-12 16:23:33', NULL, NULL, NULL, 'd9e74811-8bd6-4e63-9b70-e8a71a4b7b9c'),
-(51, 'B Medicine', 12, 1, 10, '2025-10-12 10:24:06', 'Md. Nanif Ali', 1, '2025-10-12 10:24:06', '', 0, '2025-10-12 16:24:06', NULL, NULL, NULL, 'd9e74811-8bd6-4e63-9b70-e8a71a4b7b9c');
+INSERT INTO `tbl_task_name` (`id`, `title`, `column_name`, `model_name`, `project_id`, `created_at`, `created_by`, `status`, `edited_at`, `edited_by`, `previous_status`, `status_change_time`, `status_change_by`, `deleted_by`, `deleted_at`) VALUES
+(1, 'need to add calender with dropdown menu', 4, 1, 1, '2025-09-18 12:09:54', 'muhsina', 1, '2025-09-18 12:09:54', 'muhsina', 1, '2025-09-19 16:34:08', 'muhsina', NULL, NULL),
+(2, 'Need to show project as dropdown in appBar', 1, 1, 2, '2025-09-19 10:06:29', 'muhsina', 1, '2025-09-19 10:06:29', 'muhsina', 0, '2025-09-19 16:06:29', NULL, NULL, NULL),
+(3, 'Test purpose', 2, 1, 4, '2025-09-19 10:17:13', 'muhsina', 1, '2025-09-19 10:17:13', 'muhsina', 0, '2025-09-19 16:17:13', NULL, NULL, NULL),
+(4, 'tesr', 1, 1, 3, '2025-09-19 10:19:57', 'muhsina', 1, '2025-09-19 10:19:57', 'muhsina', 0, '2025-09-19 16:19:57', NULL, NULL, NULL),
+(5, 'need to show enligh, bengali and hirji calender', 1, 1, 1, '2025-09-20 15:15:30', 'muhsina', 1, '2025-09-20 15:15:30', 'muhsina', 0, '2025-09-20 21:15:30', NULL, NULL, NULL),
+(6, 'need to show all total task', 1, 1, 1, '2025-09-20 15:22:18', 'muhsina', 1, '2025-09-20 15:22:18', 'muhsina', 0, '2025-09-20 21:22:18', NULL, NULL, NULL),
+(7, 'To show total task under respective project', 1, 1, 1, '2025-09-23 04:44:49', 'muhsina', 1, '2025-09-23 04:44:49', 'muhsina', 0, '2025-09-23 10:44:49', NULL, NULL, NULL),
+(8, 'need to add total age for each device', 1, 1, 1, '2025-09-23 05:59:31', 'muhsina', 1, '2025-09-23 05:59:31', 'muhsina', 0, '2025-09-23 11:59:31', NULL, NULL, NULL),
+(9, 'Need to show attendance', 1, 1, 1, '2025-09-23 06:01:49', 'muhsina', 1, '2025-09-23 06:01:49', 'muhsina', 0, '2025-09-23 12:01:49', NULL, NULL, NULL),
+(10, 'need to apply salary certificate', 1, 1, 1, '2025-09-23 06:02:32', 'muhsina', 1, '2025-09-23 06:02:32', 'muhsina', 0, '2025-09-23 12:02:32', NULL, NULL, NULL),
+(11, 'To test  only', 1, 1, 1, '2025-09-23 06:14:22', 'muhsina', 1, '2025-09-23 06:14:22', 'muhsina', 0, '2025-09-23 12:14:22', NULL, NULL, NULL),
+(12, 'abc', 1, 1, 1, '2025-09-23 06:14:53', 'muhsina', 1, '2025-09-23 06:14:53', 'muhsina', 0, '2025-09-23 12:14:53', NULL, NULL, NULL),
+(13, 'Task adding count', 2, 1, 1, '2025-09-23 06:18:01', 'muhsina', 1, '2025-09-23 06:18:01', 'muhsina', 0, '2025-09-23 12:18:01', NULL, NULL, NULL),
+(14, 'need to test from QA Side', 3, 1, 1, '2025-09-24 04:44:30', 'muhsina', 1, '2025-09-24 04:44:30', 'muhsina', 0, '2025-09-24 10:44:30', NULL, NULL, NULL),
+(15, 'abc', 3, 1, 1, '2025-09-24 04:45:32', 'muhsina', 1, '2025-09-24 04:45:32', 'muhsina', 0, '2025-09-24 10:45:32', NULL, NULL, NULL),
+(16, 'need to show task count instanlty inside app badge', 3, 1, 1, '2025-09-24 05:00:57', 'muhsina', 1, '2025-09-24 05:00:57', 'muhsina', 0, '2025-09-24 11:00:57', NULL, NULL, NULL),
+(17, 'test purpose', 4, 1, 1, '2025-09-24 05:17:17', 'muhsina', 1, '2025-09-24 05:17:17', 'muhsina', 0, '2025-09-24 11:17:17', NULL, NULL, NULL),
+(18, 'To add a task', 2, 1, 1, '2025-09-24 05:23:40', 'muhsina', 1, '2025-09-24 05:23:40', 'muhsina', 0, '2025-09-24 11:23:40', NULL, NULL, NULL),
+(19, 'pqr', 2, 1, 1, '2025-09-24 05:24:51', 'muhsina', 1, '2025-09-24 05:24:51', 'muhsina', 0, '2025-09-24 11:24:51', NULL, NULL, NULL),
+(20, 'abcdrkl;\';ol;l;l;', 2, 1, 1, '2025-09-24 05:55:43', 'muhsina', 1, '2025-09-24 05:55:43', 'muhsina', 0, '2025-09-24 11:55:43', NULL, NULL, NULL),
+(21, 'need to add project ID for task dynamically', 1, 1, 1, '2025-09-24 05:58:15', 'muhsina', 1, '2025-09-24 05:58:15', 'muhsina', 0, '2025-09-24 11:58:15', NULL, NULL, NULL),
+(22, 'QA Query', 2, 1, 1, '2025-09-24 05:59:39', 'muhsina', 1, '2025-09-24 05:59:39', 'muhsina', 0, '2025-09-24 11:59:39', NULL, NULL, NULL),
+(23, 'Billing Data ID', 1, 1, 1, '2025-09-24 05:59:56', 'muhsina', 1, '2025-09-24 05:59:56', 'muhsina', 0, '2025-09-24 11:59:56', NULL, NULL, NULL),
+(24, 'abcdf', 1, 1, 1, '2025-09-24 06:29:00', 'muhsina', 1, '2025-09-24 06:29:00', 'muhsina', 0, '2025-09-24 12:29:00', NULL, NULL, NULL),
+(25, 'It\'s a test purpose', 1, 1, 2, '2025-09-24 06:58:42', 'muhsina', 1, '2025-09-24 06:58:42', 'muhsina', 0, '2025-09-24 12:58:42', NULL, NULL, NULL),
+(26, 'Need to add total device age for all status', 1, 1, 5, '2025-09-24 07:00:57', 'muhsina', 1, '2025-09-24 07:00:57', 'muhsina', 0, '2025-09-24 13:00:57', NULL, NULL, NULL),
+(27, 'need to test from QA side', 2, 1, 5, '2025-09-24 07:01:28', 'muhsina', 1, '2025-09-24 07:01:28', 'muhsina', 0, '2025-09-24 13:01:28', NULL, NULL, NULL),
+(28, 'billing report generate', 1, 1, 4, '2025-09-24 07:03:05', 'muhsina', 1, '2025-09-24 07:03:05', 'muhsina', 0, '2025-09-24 13:03:05', NULL, NULL, NULL),
+(29, 'need to add MIS for device', 1, 1, 5, '2025-09-24 07:04:12', 'muhsina', 1, '2025-09-24 07:04:12', 'muhsina', 0, '2025-09-24 13:04:12', NULL, NULL, NULL),
+(30, 'Need to show Age Caluculation in MIS', 1, 1, 5, '2025-09-24 08:37:45', 'muhsina', 1, '2025-09-24 08:37:45', 'muhsina', 0, '2025-09-24 14:37:45', NULL, NULL, NULL),
+(31, 'To add billing cost for Task Managment', 1, 1, 4, '2025-09-24 08:41:36', 'muhsina', 1, '2025-09-24 08:41:36', 'muhsina', 0, '2025-09-24 14:41:36', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -451,19 +416,19 @@ ALTER TABLE `tbl_name_of_allah_swt`
 -- AUTO_INCREMENT for table `tbl_project_details`
 --
 ALTER TABLE `tbl_project_details`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `tbl_task_board`
 --
 ALTER TABLE `tbl_task_board`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `tbl_task_name`
 --
 ALTER TABLE `tbl_task_name`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `tbl_title_subtitle`

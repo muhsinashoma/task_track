@@ -54,7 +54,6 @@ Commit changes:
 
 git commit -m "Your commit message here"
 
-
 Example:
 
 git commit -m "Added task tracking feature"

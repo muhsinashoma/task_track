@@ -14,7 +14,6 @@ import '../widgets/edit_task_widget.dart';
 import '../widgets/kanban_board.dart';
 import 'kanban_board_controller.dart';
 import 'about_me_page.dart';
-import 'arabic_words_in_bangla.dart';
 
 //import 'app_drawer.dart';
 
@@ -127,7 +126,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response = await dio.get(
-        "http://192.168.32.16/API/get_project_list_kanban.php",
+        "http://192.168.0.104/API/get_project_list_kanban.php",
       );
 
       // Decode JSON string into a List
@@ -171,7 +170,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     try {
       final dio = Dio();
       var response = await dio.get(
-        "http://192.168.32.16/API/get_task_data_kanban.php",
+        "http://192.168.0.104/API/get_task_data_kanban.php",
         queryParameters: {
           "project_id": _selectedProjectId ?? 0,
           "period": selectedNumber,
@@ -260,7 +259,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
     try {
       final response = await dio.post(
-        "http://192.168.32.16/API/add_project_kanban.php",
+        "http://192.168.0.104/API/add_project_kanban.php",
         data: formData,
         options: Options(
           headers: {'Content-Type': 'multipart/form-data'},
@@ -294,7 +293,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
     try {
       final response = await dio.post(
-        'http://192.168.32.16/API/add_column_kanban.php',
+        'http://192.168.0.104/API/add_column_kanban.php',
         data: {
           "title": title,
           "project_id": projectId,
@@ -347,7 +346,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       int columnId = columns[column].id;
 
       final response = await dio.post(
-        "http://192.168.32.16/API/add_task_kanban.php",
+        "http://192.168.0.104/API/add_task_kanban.php",
         data: {
           "title": title,
           "column_id": columnId.toString(),
@@ -606,156 +605,22 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
               title: const Text('Dashboard'),
               onTap: () => Navigator.pop(context),
             ),
-
-            // ListTile(
-            //   leading: const Icon(Icons.add),
-            //   title: const Text('Add Column'),
-            //   onTap: () {
-            //     Navigator.pop(context);
-            //     _showAddColumnDialog();
-            //   },
-            // ),
-
             ListTile(
-              tileColor: Colors.grey.shade200, // 👈 light gray background
-              leading: const Icon(
-                Icons.add,
-                color: Colors.grey, // 👈 icon color matches theme
-              ),
-              title: const Text(
-                'Add Column',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              leading: const Icon(Icons.add),
+              title: const Text('Add Column'),
               onTap: () {
-                Navigator.pop(context); // Close drawer first
-                _showAddColumnDialog(); // Call your dialog function
+                Navigator.pop(context);
+                _showAddColumnDialog();
               },
             ),
 
-            // //-------------- Start About Me--------------
-
-            // ListTile(
-            //   leading: const Icon(Icons.info),
-            //   title: const Text('About Me'),
-            //   onTap: () {
-            //     Navigator.pop(context);
-
-            //     showDialog(
-            //       context: context,
-            //       barrierDismissible: true,
-            //       builder: (context) {
-            //         final screenSize = MediaQuery.of(context).size;
-            //         final screenWidth = screenSize.width;
-            //         final screenHeight = screenSize.height;
-
-            //         // Responsive inset (~1 inch or less on small devices)
-            //         final inset = screenWidth < 500 ? 32.0 : 96.0;
-
-            //         // Control dialog height for large screens
-            //         final maxDialogHeight = screenHeight < 600
-            //             ? screenHeight * 0.9 // Mobile: use most of screen
-            //             : screenHeight * 0.6; // Laptop: 60% height
-
-            //         return Dialog(
-            //           shape: RoundedRectangleBorder(
-            //             borderRadius: BorderRadius.circular(20),
-            //           ),
-            //           insetPadding: EdgeInsets.all(inset),
-            //           child: ConstrainedBox(
-            //             constraints: BoxConstraints(
-            //               maxHeight: maxDialogHeight,
-            //               maxWidth: screenWidth < 600
-            //                   ? screenWidth * 0.9
-            //                   : screenWidth * 0.5, // 50% width on desktop
-            //             ),
-            //             child: Stack(
-            //               children: [
-            //                 // Main content with image
-            //                 Padding(
-            //                   padding: const EdgeInsets.all(20),
-            //                   child: SingleChildScrollView(
-            //                     child: Column(
-            //                       mainAxisSize: MainAxisSize.min,
-            //                       children: [
-            //                         // Your profile image
-            //                         // const CircleAvatar(
-            //                         //   radius: 50,
-            //                         //   backgroundImage: AssetImage(
-            //                         //       'assets/icons/muhsina.png'),
-            //                         // ),
-            //                         const SizedBox(height: 20),
-
-            //                         // About Me content
-            //                         const AboutMePage(),
-            //                       ],
-            //                     ),
-            //                   ),
-            //                 ),
-
-            //                 // Close button (top right corner)
-            //                 Positioned(
-            //                   right: 0,
-            //                   top: 0,
-            //                   child: IconButton(
-            //                     icon:
-            //                         const Icon(Icons.close, color: Colors.grey),
-            //                     iconSize: 28,
-            //                     splashRadius: 20,
-            //                     tooltip: 'Close',
-            //                     onPressed: () => Navigator.pop(context),
-            //                   ),
-            //                 ),
-            //               ],
-            //             ),
-            //           ),
-            //         );
-            //       },
-            //     );
-            //   },
-            // ),
-
-            // End About Me
-
-            // Backup App Icon
-            // ListTile(
-            //   leading: CircleAvatar(
-            //     radius: 18,
-            //     backgroundImage: const AssetImage('assets/icons/app_icon.png'),
-            //     backgroundColor: Colors.transparent,
-            //   ),
-            //   title: const Text('More App'),
-            //   onTap: () => Navigator.pop(context),
-            // ),
-            //End Backup App Icon
-
-            // ListTile(
-            //   leading: const Icon(Icons.apps),
-            //   title: const Text('More App'),
-            //   onTap: () => Navigator.pop(context),
-            // ),
-
             //-------------- Start About Me--------------
 
-//-------------- Start About Me--------------
-
             ListTile(
-              tileColor: Colors.orange.shade50, // 👈 different light color
-              leading: const Icon(
-                Icons.info, // 👈 info icon for About Me
-                color: Colors.orange, // 👈 matching icon color
-              ),
-              title: const Text(
-                'About Me',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              leading: const Icon(Icons.info),
+              title: const Text('About Me'),
               onTap: () {
-                Navigator.pop(context); // Close drawer first
+                Navigator.pop(context);
 
                 showDialog(
                   context: context,
@@ -765,10 +630,13 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     final screenWidth = screenSize.width;
                     final screenHeight = screenSize.height;
 
+                    // Responsive inset (~1 inch or less on small devices)
                     final inset = screenWidth < 500 ? 32.0 : 96.0;
+
+                    // Control dialog height for large screens
                     final maxDialogHeight = screenHeight < 600
-                        ? screenHeight * 0.9
-                        : screenHeight * 0.6;
+                        ? screenHeight * 0.9 // Mobile: use most of screen
+                        : screenHeight * 0.6; // Laptop: 60% height
 
                     return Dialog(
                       shape: RoundedRectangleBorder(
@@ -780,22 +648,33 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                           maxHeight: maxDialogHeight,
                           maxWidth: screenWidth < 600
                               ? screenWidth * 0.9
-                              : screenWidth * 0.5,
+                              : screenWidth * 0.5, // 50% width on desktop
                         ),
                         child: Stack(
                           children: [
+                            // Main content with image
                             Padding(
                               padding: const EdgeInsets.all(20),
                               child: SingleChildScrollView(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: const [
-                                    SizedBox(height: 20),
-                                    AboutMePage(), // your About Me content
+                                  children: [
+                                    // Your profile image
+                                    // const CircleAvatar(
+                                    //   radius: 50,
+                                    //   backgroundImage: AssetImage(
+                                    //       'assets/icons/muhsina.png'),
+                                    // ),
+                                    const SizedBox(height: 20),
+
+                                    // About Me content
+                                    const AboutMePage(),
                                   ],
                                 ),
                               ),
                             ),
+
+                            // Close button (top right corner)
                             Positioned(
                               right: 0,
                               top: 0,
@@ -817,29 +696,16 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
               },
             ),
 
-//-------------- End About Me--------------
+            // End About Me
 
             ListTile(
-              tileColor: Colors.lightBlue.shade50,
-              leading: const Icon(
-                Icons.apps,
-                color: Colors.lightBlue,
+              leading: CircleAvatar(
+                radius: 18,
+                backgroundImage: const AssetImage('assets/icons/app_icon.png'),
+                backgroundColor: Colors.transparent,
               ),
-              title: const Text(
-                'More App',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context); // Close drawer first
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const ArabicWordListPage()),
-                );
-              },
+              title: const Text('More App'),
+              onTap: () => Navigator.pop(context),
             ),
 
             const Divider(),
@@ -1330,7 +1196,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.32.16/API/delete_task_kanban.php",
+        "http://192.168.0.104/API/delete_task_kanban.php",
         data: {"id": task.taskId, "deleted_by": "muhsina"},
         options: Options(
             headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
@@ -1359,7 +1225,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.32.16/API/drag_drop_kanban.php",
+        "http://192.168.0.104/API/drag_drop_kanban.php",
         data: {
           "id": data.taskId,
           "column_name": index + 1,
@@ -1381,7 +1247,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
     try {
       await dio.post(
-        "http://192.168.32.16/API/update_task_kanban.php",
+        "http://192.168.0.104/API/update_task_kanban.php",
         data: {
           "id": task.taskId,
           "title": task.title,
