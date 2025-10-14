@@ -1,22 +1,25 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
+
 import 'package:dio/dio.dart';
-import 'package:uuid/uuid.dart';
-import 'package:intl/intl.dart';
-import 'package:hijri/hijri_calendar.dart';
+//import 'package:dropdown_search/dropdown_search.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:hijri/hijri_calendar.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../data/data.dart';
 import '../../models/models.dart';
+import '../../url/api_service.dart'; // Import your baseUrl
 import '../widgets/edit_task_widget.dart';
 import '../widgets/kanban_board.dart';
-import 'kanban_board_controller.dart';
 import 'about_me_page.dart';
 import 'arabic_words_in_bangla.dart';
-
-//import 'app_drawer.dart';
+import 'kanban_board_controller.dart';
+//import 'package:dropdown_search/dropdown_search.dart';
+//import '../../models/project_list_item.dart';
 
 class ProjectListItem {
   final int id;
@@ -126,11 +129,15 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   Future<void> getProjectListData() async {
     try {
       final dio = Dio();
-      var response = await dio.get(
-        "http://192.168.32.16/API/get_project_list_kanban.php",
-      );
 
-      // Decode JSON string into a List
+      // ✅ Step 1: Build your URL using baseUrl
+      var url = Uri.parse("${baseUrl}get_project_list_kanban.php");
+      print("Fetching project list from: $url");
+
+      // ✅ Step 2: Make the request
+      var response = await dio.get(url.toString());
+
+      // ✅ Step 3: Decode response
       List data = jsonDecode(response.data);
 
       _projects = data.map((json) => ProjectListItem.fromJson(json)).toList();
@@ -139,7 +146,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         _isLoadingProjects = false;
       });
 
-      //print("Projects loaded: ${_projects.length}");
+      print("Projects loaded: ${_projects.length}");
     } catch (e) {
       print("Error fetching projects: $e");
       setState(() {
@@ -147,6 +154,31 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       });
     }
   }
+
+  // Future<void> getProjectListData() async {
+  //   try {
+  //     final dio = Dio();
+  //     var response = await dio.get(
+  //       "http://192.168.0.103/API/get_project_list_kanban.php",
+  //     );
+
+  //     // Decode JSON string into a List
+  //     List data = jsonDecode(response.data);
+
+  //     _projects = data.map((json) => ProjectListItem.fromJson(json)).toList();
+
+  //     setState(() {
+  //       _isLoadingProjects = false;
+  //     });
+
+  //     //print("Projects loaded: ${_projects.length}");
+  //   } catch (e) {
+  //     print("Error fetching projects: $e");
+  //     setState(() {
+  //       _isLoadingProjects = false;
+  //     });
+  //   }
+  // }
 
 // Function to generate day widgets with correct weekday alignment
   List<Widget> buildCalendarDays(
@@ -167,11 +199,18 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     return dayWidgets;
   }
 
+//--------------------back to getTaskData To show Kanban Board -----------------------
+
   Future<void> getTaskData() async {
     try {
       final dio = Dio();
+
+      // Use baseUrl here
+      var url = Uri.parse("${baseUrl}get_task_data_kanban.php");
+      print("Fetching data from: $url");
+
       var response = await dio.get(
-        "http://192.168.32.16/API/get_task_data_kanban.php",
+        url.toString(),
         queryParameters: {
           "project_id": _selectedProjectId ?? 0,
           "period": selectedNumber,
@@ -183,7 +222,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         var taskData = response.data['task_boards'] as List;
 
         List<Map<String, dynamic>> tasksForColumns = [];
-        int totalTaskCount = 0; // new counter
+        int totalTaskCount = 0;
 
         for (var board in taskData) {
           var tasks = board['tasks'] as List;
@@ -204,21 +243,18 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           });
         }
 
-        // Generate columns from JSON
         List<KColumn> fetchedColumns =
             Data.getColumns(jsonEncode(tasksForColumns))
                 .map((col) => col.copyWith(children: col.children ?? []))
                 .toList();
 
-        // Assign unique colors to each column
         columns = List.generate(
           fetchedColumns.length,
           (index) => fetchedColumns[index].copyWith(
-            color: generateProjectColor(index), // ✅ assign unique color
+            color: generateProjectColor(index),
           ),
         );
 
-        // Update task count
         setState(() {
           _selectedProjectTaskCount = totalTaskCount;
         });
@@ -228,7 +264,68 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     }
   }
 
-  // ------------------ Add Project ------------------
+  // Future<void> getTaskData() async {
+  //   try {
+  //     final dio = Dio();
+  //     var response = await dio.get(
+  //       "http://192.168.0.103/API/get_task_data_kanban.php",
+  //       queryParameters: {
+  //         "project_id": _selectedProjectId ?? 0,
+  //         "period": selectedNumber,
+  //         "unit": selectedUnit.toLowerCase(),
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       var taskData = response.data['task_boards'] as List;
+
+  //       List<Map<String, dynamic>> tasksForColumns = [];
+  //       int totalTaskCount = 0; // new counter
+
+  //       for (var board in taskData) {
+  //         var tasks = board['tasks'] as List;
+  //         totalTaskCount += tasks.length;
+
+  //         tasksForColumns.add({
+  //           'id': int.tryParse(board['id'].toString()) ?? 0,
+  //           'title': board['title'],
+  //           'tasks': tasks
+  //               .map((task) => {
+  //                     'id': int.tryParse(task['id'].toString()) ?? 0,
+  //                     'title': task['title'],
+  //                     'taskId': task['task_id'],
+  //                     'createdBy': task['created_by'] ?? 'Unknown',
+  //                     'createdAt': task['created_at'] ?? '',
+  //                   })
+  //               .toList(),
+  //         });
+  //       }
+
+  //       // Generate columns from JSON
+  //       List<KColumn> fetchedColumns =
+  //           Data.getColumns(jsonEncode(tasksForColumns))
+  //               .map((col) => col.copyWith(children: col.children ?? []))
+  //               .toList();
+
+  //       // Assign unique colors to each column
+  //       columns = List.generate(
+  //         fetchedColumns.length,
+  //         (index) => fetchedColumns[index].copyWith(
+  //           color: generateProjectColor(index), // ✅ assign unique color
+  //         ),
+  //       );
+
+  //       // Update task count
+  //       setState(() {
+  //         _selectedProjectTaskCount = totalTaskCount;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     print("Error fetching tasks: $e");
+  //   }
+  // }
+
+//---------------------------------Add Project using Based UrL---------------------------
 
   Future<Map<String, dynamic>> addProjectDetails({
     required String projectName,
@@ -248,7 +345,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       "email_address": email,
       "permanent_address": address,
       "created_by": ownerName,
-      "user_identifier": userIdentifier, // ✅ Include here
+      "user_identifier": userIdentifier,
       if (file != null)
         "attached_file": await MultipartFile.fromFile(
           file.path,
@@ -259,8 +356,12 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final dio = Dio();
 
     try {
+      // ✅ Use baseUrl instead of hardcoding
+      var url = Uri.parse("${baseUrl}add_project_kanban.php");
+      print("📡 Sending project to: $url");
+
       final response = await dio.post(
-        "http://192.168.32.16/API/add_project_kanban.php",
+        url.toString(),
         data: formData,
         options: Options(
           headers: {'Content-Type': 'multipart/form-data'},
@@ -278,23 +379,77 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     }
   }
 
-// ------------------ Add Columns ------------------
+  // ------------------ Add Project ------------------
+
+  // Future<Map<String, dynamic>> addProjectDetails({
+  //   required String projectName,
+  //   required String ownerName,
+  //   required String contact,
+  //   required String email,
+  //   required String address,
+  //   File? file,
+  // }) async {
+  //   // 🔹 Get unique device/user ID
+  //   String userIdentifier = await getUserIdentifier();
+
+  //   FormData formData = FormData.fromMap({
+  //     "project_name": projectName,
+  //     "project_owner_name": ownerName,
+  //     "contact_number": contact,
+  //     "email_address": email,
+  //     "permanent_address": address,
+  //     "created_by": ownerName,
+  //     "user_identifier": userIdentifier, // ✅ Include here
+  //     if (file != null)
+  //       "attached_file": await MultipartFile.fromFile(
+  //         file.path,
+  //         filename: file.path.split('/').last,
+  //       ),
+  //   });
+
+  //   final dio = Dio();
+
+  //   try {
+  //     final response = await dio.post(
+  //       "http://192.168.0.103/API/add_project_kanban.php",
+  //       data: formData,
+  //       options: Options(
+  //         headers: {'Content-Type': 'multipart/form-data'},
+  //         responseType: ResponseType.plain, // treat as plain text
+  //       ),
+  //     );
+
+  //     print("✅ Raw Response: ${response.data}");
+
+  //     final Map<String, dynamic> decoded = jsonDecode(response.data);
+  //     return decoded;
+  //   } catch (e) {
+  //     print("❌ Upload error: $e");
+  //     return {"success": false, "message": "Upload failed: $e"};
+  //   }
+  // }
+
+  //---------------------------Add Column using Based UrL----------------------------
+
   @override
   void addColumn(String title) async {
     int newId = columns.length + 1;
 
-    // Add locally first for UI responsiveness
+    // ✅ Add locally for instant UI response
     setState(() => columns.add(KColumn(id: newId, title: title, children: [])));
 
     final dio = Dio();
     String userIdentifier =
-        await getUserIdentifier(); // from shared_preferences or session
-    String projectId = _selectedProjectId
-        .toString(); // 👈 must have this from dropdown or variable
+        await getUserIdentifier(); // from shared_preferences
+    String projectId = _selectedProjectId.toString();
 
     try {
+      // ✅ Use baseUrl instead of hardcoding
+      var url = Uri.parse("${baseUrl}add_column_kanban.php");
+      print("📡 Sending column to: $url");
+
       final response = await dio.post(
-        'http://192.168.32.16/API/add_column_kanban.php',
+        url.toString(),
         data: {
           "title": title,
           "project_id": projectId,
@@ -311,7 +466,41 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     }
   }
 
-  // ------------------ Add Task ------------------
+// ------------------ Add Columns ------------------
+  // @override
+  // void addColumn(String title) async {
+  //   int newId = columns.length + 1;
+
+  //   // Add locally first for UI responsiveness
+  //   setState(() => columns.add(KColumn(id: newId, title: title, children: [])));
+
+  //   final dio = Dio();
+  //   String userIdentifier =
+  //       await getUserIdentifier(); // from shared_preferences or session
+  //   String projectId = _selectedProjectId
+  //       .toString(); // 👈 must have this from dropdown or variable
+
+  //   try {
+  //     final response = await dio.post(
+  //       'http://192.168.0.103/API/add_column_kanban.php',
+  //       data: {
+  //         "title": title,
+  //         "project_id": projectId,
+  //         "user_identifier": userIdentifier,
+  //       },
+  //       options: Options(
+  //         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+  //       ),
+  //     );
+
+  //     print("✅ Add Column Response: ${response.data}");
+  //   } catch (e) {
+  //     print("❌ Add column error: $e");
+  //   }
+  // }
+
+//-----------------------------------Add Task using Based UrL----------------------------
+
   void addTask(String title, int column) async {
     if (_selectedProjectId == null || _projectOwnerName == null) {
       print("⚠️ No project selected!");
@@ -329,10 +518,10 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       projectId: _selectedProjectId!,
     );
 
-    // Add task locally
+    // ✅ Add task locally first
     setState(() => columns[column].children.insert(0, newTask));
 
-    // Update project task count
+    // ✅ Update task count
     setState(() {
       final index = _projects.indexWhere((p) => p.id == _selectedProjectId);
       if (index != -1) {
@@ -341,13 +530,17 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       }
     });
 
-    // Send to backend
+    // ✅ Send to backend
     final dio = Dio();
     try {
       int columnId = columns[column].id;
 
+      // Use baseUrl here 👇
+      var url = Uri.parse("${baseUrl}add_task_kanban.php");
+      print("📡 Sending task to: $url");
+
       final response = await dio.post(
-        "http://192.168.32.16/API/add_task_kanban.php",
+        url.toString(),
         data: {
           "title": title,
           "column_id": columnId.toString(),
@@ -371,6 +564,67 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       print("❌ Add task error: $e");
     }
   }
+
+  // ------------------ Add Task ------------------
+  // void addTask(String title, int column) async {
+  //   if (_selectedProjectId == null || _projectOwnerName == null) {
+  //     print("⚠️ No project selected!");
+  //     return;
+  //   }
+
+  //   final taskId = Uuid().v4();
+  //   String userIdentifier = await getUserIdentifier();
+
+  //   final newTask = KTask(
+  //     title: title,
+  //     taskId: taskId,
+  //     createdBy: _projectOwnerName!,
+  //     createdAt: DateTime.now().toIso8601String(),
+  //     projectId: _selectedProjectId!,
+  //   );
+
+  //   // Add task locally
+  //   setState(() => columns[column].children.insert(0, newTask));
+
+  //   // Update project task count
+  //   setState(() {
+  //     final index = _projects.indexWhere((p) => p.id == _selectedProjectId);
+  //     if (index != -1) {
+  //       _projects[index].taskCount += 1;
+  //       _selectedProjectTaskCount = _projects[index].taskCount;
+  //     }
+  //   });
+
+  //   // Send to backend
+  //   final dio = Dio();
+  //   try {
+  //     int columnId = columns[column].id;
+
+  //     final response = await dio.post(
+  //       "http://192.168.0.103/API/add_task_kanban.php",
+  //       data: {
+  //         "title": title,
+  //         "column_id": columnId.toString(),
+  //         "model_name": "1",
+  //         "project_id": _selectedProjectId.toString(),
+  //         "created_by": _projectOwnerName!,
+  //         "user_identifier": userIdentifier,
+  //       },
+  //       options: Options(
+  //         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+  //       ),
+  //     );
+
+  //     final resData = response.data;
+  //     if (resData['success'] == false) {
+  //       print("❌ Backend error: ${resData['message']}");
+  //     } else {
+  //       print("✅ Task added successfully to backend");
+  //     }
+  //   } catch (e) {
+  //     print("❌ Add task error: $e");
+  //   }
+  // }
 
   // ------------------End Add Task ------------------
 
@@ -403,12 +657,13 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-// ---------- AppBar ----------
+      // ---------- AppBar ----------
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
         title: Row(
           children: [
-            // -------- Project Dropdown ----------
+            // -------- Project Dropdown in AppBar----------
+
             SizedBox(
               width: 180,
               child: DropdownButtonHideUnderline(
@@ -504,7 +759,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
               ),
             ),
 
-            //End SizedBox
+            //--------End Project Dropdown-----------
 
             const SizedBox(width: 6),
 
@@ -1323,20 +1578,60 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-  // ------------------ KanbanBoardController ------------------
+  // ------------------ Delete Task from Board using baseUrl-----------------
+
+  // @override
+  // Future<void> deleteItem(int columnIndex, KTask task) async {
+  //   setState(() => columns[columnIndex].children.remove(task));
+  //   final dio = Dio();
+  //   try {
+  //     await dio.post(
+  //       "http://192.168.0.103/API/delete_task_kanban.php",
+  //       data: {"id": task.taskId, "deleted_by": "muhsina"},
+  //       options: Options(
+  //           headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
+  //     );
+  //   } catch (e) {
+  //     print("Delete error: $e");
+  //   }
+  // }
+
+  // @override
+  // void handleReOrder(int oldIndex, int newIndex, int index) {
+  //   setState(() {
+  //     if (oldIndex != newIndex) {
+  //       final task = columns[index].children.removeAt(oldIndex);
+  //       columns[index].children.insert(newIndex, task);
+  //     }
+  //   });
+  // }
+
+// ------------------ Delete Task from Board using baseUrl-----------------
+
   @override
   Future<void> deleteItem(int columnIndex, KTask task) async {
     setState(() => columns[columnIndex].children.remove(task));
+
     final dio = Dio();
     try {
+      // ✅ Use baseUrl here
+      var url = Uri.parse("${baseUrl}delete_task_kanban.php");
+      print("🗑️ Delete task URL: $url");
+
       await dio.post(
-        "http://192.168.32.16/API/delete_task_kanban.php",
-        data: {"id": task.taskId, "deleted_by": "muhsina"},
+        url.toString(),
+        data: {
+          "id": task.taskId,
+          "deleted_by": "muhsina",
+        },
         options: Options(
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
       );
+
+      print("✅ Task deleted successfully (ID: ${task.taskId})");
     } catch (e) {
-      print("Delete error: $e");
+      print("❌ Delete error: $e");
     }
   }
 
@@ -1350,49 +1645,117 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     });
   }
 
+  // Drag and Drop with API call
+
   @override
   void dragHandler(KData data, int index) async {
     setState(() {
       columns[data.from].children.remove(data.task);
       columns[index].children.add(data.task);
     });
+
     final dio = Dio();
     try {
+      // ✅ Use baseUrl just like your other API functions
+      var url = Uri.parse("${baseUrl}drag_drop_kanban.php");
+      print("📡 Drag-drop update URL: $url");
+
       await dio.post(
-        "http://192.168.32.16/API/drag_drop_kanban.php",
+        url.toString(),
         data: {
           "id": data.taskId,
           "column_name": index + 1,
           "previous_status": data.from + 1,
           "model_name": 1,
           "project_name": 1,
-          "status_change_by": "muhsina"
+          "status_change_by": "muhsina",
         },
         options: Options(
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
       );
+
+      print("✅ Drag-drop update successful");
     } catch (e) {
-      print("Drag error: $e");
+      print("❌ Drag error: $e");
     }
   }
+
+  // Drag and Drop with API call
+
+  // @override
+  // void dragHandler(KData data, int index) async {
+  //   setState(() {
+  //     columns[data.from].children.remove(data.task);
+  //     columns[index].children.add(data.task);
+  //   });
+  //   final dio = Dio();
+  //   try {
+  //     await dio.post(
+  //       "http://192.168.0.103/API/drag_drop_kanban.php",
+  //       data: {
+  //         "id": data.taskId,
+  //         "column_name": index + 1,
+  //         "previous_status": data.from + 1,
+  //         "model_name": 1,
+  //         "project_name": 1,
+  //         "status_change_by": "muhsina"
+  //       },
+  //       options: Options(
+  //           headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
+  //     );
+  //   } catch (e) {
+  //     print("Drag error: $e");
+  //   }
+  // }
+
+  // @override
+  // void updateItem(int columnIndex, KTask task) async {
+  //   final dio = Dio();
+  //   try {
+  //     await dio.post(
+  //       "http://192.168.0.103/API/update_task_kanban.php",
+  //       data: {
+  //         "id": task.taskId,
+  //         "title": task.title,
+  //         "edited_by": "muhsina",
+  //         "edited_at": DateTime.now().toString()
+  //       },
+  //       options: Options(
+  //           headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
+  //     );
+  //   } catch (e) {
+  //     print("Update error: $e");
+  //   }
+  // }
+
+  // Updated to use dynamic baseUrl
 
   @override
   void updateItem(int columnIndex, KTask task) async {
     final dio = Dio();
+
     try {
+      // ✅ Use baseUrl dynamically
+      var url = Uri.parse("${baseUrl}update_task_kanban.php");
+      print("📡 Updating task via: $url");
+
       await dio.post(
-        "http://192.168.32.16/API/update_task_kanban.php",
+        url.toString(),
         data: {
           "id": task.taskId,
           "title": task.title,
           "edited_by": "muhsina",
-          "edited_at": DateTime.now().toString()
+          "edited_at": DateTime.now().toString(),
         },
         options: Options(
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
       );
+
+      print("✅ Task updated successfully on backend");
     } catch (e) {
-      print("Update error: $e");
+      print("❌ Update error: $e");
     }
   }
 }

@@ -1,4 +1,27 @@
 
+PS D:\Flutter-Project\task_track> git log -1     
+commit 551f7fc5694ab306adf487dcc6468f57da8a1950 (HEAD -> muhsina, origin/muhsina)
+Author: muhsinashoma <muhsina.akter2@gmail.com>
+Date:   Sat Oct 11 12:06:51 2025 +0600
+
+ To Add About Me Text and To Generate Multiple Colors for Columns Title
+-------------------------------------------------------------------------------
+
+Branch Commit
+
+   
+PS D:\Flutter-Project\task_track> git add .
+
+PS D:\Flutter-Project\task_track> git commit -m "To Add Shared preferences for User Identification In project, Task Board and Task Table" 
+
+PS D:\Flutter-Project\task_track> git push origin muhsina
+
+
+-------------------------------------------------------------------------------
+
+
+
+
 https://chatgpt.com/c/68c7d7ee-c970-8327-9065-5ffe9d3ed1ac
 
 

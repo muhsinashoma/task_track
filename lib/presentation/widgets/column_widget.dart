@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 import '../../models/models.dart';
+import '../../url/api_service.dart';
 import 'card_column.dart';
 import 'task_card_widget.dart';
+import '../../../../api_service.dart'; //  api endpoint service
 
 class KanbanColumn extends StatefulWidget {
   final KColumn column;
@@ -90,8 +92,12 @@ class _KanbanColumnState extends State<KanbanColumn> {
     print("➡️ New Title: $newTitle");
 
     try {
+      // ✅ Use baseUrl here
+      var url = Uri.parse("${baseUrl}update_column_kanban.php");
+      print("📡 Sending update to: $url");
+
       final response = await _dio.post(
-        'http://192.168.0.104/API/update_column_kanban.php',
+        url.toString(),
         data: {
           "id": widget.column.id,
           "title": newTitle,
@@ -120,6 +126,46 @@ class _KanbanColumnState extends State<KanbanColumn> {
       print("❌ Error updating column title: $e");
     }
   }
+
+  // --- Update column title function ---
+  // Future<void> _updateColumnTitle(String newTitle) async {
+  //   if (newTitle.trim().isEmpty) return;
+
+  //   print("🔹 Attempting to update column title...");
+  //   print("➡️ Column ID: ${widget.column.id}");
+  //   print("➡️ New Title: $newTitle");
+
+  //   try {
+  //     final response = await _dio.post(
+  //       'http://192.168.0.104/API/update_column_kanban.php',
+  //       data: {
+  //         "id": widget.column.id,
+  //         "title": newTitle,
+  //         "edited_by": "muhsina",
+  //       },
+  //       options: Options(
+  //         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+  //       ),
+  //     );
+
+  //     print("✅ Server response received:");
+  //     print("Status Code: ${response.statusCode}");
+  //     print("Response Data: ${response.data}");
+
+  //     if (response.statusCode == 200 &&
+  //         response.data.toString().contains("success")) {
+  //       setState(() {
+  //         _titleController.text = newTitle;
+  //         _isEditing = false;
+  //       });
+  //       print("🎯 Column title updated locally to: $newTitle");
+  //     } else {
+  //       print("⚠️ Unexpected server response: ${response.data}");
+  //     }
+  //   } catch (e) {
+  //     print("❌ Error updating column title: $e");
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
