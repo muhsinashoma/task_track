@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 //import 'package:dropdown_search/dropdown_search.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
@@ -21,10 +20,6 @@ import 'arabic_words_in_bangla.dart';
 import 'kanban_board_controller.dart';
 //import 'package:dropdown_search/dropdown_search.dart';
 //import '../../models/project_list_item.dart';
-
-// Add a key to your DropdownButton
-// final GlobalKey _dropdownKey = GlobalKey();
-// bool _projectNotSelected = false;
 
 class ProjectListItem {
   final int id;
@@ -56,9 +51,6 @@ String? _selectedProjectName;
 int? _selectedProjectId;
 String? _projectOwnerName;
 int _selectedProjectTaskCount = 0; // 👈 default 0
-
-bool _isBlinking = false;
-Color _borderColor = Colors.red;
 
 class KanbanSetStatePage extends StatefulWidget {
   const KanbanSetStatePage({super.key});
@@ -104,25 +96,9 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   @override
   void initState() {
     super.initState();
-    _startBlinking();
-
     //getColumnData();
     getTaskData();
     getProjectListData();
-  }
-
-// blanking effect and focus for project selector
-
-  void _startBlinking() {
-    if (_selectedProjectId != null) return; // stop if selected
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      setState(() {
-        _isBlinking = !_isBlinking;
-        _borderColor = _isBlinking ? Colors.red : Colors.white;
-      });
-      _startBlinking();
-    });
   }
 
   String getFirstAndLastLetter(String name) {
@@ -540,48 +516,106 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
         title: Row(
           children: [
-            // --------To Show Project in Modal in AppBar----------
-
-            // Start AppBar Project Selector
-
+            // -------- Project Dropdown in AppBar----------
             SizedBox(
               width: 180,
-              child: GestureDetector(
-                onTap: () => _showProjectSelectionModal(),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: _borderColor,
-                      width: 1.5,
-                    ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value: _selectedProjectId,
+                  hint: const Text(
+                    "Select Project",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          _selectedProjectName ?? "Select Project",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+
+                  // In your AppBar actions or wherever you want the button
+
+                  isExpanded: true,
+                  dropdownColor: Colors.white,
+                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                  items: _projects.map((project) {
+                    Color projectColor =
+                        generateProjectColor(_projects.indexOf(project));
+                    return DropdownMenuItem<int>(
+                      value: project.id,
+                      child: Row(
+                        children: [
+                          // -------- Folder with Task Count Badge --------
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Icon(Icons.folder, color: projectColor, size: 18),
+                              if (project.taskCount > 0)
+                                Positioned(
+                                  right: -6,
+                                  top: -6,
+                                  child: CircleAvatar(
+                                    radius: 8,
+                                    backgroundColor:
+                                        Color.fromARGB(255, 171, 168, 168),
+                                    child: Text(
+                                      '${project.taskCount}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          const SizedBox(width: 6),
+
+                          Expanded(
+                            child: Text(
+                              project.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+
+                          // -------- Project Owner Avatar --------
+                          CircleAvatar(
+                            radius: 12,
+                            backgroundColor: projectColor,
+                            child: Text(
+                              getFirstAndLastLetter(project.project_owner_name),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const Icon(Icons.arrow_drop_down, color: Colors.white),
-                    ],
-                  ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedProjectId = value;
+                      final project =
+                          _projects.firstWhere((p) => p.id == value);
+                      _selectedProjectName = project.name;
+                      _selectedProjectTaskCount = project.taskCount;
+                      _projectOwnerName = project.project_owner_name;
+                    });
+                    getTaskData();
+                  },
                 ),
               ),
             ),
 
-            // End AppBar Project Selector
+            //--------End Project Dropdown-----------
 
             const SizedBox(width: 6),
 
@@ -684,6 +718,15 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
               onTap: () => Navigator.pop(context),
             ),
 
+            // ListTile(
+            //   leading: const Icon(Icons.add),
+            //   title: const Text('Add Column'),
+            //   onTap: () {
+            //     Navigator.pop(context);
+            //     _showAddColumnDialog();
+            //   },
+            // ),
+
             ListTile(
               tileColor: Colors.grey.shade200, // 👈 light gray background
               leading: const Icon(
@@ -703,7 +746,111 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
               },
             ),
 
+            // //-------------- Start About Me--------------
+
+            // ListTile(
+            //   leading: const Icon(Icons.info),
+            //   title: const Text('About Me'),
+            //   onTap: () {
+            //     Navigator.pop(context);
+
+            //     showDialog(
+            //       context: context,
+            //       barrierDismissible: true,
+            //       builder: (context) {
+            //         final screenSize = MediaQuery.of(context).size;
+            //         final screenWidth = screenSize.width;
+            //         final screenHeight = screenSize.height;
+
+            //         // Responsive inset (~1 inch or less on small devices)
+            //         final inset = screenWidth < 500 ? 32.0 : 96.0;
+
+            //         // Control dialog height for large screens
+            //         final maxDialogHeight = screenHeight < 600
+            //             ? screenHeight * 0.9 // Mobile: use most of screen
+            //             : screenHeight * 0.6; // Laptop: 60% height
+
+            //         return Dialog(
+            //           shape: RoundedRectangleBorder(
+            //             borderRadius: BorderRadius.circular(20),
+            //           ),
+            //           insetPadding: EdgeInsets.all(inset),
+            //           child: ConstrainedBox(
+            //             constraints: BoxConstraints(
+            //               maxHeight: maxDialogHeight,
+            //               maxWidth: screenWidth < 600
+            //                   ? screenWidth * 0.9
+            //                   : screenWidth * 0.5, // 50% width on desktop
+            //             ),
+            //             child: Stack(
+            //               children: [
+            //                 // Main content with image
+            //                 Padding(
+            //                   padding: const EdgeInsets.all(20),
+            //                   child: SingleChildScrollView(
+            //                     child: Column(
+            //                       mainAxisSize: MainAxisSize.min,
+            //                       children: [
+            //                         // Your profile image
+            //                         // const CircleAvatar(
+            //                         //   radius: 50,
+            //                         //   backgroundImage: AssetImage(
+            //                         //       'assets/icons/muhsina.png'),
+            //                         // ),
+            //                         const SizedBox(height: 20),
+
+            //                         // About Me content
+            //                         const AboutMePage(),
+            //                       ],
+            //                     ),
+            //                   ),
+            //                 ),
+
+            //                 // Close button (top right corner)
+            //                 Positioned(
+            //                   right: 0,
+            //                   top: 0,
+            //                   child: IconButton(
+            //                     icon:
+            //                         const Icon(Icons.close, color: Colors.grey),
+            //                     iconSize: 28,
+            //                     splashRadius: 20,
+            //                     tooltip: 'Close',
+            //                     onPressed: () => Navigator.pop(context),
+            //                   ),
+            //                 ),
+            //               ],
+            //             ),
+            //           ),
+            //         );
+            //       },
+            //     );
+            //   },
+            // ),
+
+            // End About Me
+
+            // Backup App Icon
+            // ListTile(
+            //   leading: CircleAvatar(
+            //     radius: 18,
+            //     backgroundImage: const AssetImage('assets/icons/app_icon.png'),
+            //     backgroundColor: Colors.transparent,
+            //   ),
+            //   title: const Text('More App'),
+            //   onTap: () => Navigator.pop(context),
+            // ),
+            //End Backup App Icon
+
+            // ListTile(
+            //   leading: const Icon(Icons.apps),
+            //   title: const Text('More App'),
+            //   onTap: () => Navigator.pop(context),
+            // ),
+
             //-------------- Start About Me--------------
+
+//-------------- Start About Me--------------
 
             ListTile(
               tileColor: Colors.orange.shade50, // 👈 different light color
@@ -946,190 +1093,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-// ----------The modal for project selection------working perfectly-------
-
-  void _showProjectSelectionModal() {
-    List<ProjectListItem> _filteredProjects = List.from(_projects);
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) {
-        final isMobile = MediaQuery.of(context).size.width < 600;
-        final modalWidth = isMobile
-            ? MediaQuery.of(context).size.width * 0.95
-            : MediaQuery.of(context).size.width * 0.5;
-        final modalHeight = isMobile
-            ? MediaQuery.of(context).size.height * 0.8
-            : MediaQuery.of(context).size.height * 0.7;
-
-        return Center(
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              width: modalWidth,
-              height: modalHeight,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 20,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: StatefulBuilder(
-                builder: (context, setModalState) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ---------- Header ----------
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            // --------Title of the modal
-                            "Select Project",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            icon:
-                                const Icon(Icons.close, color: Colors.black54),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // ---------- Search Field ----------
-                      TextField(
-                        decoration: InputDecoration(
-                          hintText: "Search project...",
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 8),
-                        ),
-                        onChanged: (value) {
-                          setModalState(() {
-                            _filteredProjects = _projects
-                                .where((p) => p.name
-                                    .toLowerCase()
-                                    .contains(value.toLowerCase()))
-                                .toList();
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ---------- Project List ----------
-                      Expanded(
-                        child: _filteredProjects.isEmpty
-                            ? const Center(
-                                child: Text(
-                                  "No projects found",
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              )
-                            : ListView.builder(
-                                itemCount: _filteredProjects.length,
-                                itemBuilder: (context, index) {
-                                  final project = _filteredProjects[index];
-                                  final projectColor = generateProjectColor(
-                                      _projects.indexOf(project));
-
-                                  return Card(
-                                    elevation: 2,
-                                    margin:
-                                        const EdgeInsets.symmetric(vertical: 6),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: ListTile(
-                                      leading: Stack(
-                                        clipBehavior: Clip.none,
-                                        children: [
-                                          Icon(Icons.folder,
-                                              color: projectColor, size: 28),
-                                          if (project.taskCount > 0)
-                                            Positioned(
-                                              right: -6,
-                                              top: -6,
-                                              child: CircleAvatar(
-                                                radius: 10,
-                                                backgroundColor:
-                                                    Colors.grey[600],
-                                                child: Text(
-                                                  '${project.taskCount}',
-                                                  style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 10,
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                      title: Text(
-                                        project.name,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w600),
-                                      ),
-                                      subtitle: Text(
-                                        "Owner: ${project.project_owner_name}",
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                      trailing: CircleAvatar(
-                                        radius: 14,
-                                        backgroundColor: projectColor,
-                                        child: Text(
-                                          getFirstAndLastLetter(
-                                              project.project_owner_name),
-                                          style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12),
-                                        ),
-                                      ),
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedProjectId = project.id;
-                                          _selectedProjectName = project.name;
-                                          _selectedProjectTaskCount =
-                                              project.taskCount;
-                                          _projectOwnerName =
-                                              project.project_owner_name;
-                                        });
-                                        getTaskData();
-                                        Navigator.pop(context);
-                                      },
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-// ----------End The modal for project selection------
-
-// ----------To Add a New Project using a Dialog---------
+// ---------- Project Dialog ---------
   void _showAddProjectDialog() {
     final _projectController = TextEditingController();
     final _ownerController = TextEditingController();
@@ -1340,7 +1304,89 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-// ----------End To Add a New Project using a Dialog---------
+  // The modal function
+  void _showProjectSelectionModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Select Project",
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87),
+              ),
+              const SizedBox(height: 12),
+              ..._projects.map((project) {
+                Color projectColor =
+                    generateProjectColor(_projects.indexOf(project));
+                return ListTile(
+                  leading: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(Icons.folder, color: projectColor, size: 24),
+                      if (project.taskCount > 0)
+                        Positioned(
+                          right: -6,
+                          top: -6,
+                          child: CircleAvatar(
+                            radius: 10,
+                            backgroundColor: Colors.grey[400],
+                            child: Text(
+                              '${project.taskCount}',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  title: Text(
+                    project.name,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, color: Colors.black87),
+                  ),
+                  trailing: CircleAvatar(
+                    radius: 14,
+                    backgroundColor: projectColor,
+                    child: Text(
+                      getFirstAndLastLetter(project.project_owner_name),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12),
+                    ),
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _selectedProjectId = project.id;
+                      _selectedProjectName = project.name;
+                      _selectedProjectTaskCount = project.taskCount;
+                      _projectOwnerName = project.project_owner_name;
+                    });
+                    getTaskData();
+                    Navigator.pop(context); // Close modal after selection
+                  },
+                );
+              }).toList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
 // utils.dart (or top of your widget file, before the class)
   void _showErrorDialog(BuildContext context, String message) {
