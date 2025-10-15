@@ -212,7 +212,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
     );
   }
 
-  // --- Editable Title ---
+  // ---------------- Editable Title ------------------
   Widget _buildTitleColumn(Color titleColor) {
     final taskCount = widget.column.children.length;
 
@@ -309,7 +309,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
     );
   }
 
-  // --- Show Task list ---
+  // ------------------ Show Task list --------------------
   Widget _buildListItemsColumn() {
     final filteredTasks = getFilteredTasks();
     return Expanded(
@@ -328,7 +328,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
                   constraints: const BoxConstraints(maxWidth: 220),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
+                    color: const Color.fromARGB(255, 245, 244, 244),
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: const [
                       BoxShadow(

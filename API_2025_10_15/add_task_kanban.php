@@ -21,18 +21,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     );
     $stmt->bind_param("ssssss", $title, $column_id, $model_name, $project_id, $created_by, $user_identifier);
 
-    // if ($stmt->execute()) {
-    //     echo json_encode(["success" => true, "message" => "Task Added Successfully"]);
-    // } else {
-    //     echo json_encode(["success" => false, "message" => "Error: " . $stmt->error]);
-    // }
-
     if ($stmt->execute()) {
-    echo json_encode(["success" => 1, "message" => "Task Added Successfully"]);
+        echo json_encode(["success" => true, "message" => "Task Added Successfully"]);
     } else {
-        echo json_encode(["success" => 0, "message" => "Error: " . $stmt->error]);
+        echo json_encode(["success" => false, "message" => "Error: " . $stmt->error]);
     }
-
 
     $stmt->close();
 } else {

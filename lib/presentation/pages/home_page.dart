@@ -223,6 +223,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     return dayWidgets;
   }
 
+
 //------------------- getTaskData To show Kanban Board using BaseURL-----------------------
 
   Future<void> getTaskData() async {
@@ -404,7 +405,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   }
 
   //---------------------------Add Column using Based UrL----------------------------
-
   @override
   void addColumn(String title) async {
     int newId = columns.length + 1;
@@ -505,6 +505,120 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       print("❌ Add task error: $e");
     }
   }
+
+// ------------------Start Delete Task from Board using baseUrl-----------------
+
+  @override
+  Future<void> deleteItem(int columnIndex, KTask task) async {
+    setState(() => columns[columnIndex].children.remove(task));
+
+    final dio = Dio();
+    try {
+      // ✅ Use baseUrl here
+      var url = Uri.parse("${baseUrl}delete_task_kanban.php");
+      print("🗑️ Delete task URL: $url");
+
+      await dio.post(
+        url.toString(),
+        data: {
+          "id": task.taskId,
+          "deleted_by": "muhsina",
+        },
+        options: Options(
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
+      );
+
+      print("✅ Task deleted successfully (ID: ${task.taskId})");
+    } catch (e) {
+      print("❌ Delete error: $e");
+    }
+  }
+
+  // End Delete Task from Board using baseUrl
+
+  // Start Drag and Drop with API call
+
+  @override
+  void dragHandler(KData data, int index) async {
+    setState(() {
+      columns[data.from].children.remove(data.task);
+      columns[index].children.add(data.task);
+    });
+
+    final dio = Dio();
+    try {
+      // ✅ Use baseUrl just like your other API functions
+      var url = Uri.parse("${baseUrl}drag_drop_kanban.php");
+      print("📡 Drag-drop update URL: $url");
+
+      await dio.post(
+        url.toString(),
+        data: {
+          "id": data.taskId,
+          "column_name": index + 1,
+          "previous_status": data.from + 1,
+          "model_name": 1,
+          "project_name": 1,
+          "status_change_by": "muhsina",
+        },
+        options: Options(
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
+      );
+
+      print("✅ Drag-drop update successful");
+    } catch (e) {
+      print("❌ Drag error: $e");
+    }
+  }
+
+  //End Drag and Drop with API call
+
+  //Start Updated to use dynamic baseUrl
+
+  @override
+  void updateItem(int columnIndex, KTask task) async {
+    final dio = Dio();
+
+    try {
+      // ✅ Use baseUrl dynamically
+      var url = Uri.parse("${baseUrl}update_task_kanban.php");
+      print("📡 Updating task via: $url");
+
+      await dio.post(
+        url.toString(),
+        data: {
+          "id": task.taskId,
+          "title": task.title,
+          "edited_by": "muhsina",
+          "edited_at": DateTime.now().toString(),
+        },
+        options: Options(
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
+      );
+
+      print("✅ Task updated successfully on backend");
+    } catch (e) {
+      print("❌ Update error: $e");
+    }
+  }
+
+  //End Updated to use dynamic baseUrl
+
+//Start Handle Reorder
+  @override
+  void handleReOrder(int oldIndex, int newIndex, int index) {
+    setState(() {
+      if (oldIndex != newIndex) {
+        final task = columns[index].children.removeAt(oldIndex);
+        columns[index].children.insert(newIndex, task);
+      }
+    });
+  }
+
+  //End Handle Reorder
 
   // ------------------- Date Suffix -------------------
   String suffix(int day) {
@@ -1147,185 +1261,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-  // void _showProjectSelectionModal() {
-  //   List<ProjectListItem> _filteredProjects = List.from(_projects);
-
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: true,
-  //     builder: (context) {
-  //       final isMobile = MediaQuery.of(context).size.width < 600;
-  //       final modalWidth = isMobile
-  //           ? MediaQuery.of(context).size.width * 0.95
-  //           : MediaQuery.of(context).size.width * 0.5;
-  //       final modalHeight = isMobile
-  //           ? MediaQuery.of(context).size.height * 0.8
-  //           : MediaQuery.of(context).size.height * 0.7;
-
-  //       return Center(
-  //         child: Material(
-  //           color: Colors.transparent,
-  //           child: Container(
-  //             width: modalWidth,
-  //             height: modalHeight,
-  //             padding: const EdgeInsets.all(16),
-  //             decoration: BoxDecoration(
-  //               color: Colors.white,
-  //               borderRadius: BorderRadius.circular(16),
-  //               boxShadow: [
-  //                 BoxShadow(
-  //                   color: Colors.black26,
-  //                   blurRadius: 20,
-  //                   offset: Offset(0, 8),
-  //                 ),
-  //               ],
-  //             ),
-  //             child: StatefulBuilder(
-  //               builder: (context, setModalState) {
-  //                 return Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     // ---------- Header ----------
-  //                     Row(
-  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //                       children: [
-  //                         const Text(
-  //                           // --------Title of the modal
-  //                           "Select Project",
-  //                           style: TextStyle(
-  //                             fontSize: 18,
-  //                             fontWeight: FontWeight.bold,
-  //                           ),
-  //                         ),
-  //                         IconButton(
-  //                           icon:
-  //                               const Icon(Icons.close, color: Colors.black54),
-  //                           onPressed: () => Navigator.pop(context),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                     const SizedBox(height: 8),
-
-  //                     // ---------- Search Field ----------
-  //                     TextField(
-  //                       decoration: InputDecoration(
-  //                         hintText: "Search project...",
-  //                         prefixIcon: const Icon(Icons.search),
-  //                         border: OutlineInputBorder(
-  //                           borderRadius: BorderRadius.circular(12),
-  //                         ),
-  //                         contentPadding:
-  //                             const EdgeInsets.symmetric(vertical: 8),
-  //                       ),
-  //                       onChanged: (value) {
-  //                         setModalState(() {
-  //                           _filteredProjects = _projects
-  //                               .where((p) => p.name
-  //                                   .toLowerCase()
-  //                                   .contains(value.toLowerCase()))
-  //                               .toList();
-  //                         });
-  //                       },
-  //                     ),
-  //                     const SizedBox(height: 12),
-
-  //                     // ---------- Project List ----------
-  //                     Expanded(
-  //                       child: _filteredProjects.isEmpty
-  //                           ? const Center(
-  //                               child: Text(
-  //                                 "No projects found",
-  //                                 style: TextStyle(color: Colors.grey),
-  //                               ),
-  //                             )
-  //                           : ListView.builder(
-  //                               itemCount: _filteredProjects.length,
-  //                               itemBuilder: (context, index) {
-  //                                 final project = _filteredProjects[index];
-  //                                 final projectColor = generateProjectColor(
-  //                                     _projects.indexOf(project));
-
-  //                                 return Card(
-  //                                   elevation: 2,
-  //                                   margin:
-  //                                       const EdgeInsets.symmetric(vertical: 6),
-  //                                   shape: RoundedRectangleBorder(
-  //                                     borderRadius: BorderRadius.circular(10),
-  //                                   ),
-  //                                   child: ListTile(
-  //                                     leading: Stack(
-  //                                       clipBehavior: Clip.none,
-  //                                       children: [
-  //                                         Icon(Icons.folder,
-  //                                             color: projectColor, size: 28),
-  //                                         if (project.taskCount > 0)
-  //                                           Positioned(
-  //                                             right: -6,
-  //                                             top: -6,
-  //                                             child: CircleAvatar(
-  //                                               radius: 10,
-  //                                               backgroundColor:
-  //                                                   Colors.grey[600],
-  //                                               child: Text(
-  //                                                 '${project.taskCount}',
-  //                                                 style: const TextStyle(
-  //                                                     color: Colors.white,
-  //                                                     fontSize: 10,
-  //                                                     fontWeight:
-  //                                                         FontWeight.bold),
-  //                                               ),
-  //                                             ),
-  //                                           ),
-  //                                       ],
-  //                                     ),
-  //                                     title: Text(
-  //                                       project.name,
-  //                                       style: const TextStyle(
-  //                                           fontWeight: FontWeight.w600),
-  //                                     ),
-  //                                     subtitle: Text(
-  //                                       "Owner: ${project.project_owner_name}",
-  //                                       style: const TextStyle(fontSize: 12),
-  //                                     ),
-  //                                     trailing: CircleAvatar(
-  //                                       radius: 14,
-  //                                       backgroundColor: projectColor,
-  //                                       child: Text(
-  //                                         getFirstAndLastLetter(
-  //                                             project.project_owner_name),
-  //                                         style: const TextStyle(
-  //                                             color: Colors.white,
-  //                                             fontSize: 12),
-  //                                       ),
-  //                                     ),
-  //                                     onTap: () {
-  //                                       setState(() {
-  //                                         _selectedProjectId = project.id;
-  //                                         _selectedProjectName = project.name;
-  //                                         _selectedProjectTaskCount =
-  //                                             project.taskCount;
-  //                                         _projectOwnerName =
-  //                                             project.project_owner_name;
-  //                                       });
-  //                                       getTaskData();
-  //                                       Navigator.pop(context);
-  //                                     },
-  //                                   ),
-  //                                 );
-  //                               },
-  //                             ),
-  //                     ),
-  //                   ],
-  //                 );
-  //               },
-  //             ),
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
-
 // ----------End The modal for project selection------
 
 // ----------To Add a New Project using a Dialog---------
@@ -1671,119 +1606,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-  // ------------------ End Edit Task ----------------------------
-
-// ------------------Start Delete Task from Board using baseUrl-----------------
-
-  @override
-  Future<void> deleteItem(int columnIndex, KTask task) async {
-    setState(() => columns[columnIndex].children.remove(task));
-
-    final dio = Dio();
-    try {
-      // ✅ Use baseUrl here
-      var url = Uri.parse("${baseUrl}delete_task_kanban.php");
-      print("🗑️ Delete task URL: $url");
-
-      await dio.post(
-        url.toString(),
-        data: {
-          "id": task.taskId,
-          "deleted_by": "muhsina",
-        },
-        options: Options(
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        ),
-      );
-
-      print("✅ Task deleted successfully (ID: ${task.taskId})");
-    } catch (e) {
-      print("❌ Delete error: $e");
-    }
-  }
-
-  // End Delete Task from Board using baseUrl
-
-  // Start Drag and Drop with API call
-
-  @override
-  void dragHandler(KData data, int index) async {
-    setState(() {
-      columns[data.from].children.remove(data.task);
-      columns[index].children.add(data.task);
-    });
-
-    final dio = Dio();
-    try {
-      // ✅ Use baseUrl just like your other API functions
-      var url = Uri.parse("${baseUrl}drag_drop_kanban.php");
-      print("📡 Drag-drop update URL: $url");
-
-      await dio.post(
-        url.toString(),
-        data: {
-          "id": data.taskId,
-          "column_name": index + 1,
-          "previous_status": data.from + 1,
-          "model_name": 1,
-          "project_name": 1,
-          "status_change_by": "muhsina",
-        },
-        options: Options(
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        ),
-      );
-
-      print("✅ Drag-drop update successful");
-    } catch (e) {
-      print("❌ Drag error: $e");
-    }
-  }
-
-  //End Drag and Drop with API call
-
-  //Start Updated to use dynamic baseUrl
-
-  @override
-  void updateItem(int columnIndex, KTask task) async {
-    final dio = Dio();
-
-    try {
-      // ✅ Use baseUrl dynamically
-      var url = Uri.parse("${baseUrl}update_task_kanban.php");
-      print("📡 Updating task via: $url");
-
-      await dio.post(
-        url.toString(),
-        data: {
-          "id": task.taskId,
-          "title": task.title,
-          "edited_by": "muhsina",
-          "edited_at": DateTime.now().toString(),
-        },
-        options: Options(
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        ),
-      );
-
-      print("✅ Task updated successfully on backend");
-    } catch (e) {
-      print("❌ Update error: $e");
-    }
-  }
-
-  //End Updated to use dynamic baseUrl
-
-//Start Handle Reorder
-  @override
-  void handleReOrder(int oldIndex, int newIndex, int index) {
-    setState(() {
-      if (oldIndex != newIndex) {
-        final task = columns[index].children.removeAt(oldIndex);
-        columns[index].children.insert(newIndex, task);
-      }
-    });
-  }
+  // ----------------End Edit Task ----------------------------
 
   //End Handle Reorder
 }
