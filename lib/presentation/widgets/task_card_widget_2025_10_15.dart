@@ -74,86 +74,38 @@ class TaskCard extends StatelessWidget {
                     ),
                   ],
                 ),
-
-                trailing: PopupMenuButton<String>(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  icon: const Icon(
-                    Icons.more_vert,
-                    color: Colors.black54,
-                  ),
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      updateItemHandler(columnIndex, task);
-                    } else if (value == 'delete') {
-                      showModalBottomSheet(
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        updateItemHandler(columnIndex, task);
+                      },
+                      child: const Icon(
+                        //-------Edit Icon Color Changed-------//
+                        Icons.edit,
+                        color: Color.fromARGB(255, 163, 233, 175),
+                        size: 18.0,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () => showModalBottomSheet(
                         context: context,
                         builder: (context) => TaskMenu(
                           deleteHandler: () =>
                               deleteItemHandler(columnIndex, task),
                         ),
-                      );
-                    }
-                  },
-                  itemBuilder: (BuildContext context) => [
-                    PopupMenuItem<String>(
-                      value: 'edit',
-                      child: Row(
-                        children: const [
-                          Icon(Icons.edit, color: Colors.blueAccent, size: 18),
-                          SizedBox(width: 8),
-                          Text('Edit'),
-                        ],
                       ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Row(
-                        children: const [
-                          Icon(Icons.delete, color: Colors.redAccent, size: 18),
-                          SizedBox(width: 8),
-                          Text('Delete'),
-                        ],
+                      child: const Icon(
+                        //-------Delete Icon Color Changed-------//
+                        Icons.delete,
+                        color: Color.fromARGB(255, 125, 220, 128),
+                        size: 18,
                       ),
                     ),
                   ],
                 ),
-
-                //-------Old trailing code- 2025-10-15------//
-
-                //  trailing: Row(
-                //     mainAxisSize: MainAxisSize.min,
-                //     children: [
-                //       InkWell(
-                //         onTap: () {
-                //           updateItemHandler(columnIndex, task);
-                //         },
-                //         child: const Icon(
-                //           //-------Edit Icon Color Changed-------//
-                //           Icons.edit,
-                //           color: Color.fromARGB(255, 163, 233, 175),
-                //           size: 18.0,
-                //         ),
-                //       ),
-                //       const SizedBox(width: 8),
-                //       InkWell(
-                //         onTap: () => showModalBottomSheet(
-                //           context: context,
-                //           builder: (context) => TaskMenu(
-                //             deleteHandler: () =>
-                //                 deleteItemHandler(columnIndex, task),
-                //           ),
-                //         ),
-                //         child: const Icon(
-                //           //-------Delete Icon Color Changed-------//
-                //           Icons.delete,
-                //           color: Color.fromARGB(255, 125, 220, 128),
-                //           size: 18,
-                //         ),
-                //       ),
-                //     ],
-                //   ),
               ),
             ),
           ),

@@ -946,7 +946,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-// ----------The modal for project selection------working perfectly-------
+// ----------To show modal and Total projects number in title bar inside the modal for project selection------working perfectly-------
 
   void _showProjectSelectionModal() {
     List<ProjectListItem> _filteredProjects = List.from(_projects);
@@ -977,7 +977,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                   BoxShadow(
                     color: Colors.black26,
                     blurRadius: 20,
-                    offset: Offset(0, 8),
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
@@ -990,13 +990,33 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            // --------Title of the modal
-                            "Select Project",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            children: [
+                              const Text(
+                                "Select Project",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  "Total: ${_projects.length}",
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.blueAccent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           IconButton(
                             icon:
@@ -1070,10 +1090,10 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                                                 child: Text(
                                                   '${project.taskCount}',
                                                   style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 10,
-                                                      fontWeight:
-                                                          FontWeight.bold),
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -1126,6 +1146,185 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       },
     );
   }
+
+  // void _showProjectSelectionModal() {
+  //   List<ProjectListItem> _filteredProjects = List.from(_projects);
+
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: true,
+  //     builder: (context) {
+  //       final isMobile = MediaQuery.of(context).size.width < 600;
+  //       final modalWidth = isMobile
+  //           ? MediaQuery.of(context).size.width * 0.95
+  //           : MediaQuery.of(context).size.width * 0.5;
+  //       final modalHeight = isMobile
+  //           ? MediaQuery.of(context).size.height * 0.8
+  //           : MediaQuery.of(context).size.height * 0.7;
+
+  //       return Center(
+  //         child: Material(
+  //           color: Colors.transparent,
+  //           child: Container(
+  //             width: modalWidth,
+  //             height: modalHeight,
+  //             padding: const EdgeInsets.all(16),
+  //             decoration: BoxDecoration(
+  //               color: Colors.white,
+  //               borderRadius: BorderRadius.circular(16),
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: Colors.black26,
+  //                   blurRadius: 20,
+  //                   offset: Offset(0, 8),
+  //                 ),
+  //               ],
+  //             ),
+  //             child: StatefulBuilder(
+  //               builder: (context, setModalState) {
+  //                 return Column(
+  //                   crossAxisAlignment: CrossAxisAlignment.start,
+  //                   children: [
+  //                     // ---------- Header ----------
+  //                     Row(
+  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                       children: [
+  //                         const Text(
+  //                           // --------Title of the modal
+  //                           "Select Project",
+  //                           style: TextStyle(
+  //                             fontSize: 18,
+  //                             fontWeight: FontWeight.bold,
+  //                           ),
+  //                         ),
+  //                         IconButton(
+  //                           icon:
+  //                               const Icon(Icons.close, color: Colors.black54),
+  //                           onPressed: () => Navigator.pop(context),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                     const SizedBox(height: 8),
+
+  //                     // ---------- Search Field ----------
+  //                     TextField(
+  //                       decoration: InputDecoration(
+  //                         hintText: "Search project...",
+  //                         prefixIcon: const Icon(Icons.search),
+  //                         border: OutlineInputBorder(
+  //                           borderRadius: BorderRadius.circular(12),
+  //                         ),
+  //                         contentPadding:
+  //                             const EdgeInsets.symmetric(vertical: 8),
+  //                       ),
+  //                       onChanged: (value) {
+  //                         setModalState(() {
+  //                           _filteredProjects = _projects
+  //                               .where((p) => p.name
+  //                                   .toLowerCase()
+  //                                   .contains(value.toLowerCase()))
+  //                               .toList();
+  //                         });
+  //                       },
+  //                     ),
+  //                     const SizedBox(height: 12),
+
+  //                     // ---------- Project List ----------
+  //                     Expanded(
+  //                       child: _filteredProjects.isEmpty
+  //                           ? const Center(
+  //                               child: Text(
+  //                                 "No projects found",
+  //                                 style: TextStyle(color: Colors.grey),
+  //                               ),
+  //                             )
+  //                           : ListView.builder(
+  //                               itemCount: _filteredProjects.length,
+  //                               itemBuilder: (context, index) {
+  //                                 final project = _filteredProjects[index];
+  //                                 final projectColor = generateProjectColor(
+  //                                     _projects.indexOf(project));
+
+  //                                 return Card(
+  //                                   elevation: 2,
+  //                                   margin:
+  //                                       const EdgeInsets.symmetric(vertical: 6),
+  //                                   shape: RoundedRectangleBorder(
+  //                                     borderRadius: BorderRadius.circular(10),
+  //                                   ),
+  //                                   child: ListTile(
+  //                                     leading: Stack(
+  //                                       clipBehavior: Clip.none,
+  //                                       children: [
+  //                                         Icon(Icons.folder,
+  //                                             color: projectColor, size: 28),
+  //                                         if (project.taskCount > 0)
+  //                                           Positioned(
+  //                                             right: -6,
+  //                                             top: -6,
+  //                                             child: CircleAvatar(
+  //                                               radius: 10,
+  //                                               backgroundColor:
+  //                                                   Colors.grey[600],
+  //                                               child: Text(
+  //                                                 '${project.taskCount}',
+  //                                                 style: const TextStyle(
+  //                                                     color: Colors.white,
+  //                                                     fontSize: 10,
+  //                                                     fontWeight:
+  //                                                         FontWeight.bold),
+  //                                               ),
+  //                                             ),
+  //                                           ),
+  //                                       ],
+  //                                     ),
+  //                                     title: Text(
+  //                                       project.name,
+  //                                       style: const TextStyle(
+  //                                           fontWeight: FontWeight.w600),
+  //                                     ),
+  //                                     subtitle: Text(
+  //                                       "Owner: ${project.project_owner_name}",
+  //                                       style: const TextStyle(fontSize: 12),
+  //                                     ),
+  //                                     trailing: CircleAvatar(
+  //                                       radius: 14,
+  //                                       backgroundColor: projectColor,
+  //                                       child: Text(
+  //                                         getFirstAndLastLetter(
+  //                                             project.project_owner_name),
+  //                                         style: const TextStyle(
+  //                                             color: Colors.white,
+  //                                             fontSize: 12),
+  //                                       ),
+  //                                     ),
+  //                                     onTap: () {
+  //                                       setState(() {
+  //                                         _selectedProjectId = project.id;
+  //                                         _selectedProjectName = project.name;
+  //                                         _selectedProjectTaskCount =
+  //                                             project.taskCount;
+  //                                         _projectOwnerName =
+  //                                             project.project_owner_name;
+  //                                       });
+  //                                       getTaskData();
+  //                                       Navigator.pop(context);
+  //                                     },
+  //                                   ),
+  //                                 );
+  //                               },
+  //                             ),
+  //                     ),
+  //                   ],
+  //                 );
+  //               },
+  //             ),
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
 // ----------End The modal for project selection------
 
