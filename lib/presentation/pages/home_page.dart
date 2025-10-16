@@ -223,7 +223,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     return dayWidgets;
   }
 
-
 //------------------- getTaskData To show Kanban Board using BaseURL-----------------------
 
   Future<void> getTaskData() async {
@@ -232,6 +231,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
       // Use baseUrl here
       var url = Uri.parse("${baseUrl}get_task_data_kanban.php");
+
       print("Fetching data from: $url");
 
       var response = await dio.get(
