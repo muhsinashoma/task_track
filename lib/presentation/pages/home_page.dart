@@ -85,6 +85,20 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   // ------------------ Add this ------------------
   DateTime selectedDate = DateTime.now();
   // ---------- Selected period ----------
+  // int selectedNumber = 1;
+  // String selectedUnit = "Days"; // default period
+  // final List<int> numbers = List.generate(10, (i) => i + 1);
+  // final List<String> units = [
+  //   "Days",
+  //   "Months",
+  //   "Years",
+  //   "Last Dys",
+  //   "Last Mos",
+  //   "Last Yrs"
+  // ];
+  // String get periodText => "$selectedNumber $selectedUnit";
+
+  // ----------Start Selected period ---------------------
   int selectedNumber = 1;
   String selectedUnit = "Days"; // default period
   final List<int> numbers = List.generate(10, (i) => i + 1);
@@ -96,9 +110,30 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     "Last Months",
     "Last Years"
   ];
-  String get periodText => "$selectedNumber $selectedUnit";
 
-  // ---------- Kanban columns ----------
+// Smart formatted period text for AppBar
+  String get periodText {
+    switch (selectedUnit) {
+      case "Last Days":
+        return "${selectedNumber}LD";
+      case "Last Months":
+        return "${selectedNumber}LM";
+      case "Last Years":
+        return "${selectedNumber}LY";
+      case "Days":
+        return "${selectedNumber}d";
+      case "Months":
+        return "${selectedNumber}m";
+      case "Years":
+        return "${selectedNumber}y";
+      default:
+        return "$selectedNumber $selectedUnit";
+    }
+  }
+
+  // ----------End Selected period ---------------------
+
+  // ---------- Kanban columns ------------------------
   List<KColumn> columns = [];
 
   @override
@@ -649,109 +684,224 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ---------- AppBar ----------
+      // ✅ Responsive, balanced AppBar layout
+
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
-        title: Row(
-          children: [
-            // --------To Show Project in Modal in AppBar----------
-
-            // Start AppBar Project Selector
-
-            SizedBox(
-              width: 180,
-              child: GestureDetector(
-                onTap: () => _showProjectSelectionModal(),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
+        titleSpacing: 0,
+        title: LayoutBuilder(
+          builder: (context, constraints) {
+            final isSmallScreen = constraints.maxWidth < 360;
+            return Row(
+              children: [
+                // -------- Project Selector ----------
+                Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: _borderColor,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          _selectedProjectName ?? "Select Project",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                      const EdgeInsets.only(left: 2), // 👈 slightly more left
+                  child: SizedBox(
+                    width:
+                        isSmallScreen ? 130 : 145, // adjusts width dynamically
+                    child: GestureDetector(
+                      onTap: () => _showProjectSelectionModal(),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: _borderColor,
+                            width: 1.2,
                           ),
-                          overflow: TextOverflow.ellipsis,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                _selectedProjectName ?? "Select Project",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const Icon(Icons.arrow_drop_down,
+                                color: Colors.white, size: 18),
+                          ],
                         ),
                       ),
-                      const Icon(Icons.arrow_drop_down, color: Colors.white),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
 
-            // End AppBar Project Selector
+                const SizedBox(width: 6),
 
-            const SizedBox(width: 6),
-
-            // -------- Task Count Avatar ----------
-            CircleAvatar(
-              radius: 12,
-              backgroundColor: Colors.white,
-              child: Text(
-                '$_selectedProjectTaskCount',
-                style: const TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 8),
-
-            // -------- Period Filter ----------
-            GestureDetector(
-              onTap: _showPeriodDialog,
-              child: Row(
-                children: [
-                  const Icon(Icons.filter_alt, color: Colors.green, size: 18),
-                  const SizedBox(width: 2),
-                  Text(
-                    periodText == "1 days" ? "1d" : periodText,
+                // -------- Task Count Avatar ----------
+                CircleAvatar(
+                  radius: 11,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    '$_selectedProjectTaskCount',
                     style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                      fontSize: 11,
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            const Spacer(),
+                const SizedBox(width: 6),
 
-            // -------- English date ----------
-            Text(
-              DateFormat("MMM dd yyyy").format(DateTime.now()),
-              style: const TextStyle(
-                fontFamily: 'Montserrat',
-                color: Color.fromARGB(255, 47, 46, 46),
-                fontSize: 12,
-              ),
-            ),
+                // -------- Search Icon + Period ----------
+                GestureDetector(
+                  onTap: _showPeriodDialog,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, color: Colors.black87, size: 18),
+                      const SizedBox(width: 4),
+                      Text(
+                        periodText == "1 days" ? "1d" : periodText,
+                        style: const TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
-            const SizedBox(width: 6),
+                // -------- Push date to right ----------
+                const Spacer(),
 
-            // GestureDetector
-          ],
+                // -------- Current Date ----------
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Text(
+                    DateFormat("MMM dd, yyyy").format(DateTime.now()),
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      color: Color.fromARGB(255, 47, 46, 46),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
+
+      // To Start AppBar with Project Selector and Task Count Avatar
+
+      // ---------- Backup Oct 16, 2025 AppBar ----------
+      // appBar: AppBar(
+      //   backgroundColor: const Color.fromARGB(255, 158, 223, 180),
+      //   title: Row(
+      //     children: [
+      //       // --------To Show Project in Modal in AppBar----------
+
+      //       // Start AppBar Project Selector
+
+      //       SizedBox(
+      //         width: 180,
+      //         child: GestureDetector(
+      //           onTap: () => _showProjectSelectionModal(),
+      //           child: AnimatedContainer(
+      //             duration: const Duration(milliseconds: 300),
+      //             padding:
+      //                 const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      //             decoration: BoxDecoration(
+      //               color: Colors.transparent,
+      //               borderRadius: BorderRadius.circular(6),
+      //               border: Border.all(
+      //                 color: _borderColor,
+      //                 width: 1.5,
+      //               ),
+      //             ),
+      //             child: Row(
+      //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //               children: [
+      //                 Flexible(
+      //                   child: Text(
+      //                     _selectedProjectName ?? "Select Project",
+      //                     style: const TextStyle(
+      //                       color: Colors.white,
+      //                       fontSize: 12,
+      //                       fontWeight: FontWeight.w600,
+      //                     ),
+      //                     overflow: TextOverflow.ellipsis,
+      //                   ),
+      //                 ),
+      //                 const Icon(Icons.arrow_drop_down, color: Colors.white),
+      //               ],
+      //             ),
+      //           ),
+      //         ),
+      //       ),
+
+      //       // End AppBar Project Selector
+
+      //       const SizedBox(width: 6),
+
+      //       // -------- Task Count Avatar ----------
+      //       CircleAvatar(
+      //         radius: 12,
+      //         backgroundColor: Colors.white,
+      //         child: Text(
+      //           '$_selectedProjectTaskCount',
+      //           style: const TextStyle(
+      //             color: Colors.green,
+      //             fontWeight: FontWeight.bold,
+      //             fontSize: 12,
+      //           ),
+      //         ),
+      //       ),
+
+      //       const SizedBox(width: 8),
+
+      //       // -------- Period Filter ----------
+      //       GestureDetector(
+      //         onTap: _showPeriodDialog,
+      //         child: Row(
+      //           children: [
+      //             const Icon(Icons.filter_alt, color: Colors.green, size: 18),
+      //             const SizedBox(width: 2),
+      //             Text(
+      //               periodText == "1 days" ? "1d" : periodText,
+      //               style: const TextStyle(
+      //                 color: Colors.green,
+      //                 fontWeight: FontWeight.bold,
+      //                 fontSize: 13,
+      //               ),
+      //             ),
+      //           ],
+      //         ),
+      //       ),
+
+      //       const Spacer(),
+
+      //       // -------- English date ----------
+      //       Text(
+      //         DateFormat("MMM dd yyyy").format(DateTime.now()),
+      //         style: const TextStyle(
+      //           fontFamily: 'Montserrat',
+      //           color: Color.fromARGB(255, 47, 46, 46),
+      //           fontSize: 12,
+      //         ),
+      //       ),
+
+      //       const SizedBox(width: 6),
+
+      //       // GestureDetector
+      //     ],
+      //   ),
+      // ),
 
       //---------End AppBar-----------
 
@@ -1497,7 +1647,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   final phoneRegex = RegExp(r'^(01)[0-9]{9}$'); // Bangladeshi 11-digit number
   final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
-  // ------------------ Period Dialog ------------------
+  //----------------- Start Period Dialog-------------------
   void _showPeriodDialog() {
     showDialog(
       context: context,
@@ -1555,6 +1705,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       ),
     );
   }
+  //----------------- End Period Dialog-------------------
 
   // ------------------Start Add Column ------------------
   void _showAddColumnDialog() {

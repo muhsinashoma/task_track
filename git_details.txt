@@ -1,4 +1,7 @@
 
+
+
+
 PS D:\Flutter-Project\task_track> git log -1     
 commit 551f7fc5694ab306adf487dcc6468f57da8a1950 (HEAD -> muhsina, origin/muhsina)
 Author: muhsinashoma <muhsina.akter2@gmail.com>
@@ -17,7 +20,47 @@ PS D:\Flutter-Project\task_track> git commit -m "To Add Shared preferences for U
 PS D:\Flutter-Project\task_track> git push origin muhsina
 
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+
+No problem 😊 — here’s how you can create a new Git branch step-by-step (using command line):
+
+🪄 Option 1: Create and switch to a new branch
+git checkout -b new-branch-name
+
+
+👉 This command creates a new branch and switches you to it immediately.
+
+Example:
+
+git checkout -b feature-ui-update
+
+🪄 Option 2: Create only (without switching)
+git branch new-branch-name
+
+
+👉 This creates the branch but does not switch to it.
+
+Then you can switch later:
+
+git checkout new-branch-name
+
+🪄 To verify branches
+git branch
+
+
+👉 The current branch will be marked with a *.
+
+🪄 If you want to push it to GitHub
+
+After committing your changes:
+
+git push origin new-branch-name
+
+
+Would you like to create the new branch from your master or from muhsina branch?
+(I can show the exact command for that case.)
+
+-----------------------------------------------------------------------
 
 
 

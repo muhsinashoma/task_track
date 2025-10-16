@@ -1,7 +1,26 @@
 ---------------------------------------------------------------------------------------
+https://www.youtube.com/watch?v=vEyEdVY_utg
+
+রিজিক নিয়ে অযথা চিন্তা করবেন না?, মিজানুর রহমান আজহারী, তাং Oct 16, 2025
+-----------------------------------------------------------------------------------
+
+
+
+√  Built build\app\outputs\flutter-apk\app-debug.apk.
+Installing build\app\outputs\flutter-apk\app-debug.apk...          29.9s
+Syncing files to device SM A125F...                                223ms
+
+Flutter run key commands.
+r Hot reload.
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+
+--------------------------------------------------------------------------------------
 https://chatgpt.com/c/68ef8967-b5c4-8321-abf3-ca9772aebd6c
-
-
 
 That file loops:
 
