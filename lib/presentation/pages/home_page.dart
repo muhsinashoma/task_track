@@ -19,6 +19,7 @@ import '../widgets/kanban_board.dart';
 import 'about_me_page.dart';
 import 'arabic_words_in_bangla.dart';
 import 'kanban_board_controller.dart';
+import 'user_details_page.dart';
 //import 'package:dropdown_search/dropdown_search.dart';
 //import '../../models/project_list_item.dart';
 
@@ -267,6 +268,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       // Use baseUrl here
       var url = Uri.parse("${baseUrl}get_task_data_kanban.php");
 
+      //var url = Uri.parse("${baseUrl}get_dashboard_kanban.php");
+
       print("Fetching data from: $url");
 
       var response = await dio.get(
@@ -324,64 +327,59 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     }
   }
 
+  //To show multiple prjects in dashbard  2025-10-16
+
   // Future<void> getTaskData() async {
   //   try {
   //     final dio = Dio();
-  //     var response = await dio.get(
-  //       "http://192.168.0.103/API/get_task_data_kanban.php",
-  //       queryParameters: {
-  //         "project_id": _selectedProjectId ?? 0,
-  //         "period": selectedNumber,
-  //         "unit": selectedUnit.toLowerCase(),
-  //       },
-  //     );
+  //     var url = "${baseUrl}get_dashboard_kanban.php";
 
-  //     if (response.statusCode == 200) {
-  //       var taskData = response.data['task_boards'] as List;
+  //     var response = await dio.get(url, queryParameters: {
+  //       "user_identifier": userIdentifier,
+  //       "project_id": _selectedProjectId ?? 0, // 0 = all projects
+  //     });
 
-  //       List<Map<String, dynamic>> tasksForColumns = [];
-  //       int totalTaskCount = 0; // new counter
+  //     if (response.statusCode == 200 && response.data['success'] == true) {
+  //       // ----------------- Projects for dropdown -----------------
+  //       _projects = List<Map<String, dynamic>>.from(response.data['projects']);
 
-  //       for (var board in taskData) {
-  //         var tasks = board['tasks'] as List;
-  //         totalTaskCount += tasks.length;
+  //       // ----------------- Dashboard / Kanban Data -----------------
+  //       var dashboardData = response.data['data'] as List;
 
-  //         tasksForColumns.add({
-  //           'id': int.tryParse(board['id'].toString()) ?? 0,
-  //           'title': board['title'],
-  //           'tasks': tasks
-  //               .map((task) => {
-  //                     'id': int.tryParse(task['id'].toString()) ?? 0,
-  //                     'title': task['title'],
-  //                     'taskId': task['task_id'],
-  //                     'createdBy': task['created_by'] ?? 'Unknown',
-  //                     'createdAt': task['created_at'] ?? '',
-  //                   })
-  //               .toList(),
-  //         });
+  //       int totalTaskCount = 0;
+  //       List<KColumn> tempColumns = [];
+
+  //       for (var project in dashboardData) {
+  //         for (var col in project['columns']) {
+  //           List<KTask> tasks = [];
+  //           if (col['tasks'] != null) {
+  //             for (var t in col['tasks']) {
+  //               tasks.add(KTask(
+  //                 id: int.tryParse(t['id'].toString()) ?? 0,
+  //                 title: t['title'] ?? '',
+  //                 createdBy: t['created_by'] ?? 'Unknown',
+  //                 createdAt: t['created_at'] ?? '',
+  //               ));
+  //             }
+  //             totalTaskCount += tasks.length;
+  //           }
+
+  //           tempColumns.add(KColumn(
+  //             id: int.tryParse(col['id'].toString()) ?? 0,
+  //             title: col['title'] ?? '',
+  //             children: tasks,
+  //           ));
+  //         }
   //       }
 
-  //       // Generate columns from JSON
-  //       List<KColumn> fetchedColumns =
-  //           Data.getColumns(jsonEncode(tasksForColumns))
-  //               .map((col) => col.copyWith(children: col.children ?? []))
-  //               .toList();
-
-  //       // Assign unique colors to each column
-  //       columns = List.generate(
-  //         fetchedColumns.length,
-  //         (index) => fetchedColumns[index].copyWith(
-  //           color: generateProjectColor(index), // ✅ assign unique color
-  //         ),
-  //       );
-
-  //       // Update task count
+  //       // ----------------- Update state -----------------
   //       setState(() {
+  //         columns = tempColumns;
   //         _selectedProjectTaskCount = totalTaskCount;
   //       });
   //     }
   //   } catch (e) {
-  //     print("Error fetching tasks: $e");
+  //     print("Error fetching dashboard: $e");
   //   }
   // }
 
@@ -797,112 +795,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         ),
       ),
 
-      // To Start AppBar with Project Selector and Task Count Avatar
-
-      // ---------- Backup Oct 16, 2025 AppBar ----------
-      // appBar: AppBar(
-      //   backgroundColor: const Color.fromARGB(255, 158, 223, 180),
-      //   title: Row(
-      //     children: [
-      //       // --------To Show Project in Modal in AppBar----------
-
-      //       // Start AppBar Project Selector
-
-      //       SizedBox(
-      //         width: 180,
-      //         child: GestureDetector(
-      //           onTap: () => _showProjectSelectionModal(),
-      //           child: AnimatedContainer(
-      //             duration: const Duration(milliseconds: 300),
-      //             padding:
-      //                 const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      //             decoration: BoxDecoration(
-      //               color: Colors.transparent,
-      //               borderRadius: BorderRadius.circular(6),
-      //               border: Border.all(
-      //                 color: _borderColor,
-      //                 width: 1.5,
-      //               ),
-      //             ),
-      //             child: Row(
-      //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //               children: [
-      //                 Flexible(
-      //                   child: Text(
-      //                     _selectedProjectName ?? "Select Project",
-      //                     style: const TextStyle(
-      //                       color: Colors.white,
-      //                       fontSize: 12,
-      //                       fontWeight: FontWeight.w600,
-      //                     ),
-      //                     overflow: TextOverflow.ellipsis,
-      //                   ),
-      //                 ),
-      //                 const Icon(Icons.arrow_drop_down, color: Colors.white),
-      //               ],
-      //             ),
-      //           ),
-      //         ),
-      //       ),
-
-      //       // End AppBar Project Selector
-
-      //       const SizedBox(width: 6),
-
-      //       // -------- Task Count Avatar ----------
-      //       CircleAvatar(
-      //         radius: 12,
-      //         backgroundColor: Colors.white,
-      //         child: Text(
-      //           '$_selectedProjectTaskCount',
-      //           style: const TextStyle(
-      //             color: Colors.green,
-      //             fontWeight: FontWeight.bold,
-      //             fontSize: 12,
-      //           ),
-      //         ),
-      //       ),
-
-      //       const SizedBox(width: 8),
-
-      //       // -------- Period Filter ----------
-      //       GestureDetector(
-      //         onTap: _showPeriodDialog,
-      //         child: Row(
-      //           children: [
-      //             const Icon(Icons.filter_alt, color: Colors.green, size: 18),
-      //             const SizedBox(width: 2),
-      //             Text(
-      //               periodText == "1 days" ? "1d" : periodText,
-      //               style: const TextStyle(
-      //                 color: Colors.green,
-      //                 fontWeight: FontWeight.bold,
-      //                 fontSize: 13,
-      //               ),
-      //             ),
-      //           ],
-      //         ),
-      //       ),
-
-      //       const Spacer(),
-
-      //       // -------- English date ----------
-      //       Text(
-      //         DateFormat("MMM dd yyyy").format(DateTime.now()),
-      //         style: const TextStyle(
-      //           fontFamily: 'Montserrat',
-      //           color: Color.fromARGB(255, 47, 46, 46),
-      //           fontSize: 12,
-      //         ),
-      //       ),
-
-      //       const SizedBox(width: 6),
-
-      //       // GestureDetector
-      //     ],
-      //   ),
-      // ),
-
       //---------End AppBar-----------
 
       //---------Start Drawer----------
@@ -1045,8 +937,9 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
               },
             ),
 
-//-------------- End About Me--------------
+            //-------------- End About Me--------------
 
+            //--------------Start More App-------------
             ListTile(
               tileColor: Colors.lightBlue.shade50,
               leading: const Icon(
@@ -1067,6 +960,28 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                   MaterialPageRoute(
                       builder: (context) => const ArabicWordListPage()),
                 );
+              },
+            ),
+
+            //--------------End More App-------------
+
+            //--------------User Details-------------
+            ListTile(
+              tileColor: Colors.green.shade50,
+              leading: const Icon(
+                Icons.person,
+                color: Colors.green,
+              ),
+              title: const Text(
+                'User Details',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context); // Close drawer first
+                _showUserDetailsTray(context); // 👈 Open side tray
               },
             ),
 
@@ -1210,6 +1125,51 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
+  //Start User Details Side Tray
+
+  void _showUserDetailsTray(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'User Details',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            elevation: 8,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              bottomLeft: Radius.circular(16),
+            ),
+            child: Container(
+              width: MediaQuery.of(context).size.width *
+                  0.75, // 👈 Side tray width
+              height: MediaQuery.of(context).size.height,
+              color: Colors.white,
+              padding: const EdgeInsets.all(16),
+              child: const UserDetailsPage(), // 👈 Your user details UI
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0), // 👈 From right side
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOut,
+          )),
+          child: child,
+        );
+      },
+    );
+  }
+
+  //ENd User Details Side Tray
+
 // ----------To show modal and Total projects number in title bar inside the modal for project selection------working perfectly-------
 
   void _showProjectSelectionModal() {
@@ -1250,7 +1210,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ---------- Header ----------
+                      // ---------Start Header for Porject ----------
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -1280,6 +1240,100 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 8),
+
+                              // ---------- Add Project Button ----------
+                              // ElevatedButton.icon(
+                              //   onPressed: () {
+                              //     Navigator.pop(
+                              //         context); // Close modal before adding
+                              //     _showAddProjectDialog(); // Open Add Project dialog
+                              //   },
+                              //   icon: const Icon(Icons.add, size: 16),
+                              //   label: const Text(
+                              //     "Add",
+                              //     style: TextStyle(fontSize: 13),
+                              //   ),
+                              //   style: ElevatedButton.styleFrom(
+                              //     padding: const EdgeInsets.symmetric(
+                              //         horizontal: 12, vertical: 6),
+                              //     minimumSize: Size.zero, // fit to content
+                              //     tapTargetSize:
+                              //         MaterialTapTargetSize.shrinkWrap,
+                              //   ),
+                              // ),
+
+                              // ---------- Add Project Button ----------
+                              // ElevatedButton(
+                              //   onPressed: () {
+                              //     Navigator.pop(
+                              //         context); // Close modal before adding
+                              //     _showAddProjectDialog(); // Open Add Project dialog
+                              //   },
+                              //   style: ElevatedButton.styleFrom(
+                              //     backgroundColor: Color.fromARGB(
+                              //         255, 122, 183, 123), // ✅ Blue background
+                              //     shape: RoundedRectangleBorder(
+                              //       borderRadius: BorderRadius.circular(
+                              //           4), // ✅ Square edges
+                              //     ),
+                              //     padding: const EdgeInsets.all(
+                              //         10), // ✅ Make it look balanced
+                              //     minimumSize: const Size(
+                              //         36, 36), // ✅ Square button size
+                              //     tapTargetSize:
+                              //         MaterialTapTargetSize.shrinkWrap,
+                              //   ),
+                              //   child: const Icon(
+                              //     Icons.add,
+                              //     color:
+                              //         Colors.white, // ✅ White icon for contrast
+                              //     size: 18,
+                              //   ),
+                              // ),
+
+                              // ---------- Add Project Button ----------
+                              Tooltip(
+                                message: 'Add Project', // 👈 Hover text
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(
+                                        context); // Close modal before adding
+                                    _showAddProjectDialog(); // Open Add Project dialog
+                                  },
+                                  icon: const Icon(
+                                    Icons.add,
+                                    color: Colors
+                                        .white, // ✅ White icon for contrast
+                                    size: 18,
+                                  ),
+                                  label: const Text(
+                                    "Add Project",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color.fromARGB(
+                                        255,
+                                        122,
+                                        183,
+                                        123), // ✅ Your existing greenish-blue
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          4), // ✅ Square edges
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 8),
+                                    minimumSize:
+                                        const Size(36, 36), // ✅ Compact size
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           IconButton(
@@ -1289,6 +1343,9 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                           ),
                         ],
                       ),
+
+                      // ----------End Header for Porject Header ----------
+
                       const SizedBox(height: 8),
 
                       // ---------- Search Field ----------
