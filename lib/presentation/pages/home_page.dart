@@ -20,18 +20,16 @@ import 'about_me_page.dart';
 import 'arabic_words_in_bangla.dart';
 import 'kanban_board_controller.dart';
 import 'user_details_page.dart';
-//import 'package:dropdown_search/dropdown_search.dart';
-//import '../../models/project_list_item.dart';
-
-// Add a key to your DropdownButton
-// final GlobalKey _dropdownKey = GlobalKey();
-// bool _projectNotSelected = false;
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+// 👈 Add this
 
 class ProjectListItem {
   final int id;
   final String name;
   final String project_owner_name;
-  final String? attached_file;
+  final String? attached_file; // project file
+  final String? owner_image; // owner image
   int taskCount;
 
   ProjectListItem({
@@ -39,6 +37,7 @@ class ProjectListItem {
     required this.name,
     required this.project_owner_name,
     this.attached_file,
+    this.owner_image,
     this.taskCount = 0,
   });
 
@@ -48,10 +47,13 @@ class ProjectListItem {
       name: json['project_name'] ?? "Unnamed Project",
       project_owner_name: json['project_owner_name'] ?? "Unknown",
       attached_file: json['attached_file'],
+      owner_image: json['owner_image'], // map from backend
       taskCount: int.tryParse(json['task_count']?.toString() ?? "0") ?? 0,
     );
   }
 }
+
+File? selectedOwnerImage;
 
 String? _selectedProjectName;
 int? _selectedProjectId;
@@ -70,15 +72,16 @@ class KanbanSetStatePage extends StatefulWidget {
 
 class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     implements KanbanBoardController {
+  String? deviceId; // store globally for use anywhere
   // ---------------------- USER IDENTIFIER ----------------------
 
 //The function you posted creates and stores a unique ID for that device:
   Future<String> getUserIdentifier() async {
     final prefs = await SharedPreferences.getInstance();
-    String? id = prefs.getString('user_identifier');
+    String? id = prefs.getString('device_user_id');
     if (id == null) {
       id = const Uuid().v4();
-      await prefs.setString('user_identifier', id);
+      await prefs.setString('device_user_id', id);
     }
     return id;
   }
@@ -145,7 +148,40 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     //getColumnData();
     getTaskData();
     getProjectListData();
+    _initDeviceId();
   }
+
+  Future<void> _initDeviceId() async {
+    final id = await getDeviceUserId();
+    setState(() {
+      deviceId = id;
+    });
+
+    print("✅ Device ID initialized: $deviceId");
+  }
+
+  //To get Device User ID Dynamically
+
+  Future<String> getDeviceUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? deviceId = prefs.getString('device_user_id');
+
+    if (deviceId == null) {
+      deviceId = const Uuid().v4(); // Generate a new unique ID
+      await prefs.setString('device_user_id', deviceId);
+    }
+
+    return deviceId;
+  }
+
+// To get Device User ID Fixed to match DB Statically   Today October 24, 2025
+  // Future<String> getDeviceUserId() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   String deviceId = '1a6175f6-e9f5-49ef-82ee-98da33c1cdbd'; // match DB
+  //   await prefs.setString('device_user_id', deviceId);
+  //   print("📌 Using fixed device_user_id: $deviceId");
+  //   return deviceId;
+  // }
 
 // blanking effect and focus for project selector
 
@@ -383,7 +419,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   //   }
   // }
 
-//---------------------------------Add Project using Based UrL---------------------------
+//------------------- Add Project using BaseURL Today -----------------------
 
   Future<Map<String, dynamic>> addProjectDetails({
     required String projectName,
@@ -391,51 +427,187 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     required String contact,
     required String email,
     required String address,
-    File? file,
+    File? file, // Mobile file
+    File? ownerImage, // Mobile owner image
+    Uint8List? ownerImageBytes, // Web owner image
   }) async {
-    // 🔹 Get unique device/user ID
-    String userIdentifier = await getUserIdentifier();
+    final prefs = await SharedPreferences.getInstance();
+    String? deviceUserId = prefs.getString('device_user_id');
+    String? userId = prefs.getString('user_id');
 
-    FormData formData = FormData.fromMap({
+    deviceUserId ??= const Uuid().v4();
+    await prefs.setString('device_user_id', deviceUserId);
+
+    Map<String, dynamic> formMap = {
       "project_name": projectName,
       "project_owner_name": ownerName,
       "contact_number": contact,
       "email_address": email,
       "permanent_address": address,
       "created_by": ownerName,
-      "user_identifier": userIdentifier,
-      if (file != null)
-        "attached_file": await MultipartFile.fromFile(
-          file.path,
-          filename: file.path.split('/').last,
-        ),
-    });
+      "device_user_id": deviceUserId,
+      if (userId != null) "user_id": userId,
+    };
+
+    // Attach project file (mobile only)
+    if (file != null) {
+      formMap["attached_file"] = await MultipartFile.fromFile(
+        file.path,
+        filename: file.path.split('/').last,
+      );
+    }
+
+    // Attach owner image
+    if (kIsWeb && ownerImageBytes != null) {
+      formMap["owner_image"] = MultipartFile.fromBytes(
+        ownerImageBytes,
+        filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
+      );
+    } else if (!kIsWeb && ownerImage != null) {
+      formMap["owner_image"] = await MultipartFile.fromFile(
+        ownerImage.path,
+        filename: ownerImage.path.split('/').last,
+      );
+    }
+
+    FormData formData = FormData.fromMap(formMap);
 
     final dio = Dio();
+    //final url = "YOUR_BASE_URL/add_project_kanban.php";
+    final url = "${baseUrl}add_project_kanban.php";
 
     try {
-      // ✅ Use baseUrl instead of hardcoding
-      var url = Uri.parse("${baseUrl}add_project_kanban.php");
-      print("📡 Sending project to: $url");
-
       final response = await dio.post(
-        url.toString(),
+        url,
         data: formData,
-        options: Options(
-          headers: {'Content-Type': 'multipart/form-data'},
-          responseType: ResponseType.plain, // treat as plain text
-        ),
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
       );
-
-      print("✅ Raw Response: ${response.data}");
-
-      final Map<String, dynamic> decoded = jsonDecode(response.data);
-      return decoded;
+      return response.data;
     } catch (e) {
-      print("❌ Upload error: $e");
       return {"success": false, "message": "Upload failed: $e"};
     }
   }
+
+//---------------------------------Backup Add Project using Based UrL---------------------------
+  // Future<Map<String, dynamic>> addProjectDetails({
+  //   required String projectName,
+  //   required String ownerName,
+  //   required String contact,
+  //   required String email,
+  //   required String address,
+  // File? file,
+  // File? ownerImage, // For mobile
+  // Uint8List? ownerImageBytes, // For web
+  // }) async {
+  //   // Get the stored unique device ID
+  //   final prefs = await SharedPreferences.getInstance();
+  //   String? userDeviceId = prefs.getString('device_user_id');
+
+  //   // If not found, generate one and save it
+  //   if (userDeviceId == null) {
+  //     userDeviceId = const Uuid().v4();
+  //     await prefs.setString('device_user_id', userDeviceId);
+  //   }
+
+  //   FormData formData = FormData.fromMap({
+  //     "project_name": projectName,
+  //     "project_owner_name": ownerName,
+  //     "contact_number": contact,
+  //     "email_address": email,
+  //     "permanent_address": address,
+  //     "created_by": ownerName,
+  //     "device_user_id": userDeviceId, // 👈 Added here
+
+  //     // File attachment
+  //     if (file != null)
+  //       "attached_file": await MultipartFile.fromFile(
+  //         file.path,
+  //         filename: file.path.split('/').last,
+  //       ),
+
+  //     // Owner image (for both Web and Mobile)
+  //     if (kIsWeb && ownerImageBytes != null)
+  //       "owner_image": MultipartFile.fromBytes(
+  //         ownerImageBytes,
+  //         filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
+  //       ),
+  //     if (!kIsWeb && ownerImage != null)
+  //       "owner_image": await MultipartFile.fromFile(
+  //         ownerImage.path,
+  //         filename: ownerImage.path.split('/').last,
+  //       ),
+  //   });
+
+  //   final dio = Dio();
+  //   final url = "${baseUrl}add_project_kanban.php";
+
+  //   try {
+  //     final response = await dio.post(
+  //       url,
+  //       data: formData,
+  //       options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+  //     );
+
+  //     // ✅ Return as-is since Dio already decodes JSON automatically
+  //     return response.data;
+  //   } catch (e) {
+  //     return {"success": false, "message": "Upload failed: $e"};
+  //   }
+  // }
+
+//---------------------------------Backup 2025-10-21 Add Project using Based UrL---------------------------
+
+  // Future<Map<String, dynamic>> addProjectDetails({
+  //   required String projectName,
+  //   required String ownerName,
+  //   required String contact,
+  //   required String email,
+  //   required String address,
+  //   File? file,
+  // }) async {
+  //   // 🔹 Get unique device/user ID
+  //   String userIdentifier = await getUserIdentifier();
+
+  //   FormData formData = FormData.fromMap({
+  //     "project_name": projectName,
+  //     "project_owner_name": ownerName,
+  //     "contact_number": contact,
+  //     "email_address": email,
+  //     "permanent_address": address,
+  //     "created_by": ownerName,
+  //     "device_user_id": userIdentifier,
+  //     if (file != null)
+  //       "attached_file": await MultipartFile.fromFile(
+  //         file.path,
+  //         filename: file.path.split('/').last,
+  //       ),
+  //   });
+
+  //   final dio = Dio();
+
+  //   try {
+  //     // ✅ Use baseUrl instead of hardcoding
+  //     var url = Uri.parse("${baseUrl}add_project_kanban.php");
+  //     print("📡 Sending project to: $url");
+
+  //     final response = await dio.post(
+  //       url.toString(),
+  //       data: formData,
+  //       options: Options(
+  //         headers: {'Content-Type': 'multipart/form-data'},
+  //         responseType: ResponseType.plain, // treat as plain text
+  //       ),
+  //     );
+
+  //     print("✅ Raw Response: ${response.data}");
+
+  //     final Map<String, dynamic> decoded = jsonDecode(response.data);
+  //     return decoded;
+  //   } catch (e) {
+  //     print("❌ Upload error: $e");
+  //     return {"success": false, "message": "Upload failed: $e"};
+  //   }
+  // }
 
   //---------------------------Add Column using Based UrL----------------------------
   @override
@@ -460,7 +632,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         data: {
           "title": title,
           "project_id": projectId,
-          "user_identifier": userIdentifier,
+          "device_user_id": userIdentifier,
         },
         options: Options(
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -521,7 +693,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           "model_name": "1",
           "project_id": _selectedProjectId.toString(),
           "created_by": _projectOwnerName!,
-          "user_identifier": userIdentifier,
+          "device_user_id": userIdentifier,
         },
         options: Options(
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -834,14 +1006,27 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             ),
 
             // ---------- Default Menu ----------
+            // ListTile(
+            //   leading: const Icon(Icons.dashboard),
+            //   title: const Text('Dashboard'),
+            //   onTap: () => Navigator.pop(context),
+            // ),
+
+            // ---------- Default Menu ----------
             ListTile(
               leading: const Icon(Icons.dashboard),
               title: const Text('Dashboard'),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context); // Close the drawer first
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => KanbanSetStatePage()),
+                );
+              },
             ),
 
             ListTile(
-              tileColor: Colors.grey.shade200, // 👈 light gray background
+              //tileColor: Colors.grey.shade200, // 👈 light gray background
               leading: const Icon(
                 Icons.add,
                 color: Colors.grey, // 👈 icon color matches theme
@@ -862,7 +1047,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             //-------------- Start About Me--------------
 
             ListTile(
-              tileColor: Colors.orange.shade50, // 👈 different light color
+              //tileColor: Colors.orange.shade50, // 👈 different light color
               leading: const Icon(
                 Icons.info, // 👈 info icon for About Me
                 color: Colors.orange, // 👈 matching icon color
@@ -939,9 +1124,30 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
             //-------------- End About Me--------------
 
+            //--------------User Details-------------
+            ListTile(
+              // tileColor: Colors.green.shade50,
+              leading: const Icon(
+                Icons.person,
+                color: Colors.green,
+              ),
+              title: const Text(
+                'User Details',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context); // Close drawer first
+                _showUserDetailsTray(context); // 👈 Open side tray
+              },
+            ),
+            //--------------End Details-------------
+
             //--------------Start More App-------------
             ListTile(
-              tileColor: Colors.lightBlue.shade50,
+              //tileColor: Colors.lightBlue.shade50,
               leading: const Icon(
                 Icons.apps,
                 color: Colors.lightBlue,
@@ -964,26 +1170,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             ),
 
             //--------------End More App-------------
-
-            //--------------User Details-------------
-            ListTile(
-              tileColor: Colors.green.shade50,
-              leading: const Icon(
-                Icons.person,
-                color: Colors.green,
-              ),
-              title: const Text(
-                'User Details',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context); // Close drawer first
-                _showUserDetailsTray(context); // 👈 Open side tray
-              },
-            ),
 
             const Divider(),
 
@@ -1143,12 +1329,12 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
               bottomLeft: Radius.circular(16),
             ),
             child: Container(
-              width: MediaQuery.of(context).size.width *
-                  0.75, // 👈 Side tray width
+              width: MediaQuery.of(context).size.width * 0.75,
               height: MediaQuery.of(context).size.height,
               color: Colors.white,
               padding: const EdgeInsets.all(16),
-              child: const UserDetailsPage(), // 👈 Your user details UI
+              // ✅ Just open UserDetailsPage directly
+              child: const UserDetailsPage(),
             ),
           ),
         );
@@ -1156,7 +1342,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         return SlideTransition(
           position: Tween<Offset>(
-            begin: const Offset(1, 0), // 👈 From right side
+            begin: const Offset(1, 0),
             end: Offset.zero,
           ).animate(CurvedAnimation(
             parent: animation,
@@ -1167,6 +1353,47 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       },
     );
   }
+
+  // void _showUserDetailsTray(BuildContext context) {
+  //   showGeneralDialog(
+  //     context: context,
+  //     barrierDismissible: true,
+  //     barrierLabel: 'User Details',
+  //     transitionDuration: const Duration(milliseconds: 300),
+  //     pageBuilder: (context, animation, secondaryAnimation) {
+  //       return Align(
+  //         alignment: Alignment.centerRight,
+  //         child: Material(
+  //           elevation: 8,
+  //           borderRadius: const BorderRadius.only(
+  //             topLeft: Radius.circular(16),
+  //             bottomLeft: Radius.circular(16),
+  //           ),
+  //           child: Container(
+  //             width: MediaQuery.of(context).size.width *
+  //                 0.75, // 👈 Side tray width
+  //             height: MediaQuery.of(context).size.height,
+  //             color: Colors.white,
+  //             padding: const EdgeInsets.all(16),
+  //             child: const UserDetailsPage(), // 👈 Your user details UI
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //     transitionBuilder: (context, animation, secondaryAnimation, child) {
+  //       return SlideTransition(
+  //         position: Tween<Offset>(
+  //           begin: const Offset(1, 0), // 👈 From right side
+  //           end: Offset.zero,
+  //         ).animate(CurvedAnimation(
+  //           parent: animation,
+  //           curve: Curves.easeOut,
+  //         )),
+  //         child: child,
+  //       );
+  //     },
+  //   );
+  // }
 
   //ENd User Details Side Tray
 
@@ -1471,6 +1698,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 // ----------End The modal for project selection------
 
 // ----------To Add a New Project using a Dialog---------
+// ----------To Add a New Project using a Dialog---------
   void _showAddProjectDialog() {
     final _projectController = TextEditingController();
     final _ownerController = TextEditingController();
@@ -1478,7 +1706,9 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     final _emailController = TextEditingController();
     final _addressController = TextEditingController();
 
-    File? selectedFile;
+    File? selectedFile; // Project attachment (mobile)
+    File? selectedOwnerImage; // Owner image (mobile)
+    Uint8List? selectedOwnerImageBytes; // Owner image (web)
 
     showDialog(
       context: context,
@@ -1505,9 +1735,10 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     TextField(
                       controller: _projectController,
                       decoration: const InputDecoration(
-                          labelText: 'Project Name',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.business)),
+                        labelText: 'Project Name',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.business),
+                      ),
                     ),
                     const SizedBox(height: 12),
 
@@ -1515,19 +1746,70 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     TextField(
                       controller: _ownerController,
                       decoration: const InputDecoration(
-                          labelText: 'Project Owner Name',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.person)),
+                        labelText: 'Project Owner Name',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
                     ),
                     const SizedBox(height: 12),
 
-                    // File picker
+                    // Owner Image Picker
+                    GestureDetector(
+                      onTap: () async {
+                        FilePickerResult? result =
+                            await FilePicker.platform.pickFiles(
+                          type: FileType.image,
+                          withData: true, // important for Web
+                        );
+                        if (result != null) {
+                          if (kIsWeb) {
+                            setState(() {
+                              selectedOwnerImageBytes =
+                                  result.files.single.bytes;
+                            });
+                          } else {
+                            setState(() {
+                              selectedOwnerImage =
+                                  File(result.files.single.path!);
+                            });
+                          }
+                        }
+                      },
+                      child: CircleAvatar(
+                        radius: 30,
+                        backgroundImage: kIsWeb
+                            ? (selectedOwnerImageBytes != null
+                                ? MemoryImage(selectedOwnerImageBytes!)
+                                : const AssetImage(
+                                        "assets/icons/default_user.png")
+                                    as ImageProvider)
+                            : (selectedOwnerImage != null
+                                ? FileImage(selectedOwnerImage!)
+                                : const AssetImage(
+                                        "assets/icons/default_user.png")
+                                    as ImageProvider),
+                        child: (kIsWeb
+                                ? selectedOwnerImageBytes == null
+                                : selectedOwnerImage == null)
+                            ? const Icon(Icons.add_a_photo)
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Project File Picker
                     ElevatedButton.icon(
                       onPressed: () async {
                         FilePickerResult? result =
                             await FilePicker.platform.pickFiles(
                           type: FileType.custom,
-                          allowedExtensions: ['png', 'jpg', 'jpeg', 'xlsx'],
+                          allowedExtensions: [
+                            'png',
+                            'jpg',
+                            'jpeg',
+                            'xlsx',
+                            'pdf'
+                          ],
                         );
                         if (result != null) {
                           selectedFile = File(result.files.single.path!);
@@ -1539,7 +1821,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                           ? "Pick File"
                           : "Selected: ${selectedFile!.path.split('/').last}"),
                     ),
-
                     const SizedBox(height: 12),
 
                     // Contact
@@ -1575,102 +1856,79 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     ),
                     const SizedBox(height: 20),
 
-                    // ---------------- Add Project Buttons ----------------
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () async {
-                            final projectName = _projectController.text.trim();
-                            final ownerName = _ownerController.text.trim();
-                            final contact = _contactController.text.trim();
-                            final email = _emailController.text.trim();
-                            final address = _addressController.text.trim();
+                    // -------------Add Project Button---------------
+                    ElevatedButton(
+                      onPressed: () async {
+                        final projectName = _projectController.text.trim();
+                        final ownerName = _ownerController.text.trim();
+                        final contact = _contactController.text.trim();
+                        final email = _emailController.text.trim();
+                        final address = _addressController.text.trim();
 
-                            // --- Field Validations ---
-                            if (projectName.isEmpty ||
-                                ownerName.isEmpty ||
-                                contact.isEmpty ||
-                                email.isEmpty) {
-                              _showErrorDialog(context,
-                                  "Project name, owner, contact and email are required.");
-                              return;
-                            }
+                        // Validation
+                        if (projectName.isEmpty ||
+                            ownerName.isEmpty ||
+                            contact.isEmpty ||
+                            email.isEmpty) {
+                          _showErrorDialog(context,
+                              "Project name, owner, contact, and email are required.");
+                          return;
+                        }
 
-                            if (!phoneRegex.hasMatch(contact)) {
-                              _showErrorDialog(context,
-                                  "Please enter a valid Bangladeshi mobile number (11 digits, starts with 01).");
-                              return;
-                            }
+                        if (!phoneRegex.hasMatch(contact)) {
+                          _showErrorDialog(context,
+                              "Enter a valid Bangladeshi number (11 digits, starts with 01).");
+                          return;
+                        }
 
-                            if (!emailRegex.hasMatch(email)) {
-                              _showErrorDialog(context,
-                                  "Please enter a valid email address.");
-                              return;
-                            }
+                        if (!emailRegex.hasMatch(email)) {
+                          _showErrorDialog(
+                              context, "Enter a valid email address.");
+                          return;
+                        }
 
-                            // --- API Call ---
-                            try {
-                              final res = await addProjectDetails(
-                                projectName: projectName,
-                                ownerName: ownerName,
-                                contact: contact,
-                                email: email,
-                                address: address,
-                                file: selectedFile,
-                              );
+                        // API Call
+                        final res = await addProjectDetails(
+                          projectName: projectName,
+                          ownerName: ownerName,
+                          contact: contact,
+                          email: email,
+                          address: address,
+                          file: selectedFile,
+                          ownerImage: selectedOwnerImage, // Mobile
+                          ownerImageBytes: selectedOwnerImageBytes, // Web
+                        );
 
-                              print("Response: $res");
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(res['message'] ?? "Upload completed"),
+                            backgroundColor: res['success'] == true
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                        );
 
-                              // Show success/error in SnackBar
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      res['message'] ?? "Upload completed"),
-                                  backgroundColor: res['success']
-                                      ? Colors.green
-                                      : Colors.red,
-                                ),
-                              );
+                        if (res['success'] == true) {
+                          // Clear fields
+                          _projectController.clear();
+                          _ownerController.clear();
+                          _contactController.clear();
+                          _emailController.clear();
+                          _addressController.clear();
+                          setState(() {
+                            selectedFile = null;
+                            selectedOwnerImage = null;
+                            selectedOwnerImageBytes = null;
+                          });
 
-                              if (res['success'] == true) {
-                                // Clear form fields
-                                _projectController.clear();
-                                _ownerController.clear();
-                                _contactController.clear();
-                                _emailController.clear();
-                                _addressController.clear();
-                                setState(() {
-                                  selectedFile = null;
-                                });
-
-                                // Close dialog
-                                Navigator.pop(context);
-
-                                // Refresh project list instantly
-                                await getProjectListData();
-                              }
-                            } catch (e) {
-                              print("Upload error: $e");
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Upload failed: $e"),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          },
-                          child: const Text("Add"),
-                        ),
-                      ],
+                          Navigator.pop(context);
+                          await getProjectListData(); // refresh project list
+                        }
+                      },
+                      child: const Text("Add"),
                     ),
 
-                    //To End add Project Buttons
+                    //-----------End Add Project Button-------------
                   ],
                 ),
               ),

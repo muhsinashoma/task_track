@@ -1,9 +1,44 @@
----------------------------------------------------------------------------------------
+http://192.168.32.168/API/get_user_profile_kanban.php?device_user_id=6a3dc9c8-2f0c-45de-9fc9-0d2800691732
+
+
+
+--------------------------------------------------------------------------------
+https://chatgpt.com/c/68fa0b1d-6e88-8324-b806-fa1547a8e41e
+
+
+
+Flutter run key commands.
+r Hot reload.
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+A Dart VM Service on SM A125F is available at: http://127.0.0.1:49285/XptW2_ni3eU=/
+The Flutter DevTools debugger and profiler on SM A125F is available at: http://127.0.0.1:9100?uri=http://127.0.0.1:49285/XptW2_ni3eU=/
+
+
+
+--------------------------------------------------------------------------------------
 https://www.youtube.com/watch?v=vEyEdVY_utg
 
 রিজিক নিয়ে অযথা চিন্তা করবেন না?, মিজানুর রহমান আজহারী, তাং Oct 16, 2025
 -----------------------------------------------------------------------------------
 
+Database Value for device_user_id=8086174d-98ef-4f11-ae40-8b9b374ce642
+
+8086174d-98ef-4f11-ae40-8b9b374ce642
+
+
+Performing hot restart...                                          128ms
+Restarted application in 136ms.
+Fetching data from: http://192.168.32.168/API/get_task_data_kanban.php
+Fetching project list from: http://192.168.32.168/API/get_project_list_kanban.php
+✅ Device ID initialized: 8086174d-98ef-4f11-ae40-8b9b374ce642
+Projects loaded: 10
+
+----------------------------------------------------------------------------
 
 
 √  Built build\app\outputs\flutter-apk\app-debug.apk.

@@ -1,6 +1,16 @@
 
+------------------------------------------------------------------------------
+Got it! You want a fully working solution where the user profile always loads, even after closing/reopening the app or restarting it. The key here is:
 
+Persist the device_user_id using SharedPreferences.
 
+Ensure the server has a user profile for that device_user_id.
+
+Fetch and cache the user profile locally so the UI can display it immediately.
+
+Here’s the complete correct solution:
+
+--------------------------------------------------------------------------------
 
 PS D:\Flutter-Project\task_track> git log -1     
 commit 551f7fc5694ab306adf487dcc6468f57da8a1950 (HEAD -> muhsina, origin/muhsina)
