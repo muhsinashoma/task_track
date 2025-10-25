@@ -61,15 +61,10 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
             email = data['email_address'] ?? '';
             contact = data['contact_number'] ?? '';
             address = data['permanent_address'] ?? '';
-            // imageUrl = data['owner_image'] != null &&
-            //         data['owner_image'].toString().isNotEmpty
-            //     ? '$baseUrl/uploads/${data['owner_image']}'
-            //     : '';
-
             projectName = data['project_name'] ?? ''; // <-- Add this line
-            imageUrl = data['owner_image'] != null &&
-                    data['owner_image'].toString().isNotEmpty
-                ? '$baseUrl/uploads/${data['owner_image']}'
+            imageUrl = (data['owner_image'] != null &&
+                    data['owner_image'].toString().isNotEmpty)
+                ? 'http://192.168.0.101/API/uploads/${data['owner_image']}'
                 : '';
           });
         } else {
@@ -101,6 +96,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            fontSize: 14, // ✅ font 10px
           ),
         ),
         centerTitle: true,
@@ -113,7 +109,10 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text("Edit Profile Coming Soon..."),
+                  content: Text(
+                    "Edit Profile Coming Soon...",
+                    style: TextStyle(fontSize: 10), // ✅ font 10px
+                  ),
                 ),
               );
             },
@@ -141,41 +140,25 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
               child: CircleAvatar(
                 radius: 75,
                 backgroundColor: Colors.white,
-                backgroundImage:
-                    imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-                child: imageUrl.isEmpty
-                    ? const Icon(Icons.person, size: 75, color: Colors.grey)
-                    : null,
+                child: ClipOval(
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          width: 150,
+                          height: 150,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Show default icon if image fails to load
+                            return const Icon(Icons.person,
+                                size: 75, color: Colors.grey);
+                          },
+                        )
+                      : const Icon(Icons.person, size: 75, color: Colors.grey),
+                ),
               ),
             ),
 
             const SizedBox(height: 20),
-
-            // // Name & Project
-            // Column(
-            //   children: [
-            //     Text(
-            //       userName.isNotEmpty ? userName : 'No Name Found',
-            //       textAlign: TextAlign.center,
-            //       style: const TextStyle(
-            //         fontSize: 26,
-            //         fontWeight: FontWeight.bold,
-            //         color: Colors.black87,
-            //       ),
-            //     ),
-            //     const SizedBox(height: 6),
-            //     Text(
-            //       projectName.isNotEmpty
-            //           ? projectName
-            //           : 'No Project Name Found',
-            //       style: TextStyle(
-            //         fontSize: 18,
-            //         fontWeight: FontWeight.w600,
-            //         color: oceanColor,
-            //       ),
-            //     ),
-            //   ],
-            // ),
 
             // Only show owner name
             Column(
@@ -184,7 +167,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                   userName.isNotEmpty ? userName : 'No Name Found',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 26,
+                    fontSize: 14, // ✅ font 10px
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
@@ -198,7 +181,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
             Text(
               email.isNotEmpty ? email : 'No Email Found',
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 10, // ✅ font 10px
                 color: Colors.black54,
               ),
             ),
@@ -226,7 +209,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                   Text(
                     "Profile Details",
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 10, // ✅ font 10px
                       fontWeight: FontWeight.bold,
                       color: oceanColor,
                     ),
@@ -269,14 +252,17 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                   label,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontSize: 10, // ✅ font 10px
                     color: Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  style: const TextStyle(
+                    fontSize: 10, // ✅ font 10px
+                    color: Colors.black54,
+                  ),
                 ),
               ],
             ),
@@ -285,193 +271,6 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
       ),
     );
   }
-
-// backup code below that works fine without ocean theme
-//   @override
-//   Widget build(BuildContext context) {
-//     const oceanColor = Color.fromARGB(255, 158, 223, 180);
-
-//     return Scaffold(
-//       backgroundColor: const Color(0xFFF3F6FB),
-//       appBar: AppBar(
-//         title: const Text(
-//           'User Profile',
-//           style: TextStyle(
-//             fontWeight: FontWeight.bold,
-//             color: Colors.white,
-//           ),
-//         ),
-//         centerTitle: true,
-//         backgroundColor: oceanColor,
-//         elevation: 0,
-//       ),
-//       body: SingleChildScrollView(
-//         padding: const EdgeInsets.all(20.0),
-//         child: Column(
-//           children: [
-//             const SizedBox(height: 10),
-
-//             // Profile Image with Shadow
-//             Container(
-//               decoration: BoxDecoration(
-//                 shape: BoxShape.circle,
-//                 boxShadow: [
-//                   BoxShadow(
-//                     color: oceanColor.withOpacity(0.3),
-//                     blurRadius: 15,
-//                     offset: const Offset(0, 5),
-//                   ),
-//                 ],
-//               ),
-//               child: CircleAvatar(
-//                 radius: 70,
-//                 backgroundColor: Colors.white,
-//                 backgroundImage:
-//                     imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-//                 child: imageUrl.isEmpty
-//                     ? const Icon(Icons.person, size: 70, color: Colors.grey)
-//                     : null,
-//               ),
-//             ),
-
-//             const SizedBox(height: 20),
-
-//             // User Name with Edit Button
-//             Row(
-//               mainAxisAlignment: MainAxisAlignment.center,
-//               children: [
-//                 Expanded(
-//                   child: Text(
-//                     userName.isNotEmpty ? userName : 'No Name Found',
-//                     textAlign: TextAlign.center,
-//                     style: const TextStyle(
-//                       fontSize: 24,
-//                       fontWeight: FontWeight.bold,
-//                       color: Colors.black87,
-//                     ),
-//                   ),
-//                 ),
-//                 IconButton(
-//                   icon: const Icon(Icons.edit, color: oceanColor, size: 26),
-//                   onPressed: () {
-//                     ScaffoldMessenger.of(context).showSnackBar(
-//                       const SnackBar(
-//                         content: Text("Edit Profile Coming Soon..."),
-//                       ),
-//                     );
-//                   },
-//                 ),
-//               ],
-//             ),
-
-//             const SizedBox(height: 6),
-
-//             // Email
-//             Text(
-//               email.isNotEmpty ? email : 'No Email Found',
-//               style: const TextStyle(
-//                 fontSize: 16,
-//                 color: Colors.black54,
-//               ),
-//             ),
-
-//             const SizedBox(height: 10),
-
-//             // Project Name
-//             Text(
-//               projectName.isNotEmpty ? projectName : 'No Project Name Found',
-//               style: TextStyle(
-//                 fontSize: 18,
-//                 fontWeight: FontWeight.w600,
-//                 color: oceanColor,
-//               ),
-//             ),
-
-//             const SizedBox(height: 25),
-
-//             // Card with user details
-//             Container(
-//               width: double.infinity,
-//               padding: const EdgeInsets.all(20),
-//               decoration: BoxDecoration(
-//                 color: Colors.white,
-//                 borderRadius: BorderRadius.circular(18),
-//                 boxShadow: [
-//                   BoxShadow(
-//                     color: oceanColor.withOpacity(0.3),
-//                     blurRadius: 12,
-//                     offset: const Offset(0, 6),
-//                   ),
-//                 ],
-//               ),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Text(
-//                     "Profile Details",
-//                     style: TextStyle(
-//                       fontSize: 18,
-//                       fontWeight: FontWeight.bold,
-//                       color: oceanColor,
-//                     ),
-//                   ),
-
-//                   const Divider(),
-//                   _infoRow(Icons.perm_identity, "Project Name",
-//                       projectName ?? 'Unknown'),
-//                   const SizedBox(height: 15),
-//                   _infoRow(Icons.phone, "Contact",
-//                       contact.isNotEmpty ? contact : 'No Contact Found'),
-//                   const Divider(),
-//                   _infoRow(Icons.home, "Address",
-//                       address.isNotEmpty ? address : 'No Address Found'),
-//                   // const Divider(),
-//                   // _infoRow(Icons.perm_identity, "Device ID",
-//                   //     deviceUserId ?? 'Unknown'),
-//                 ],
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-// // Helper widget for info rows with ocean-themed icons
-//   Widget _infoRow(IconData icon, String label, String value) {
-//     const oceanColor = Color.fromARGB(255, 158, 223, 180);
-
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 8.0),
-//       child: Row(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Icon(icon, color: oceanColor, size: 22),
-//           const SizedBox(width: 12),
-//           Expanded(
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   label,
-//                   style: const TextStyle(
-//                     fontWeight: FontWeight.bold,
-//                     fontSize: 14,
-//                     color: Colors.black87,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 4),
-//                 Text(
-//                   value,
-//                   style: const TextStyle(fontSize: 14, color: Colors.black54),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
 
 //     return Padding(
 //       padding: const EdgeInsets.symmetric(vertical: 8.0),

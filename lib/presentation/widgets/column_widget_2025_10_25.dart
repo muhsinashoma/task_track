@@ -172,7 +172,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
     );
   }
 
-  // ---------------- Start Build Column Title ------------------
+  // ---------------- Editable Title ------------------
   Widget _buildTitleColumn(Color titleColor) {
     final taskCount = widget.column.children.length;
 
@@ -205,7 +205,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
                     child: Text(
                       _titleController.text,
                       style: TextStyle(
-                        fontSize: 12, //display Column Title 12 px
+                        fontSize: 20,
                         color: titleColor, // 🔹 dynamic color
                         fontWeight: FontWeight.w700,
                       ),
@@ -247,9 +247,8 @@ class _KanbanColumnState extends State<KanbanColumn> {
       ),
     );
   }
-  // ---------------- End Build Column Title ------------------
 
-// ------------Start Search bar ----------------------------
+  // ------------ Search bar -------------
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -257,37 +256,20 @@ class _KanbanColumnState extends State<KanbanColumn> {
         controller: _searchController,
         decoration: InputDecoration(
           hintText: 'Search tasks...',
-          hintStyle: const TextStyle(
-            fontSize: 12, // set hint text to 12 px
-            color: Colors.grey,
-          ),
-          prefixIcon: const Icon(
-            Icons.search,
-            size: 20, // optional: adjust icon size
-          ),
+          prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchText.isNotEmpty
               ? IconButton(
-                  icon: const Icon(
-                    Icons.clear,
-                    size: 20, // optional: adjust icon size
-                  ),
+                  icon: const Icon(Icons.clear),
                   onPressed: () => _searchController.clear(),
                 )
               : null,
           border: const OutlineInputBorder(),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        ),
-        style: const TextStyle(
-          fontSize: 12, // optional: text input size 12 px
         ),
       ),
     );
   }
 
-// ------------End Search bar ------------------------
-
-  // ----------Show Task list Under Each Column--------------------
+  // ------------------ Show Task list --------------------
   Widget _buildListItemsColumn() {
     final filteredTasks = getFilteredTasks();
     return Expanded(
@@ -310,7 +292,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: const [
                       BoxShadow(
-                        //color: Colors.black26,
+                        color: Colors.black26,
                         blurRadius: 4,
                         offset: Offset(2, 3),
                       )
@@ -322,7 +304,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
                       Text(
                         task.title,
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
@@ -330,13 +312,13 @@ class _KanbanColumnState extends State<KanbanColumn> {
                       const SizedBox(height: 6),
                       Text(
                         "By: ${task.createdBy}",
-                        style:
-                            const TextStyle(fontSize: 8, color: Colors.black54),
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black54),
                       ),
                       Text(
                         "At: ${task.createdAt}",
-                        style:
-                            const TextStyle(fontSize: 8, color: Colors.black54),
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black54),
                       ),
                     ],
                   ),

@@ -88,21 +88,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
   // ------------------ Add this ------------------
   DateTime selectedDate = DateTime.now();
-  // ---------- Selected period ----------
-  // int selectedNumber = 1;
-  // String selectedUnit = "Days"; // default period
-  // final List<int> numbers = List.generate(10, (i) => i + 1);
-  // final List<String> units = [
-  //   "Days",
-  //   "Months",
-  //   "Years",
-  //   "Last Dys",
-  //   "Last Mos",
-  //   "Last Yrs"
-  // ];
-  // String get periodText => "$selectedNumber $selectedUnit";
 
-  // ----------Start Selected period ---------------------
+  // ---------- Selected period ----------
   int selectedNumber = 1;
   String selectedUnit = "Days"; // default period
   final List<int> numbers = List.generate(10, (i) => i + 1);
@@ -114,26 +101,42 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     "Last Months",
     "Last Years"
   ];
+  String get periodText => "$selectedNumber $selectedUnit";
 
-// Smart formatted period text for AppBar
-  String get periodText {
-    switch (selectedUnit) {
-      case "Last Days":
-        return "${selectedNumber}LD";
-      case "Last Months":
-        return "${selectedNumber}LM";
-      case "Last Years":
-        return "${selectedNumber}LY";
-      case "Days":
-        return "${selectedNumber}d";
-      case "Months":
-        return "${selectedNumber}m";
-      case "Years":
-        return "${selectedNumber}y";
-      default:
-        return "$selectedNumber $selectedUnit";
-    }
-  }
+  // ---------- End Selected period ----------
+
+  // ----------Start Selected period ---------------------
+//   int selectedNumber = 1;
+//   String selectedUnit = "Days"; // default period
+//   final List<int> numbers = List.generate(10, (i) => i + 1);
+//   final List<String> units = [
+//     "Days",
+//     "Months",
+//     "Years",
+//     "Last Days",
+//     "Last Months",
+//     "Last Years"
+//   ];
+
+// // Smart formatted period text for AppBar
+//   String get periodText {
+//     switch (selectedUnit) {
+//       case "Last Days":
+//         return "${selectedNumber}LD";
+//       case "Last Months":
+//         return "${selectedNumber}LM";
+//       case "Last Years":
+//         return "${selectedNumber}LY";
+//       case "Days":
+//         return "${selectedNumber}d";
+//       case "Months":
+//         return "${selectedNumber}m";
+//       case "Years":
+//         return "${selectedNumber}y";
+//       default:
+//         return "$selectedNumber $selectedUnit";
+//     }
+//   }
 
   // ----------End Selected period ---------------------
 
@@ -173,15 +176,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
     return deviceId;
   }
-
-// To get Device User ID Fixed to match DB Statically   Today October 24, 2025
-  // Future<String> getDeviceUserId() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   String deviceId = '1a6175f6-e9f5-49ef-82ee-98da33c1cdbd'; // match DB
-  //   await prefs.setString('device_user_id', deviceId);
-  //   print("📌 Using fixed device_user_id: $deviceId");
-  //   return deviceId;
-  // }
 
 // blanking effect and focus for project selector
 
@@ -250,31 +244,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       });
     }
   }
-
-  // Future<void> getProjectListData() async {
-  //   try {
-  //     final dio = Dio();
-  //     var response = await dio.get(
-  //       "http://192.168.0.103/API/get_project_list_kanban.php",
-  //     );
-
-  //     // Decode JSON string into a List
-  //     List data = jsonDecode(response.data);
-
-  //     _projects = data.map((json) => ProjectListItem.fromJson(json)).toList();
-
-  //     setState(() {
-  //       _isLoadingProjects = false;
-  //     });
-
-  //     //print("Projects loaded: ${_projects.length}");
-  //   } catch (e) {
-  //     print("Error fetching projects: $e");
-  //     setState(() {
-  //       _isLoadingProjects = false;
-  //     });
-  //   }
-  // }
 
 // Function to generate day widgets with correct weekday alignment
   List<Widget> buildCalendarDays(
@@ -363,62 +332,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     }
   }
 
-  //To show multiple prjects in dashbard  2025-10-16
-
-  // Future<void> getTaskData() async {
-  //   try {
-  //     final dio = Dio();
-  //     var url = "${baseUrl}get_dashboard_kanban.php";
-
-  //     var response = await dio.get(url, queryParameters: {
-  //       "user_identifier": userIdentifier,
-  //       "project_id": _selectedProjectId ?? 0, // 0 = all projects
-  //     });
-
-  //     if (response.statusCode == 200 && response.data['success'] == true) {
-  //       // ----------------- Projects for dropdown -----------------
-  //       _projects = List<Map<String, dynamic>>.from(response.data['projects']);
-
-  //       // ----------------- Dashboard / Kanban Data -----------------
-  //       var dashboardData = response.data['data'] as List;
-
-  //       int totalTaskCount = 0;
-  //       List<KColumn> tempColumns = [];
-
-  //       for (var project in dashboardData) {
-  //         for (var col in project['columns']) {
-  //           List<KTask> tasks = [];
-  //           if (col['tasks'] != null) {
-  //             for (var t in col['tasks']) {
-  //               tasks.add(KTask(
-  //                 id: int.tryParse(t['id'].toString()) ?? 0,
-  //                 title: t['title'] ?? '',
-  //                 createdBy: t['created_by'] ?? 'Unknown',
-  //                 createdAt: t['created_at'] ?? '',
-  //               ));
-  //             }
-  //             totalTaskCount += tasks.length;
-  //           }
-
-  //           tempColumns.add(KColumn(
-  //             id: int.tryParse(col['id'].toString()) ?? 0,
-  //             title: col['title'] ?? '',
-  //             children: tasks,
-  //           ));
-  //         }
-  //       }
-
-  //       // ----------------- Update state -----------------
-  //       setState(() {
-  //         columns = tempColumns;
-  //         _selectedProjectTaskCount = totalTaskCount;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     print("Error fetching dashboard: $e");
-  //   }
-  // }
-
 //------------------- Add Project using BaseURL Today -----------------------
 
   Future<Map<String, dynamic>> addProjectDetails({
@@ -487,127 +400,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       return {"success": false, "message": "Upload failed: $e"};
     }
   }
-
-//---------------------------------Backup Add Project using Based UrL---------------------------
-  // Future<Map<String, dynamic>> addProjectDetails({
-  //   required String projectName,
-  //   required String ownerName,
-  //   required String contact,
-  //   required String email,
-  //   required String address,
-  // File? file,
-  // File? ownerImage, // For mobile
-  // Uint8List? ownerImageBytes, // For web
-  // }) async {
-  //   // Get the stored unique device ID
-  //   final prefs = await SharedPreferences.getInstance();
-  //   String? userDeviceId = prefs.getString('device_user_id');
-
-  //   // If not found, generate one and save it
-  //   if (userDeviceId == null) {
-  //     userDeviceId = const Uuid().v4();
-  //     await prefs.setString('device_user_id', userDeviceId);
-  //   }
-
-  //   FormData formData = FormData.fromMap({
-  //     "project_name": projectName,
-  //     "project_owner_name": ownerName,
-  //     "contact_number": contact,
-  //     "email_address": email,
-  //     "permanent_address": address,
-  //     "created_by": ownerName,
-  //     "device_user_id": userDeviceId, // 👈 Added here
-
-  //     // File attachment
-  //     if (file != null)
-  //       "attached_file": await MultipartFile.fromFile(
-  //         file.path,
-  //         filename: file.path.split('/').last,
-  //       ),
-
-  //     // Owner image (for both Web and Mobile)
-  //     if (kIsWeb && ownerImageBytes != null)
-  //       "owner_image": MultipartFile.fromBytes(
-  //         ownerImageBytes,
-  //         filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
-  //       ),
-  //     if (!kIsWeb && ownerImage != null)
-  //       "owner_image": await MultipartFile.fromFile(
-  //         ownerImage.path,
-  //         filename: ownerImage.path.split('/').last,
-  //       ),
-  //   });
-
-  //   final dio = Dio();
-  //   final url = "${baseUrl}add_project_kanban.php";
-
-  //   try {
-  //     final response = await dio.post(
-  //       url,
-  //       data: formData,
-  //       options: Options(headers: {'Content-Type': 'multipart/form-data'}),
-  //     );
-
-  //     // ✅ Return as-is since Dio already decodes JSON automatically
-  //     return response.data;
-  //   } catch (e) {
-  //     return {"success": false, "message": "Upload failed: $e"};
-  //   }
-  // }
-
-//---------------------------------Backup 2025-10-21 Add Project using Based UrL---------------------------
-
-  // Future<Map<String, dynamic>> addProjectDetails({
-  //   required String projectName,
-  //   required String ownerName,
-  //   required String contact,
-  //   required String email,
-  //   required String address,
-  //   File? file,
-  // }) async {
-  //   // 🔹 Get unique device/user ID
-  //   String userIdentifier = await getUserIdentifier();
-
-  //   FormData formData = FormData.fromMap({
-  //     "project_name": projectName,
-  //     "project_owner_name": ownerName,
-  //     "contact_number": contact,
-  //     "email_address": email,
-  //     "permanent_address": address,
-  //     "created_by": ownerName,
-  //     "device_user_id": userIdentifier,
-  //     if (file != null)
-  //       "attached_file": await MultipartFile.fromFile(
-  //         file.path,
-  //         filename: file.path.split('/').last,
-  //       ),
-  //   });
-
-  //   final dio = Dio();
-
-  //   try {
-  //     // ✅ Use baseUrl instead of hardcoding
-  //     var url = Uri.parse("${baseUrl}add_project_kanban.php");
-  //     print("📡 Sending project to: $url");
-
-  //     final response = await dio.post(
-  //       url.toString(),
-  //       data: formData,
-  //       options: Options(
-  //         headers: {'Content-Type': 'multipart/form-data'},
-  //         responseType: ResponseType.plain, // treat as plain text
-  //       ),
-  //     );
-
-  //     print("✅ Raw Response: ${response.data}");
-
-  //     final Map<String, dynamic> decoded = jsonDecode(response.data);
-  //     return decoded;
-  //   } catch (e) {
-  //     print("❌ Upload error: $e");
-  //     return {"success": false, "message": "Upload failed: $e"};
-  //   }
-  // }
 
   //---------------------------Add Column using Based UrL----------------------------
   @override
@@ -856,6 +648,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     return Scaffold(
       // ✅ Responsive, balanced AppBar layout
 
+      //---------Start AppBar-----------
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
         titleSpacing: 0,
@@ -892,15 +685,15 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                               child: Text(
                                 _selectedProjectName ?? "Select Project",
                                 style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
+                                  color: Colors.black87,
+                                  fontSize: 10, // 🔹 changed
                                   fontWeight: FontWeight.w600,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const Icon(Icons.arrow_drop_down,
-                                color: Colors.white, size: 18),
+                                color: Colors.white, size: 16),
                           ],
                         ),
                       ),
@@ -919,7 +712,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
-                      fontSize: 11,
+                      fontSize: 10, // 🔹 changed
                     ),
                   ),
                 ),
@@ -931,21 +724,20 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                   onTap: _showPeriodDialog,
                   child: Row(
                     children: [
-                      const Icon(Icons.search, color: Colors.black87, size: 18),
+                      const Icon(Icons.search, color: Colors.black87, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         periodText == "1 days" ? "1d" : periodText,
                         style: const TextStyle(
                           color: Colors.green,
                           fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                          fontSize: 10, // 🔹 changed
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // -------- Push date to right ----------
                 const Spacer(),
 
                 // -------- Current Date ----------
@@ -956,7 +748,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     style: const TextStyle(
                       fontFamily: 'Montserrat',
                       color: Color.fromARGB(255, 47, 46, 46),
-                      fontSize: 11,
+                      fontSize: 10, // 🔹 changed
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -966,7 +758,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           },
         ),
       ),
-
       //---------End AppBar-----------
 
       //---------Start Drawer----------
@@ -994,7 +785,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                         'Task Management',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 10, // ✅ font 10px
                           fontWeight: FontWeight.bold,
                         ),
                         textAlign: TextAlign.center,
@@ -1006,16 +797,12 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             ),
 
             // ---------- Default Menu ----------
-            // ListTile(
-            //   leading: const Icon(Icons.dashboard),
-            //   title: const Text('Dashboard'),
-            //   onTap: () => Navigator.pop(context),
-            // ),
-
-            // ---------- Default Menu ----------
             ListTile(
               leading: const Icon(Icons.dashboard),
-              title: const Text('Dashboard'),
+              title: const Text(
+                'Dashboard',
+                style: TextStyle(fontSize: 10), // ✅ font 10px
+              ),
               onTap: () {
                 Navigator.pop(context); // Close the drawer first
                 Navigator.push(
@@ -1026,41 +813,40 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             ),
 
             ListTile(
-              //tileColor: Colors.grey.shade200, // 👈 light gray background
               leading: const Icon(
                 Icons.add,
-                color: Colors.grey, // 👈 icon color matches theme
+                color: Colors.grey,
               ),
               title: const Text(
                 'Add Column',
                 style: TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.w500,
+                  fontSize: 10, // ✅ font 10px
                 ),
               ),
               onTap: () {
-                Navigator.pop(context); // Close drawer first
-                _showAddColumnDialog(); // Call your dialog function
+                Navigator.pop(context);
+                _showAddColumnDialog();
               },
             ),
 
             //-------------- Start About Me--------------
-
             ListTile(
-              //tileColor: Colors.orange.shade50, // 👈 different light color
               leading: const Icon(
-                Icons.info, // 👈 info icon for About Me
-                color: Colors.orange, // 👈 matching icon color
+                Icons.info,
+                color: Colors.orange,
               ),
               title: const Text(
                 'About Me',
                 style: TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.w500,
+                  fontSize: 10, // ✅ font 10px
                 ),
               ),
               onTap: () {
-                Navigator.pop(context); // Close drawer first
+                Navigator.pop(context);
 
                 showDialog(
                   context: context,
@@ -1121,12 +907,10 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 );
               },
             ),
-
             //-------------- End About Me--------------
 
             //--------------User Details-------------
             ListTile(
-              // tileColor: Colors.green.shade50,
               leading: const Icon(
                 Icons.person,
                 color: Colors.green,
@@ -1136,18 +920,18 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 style: TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.w500,
+                  fontSize: 10, // ✅ font 10px
                 ),
               ),
               onTap: () {
-                Navigator.pop(context); // Close drawer first
-                _showUserDetailsTray(context); // 👈 Open side tray
+                Navigator.pop(context);
+                _showUserDetailsTray(context);
               },
             ),
             //--------------End Details-------------
 
             //--------------Start More App-------------
             ListTile(
-              //tileColor: Colors.lightBlue.shade50,
               leading: const Icon(
                 Icons.apps,
                 color: Colors.lightBlue,
@@ -1157,10 +941,11 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 style: TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.w500,
+                  fontSize: 10, // ✅ font 10px
                 ),
               ),
               onTap: () {
-                Navigator.pop(context); // Close drawer first
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -1168,8 +953,23 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 );
               },
             ),
-
             //--------------End More App-------------
+
+            const Divider(),
+            ListTile(
+              leading: const Icon(
+                Icons.feedback,
+                color: Colors.blueGrey,
+              ),
+              title: const Text(
+                'Feedback',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 10, // ✅ font 10px
+                ),
+              ),
+            ),
 
             const Divider(),
 
@@ -1182,18 +982,16 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                   const Text(
                     "My Projects",
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 10, // ✅ font 10px
                       fontWeight: FontWeight.bold,
                       color: Colors.black54,
                     ),
                   ),
                   if (_projects.isNotEmpty)
                     Text(
-                      // "Owner: ${_projects.first.project_owner_name}", // show beside My Projects
-
                       "Owner",
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 10, // ✅ font 10px
                         fontWeight: FontWeight.w500,
                         color: Colors.black87,
                       ),
@@ -1212,14 +1010,15 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
             else if (_projects.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(16.0),
-                child: Text("No projects found."),
+                child: Text(
+                  "No projects found.",
+                  style: TextStyle(fontSize: 10), // ✅ font 10px
+                ),
               )
             else
               ..._projects.asMap().entries.map((entry) {
                 int index = entry.key;
                 var project = entry.value;
-
-                // Dynamic HSV-based color
                 Color projectColor = generateProjectColor(index);
 
                 return ListTile(
@@ -1242,7 +1041,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                               '${project.taskCount}',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 10,
+                                fontSize: 10, // ✅ font 10px
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -1254,7 +1053,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     project.name,
                     style: const TextStyle(
                       fontWeight: FontWeight.w500,
-                      fontSize: 14,
+                      fontSize: 10, // ✅ font 10px
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1268,7 +1067,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
-                          fontSize: 13,
+                          fontSize: 10, // ✅ font 10px
                         ),
                       ),
                     ),
@@ -1278,8 +1077,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     setState(() {
                       _selectedProjectId = project.id;
                       _selectedProjectName = project.name;
-                      _selectedProjectTaskCount =
-                          project.taskCount; // 👈 update selected task count
+                      _selectedProjectTaskCount = project.taskCount;
                     });
                     getTaskData();
                   },
@@ -1288,8 +1086,9 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           ],
         ),
       ),
-      //---------End Drawer----------
+      //---------End Drawer--------------------
 
+      // ----------Start Kanban Board Body ----------
       body: SafeArea(
         child: KanbanBoard(
           columns: columns,
@@ -1297,6 +1096,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           updateItemHandler: _showEditTask,
         ),
       ),
+
+      // ----------End Kanban Board Body ----------
 
       // ---------- Add floating + button ----------
       floatingActionButton: FloatingActionButton(
@@ -1354,49 +1155,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-  // void _showUserDetailsTray(BuildContext context) {
-  //   showGeneralDialog(
-  //     context: context,
-  //     barrierDismissible: true,
-  //     barrierLabel: 'User Details',
-  //     transitionDuration: const Duration(milliseconds: 300),
-  //     pageBuilder: (context, animation, secondaryAnimation) {
-  //       return Align(
-  //         alignment: Alignment.centerRight,
-  //         child: Material(
-  //           elevation: 8,
-  //           borderRadius: const BorderRadius.only(
-  //             topLeft: Radius.circular(16),
-  //             bottomLeft: Radius.circular(16),
-  //           ),
-  //           child: Container(
-  //             width: MediaQuery.of(context).size.width *
-  //                 0.75, // 👈 Side tray width
-  //             height: MediaQuery.of(context).size.height,
-  //             color: Colors.white,
-  //             padding: const EdgeInsets.all(16),
-  //             child: const UserDetailsPage(), // 👈 Your user details UI
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //     transitionBuilder: (context, animation, secondaryAnimation, child) {
-  //       return SlideTransition(
-  //         position: Tween<Offset>(
-  //           begin: const Offset(1, 0), // 👈 From right side
-  //           end: Offset.zero,
-  //         ).animate(CurvedAnimation(
-  //           parent: animation,
-  //           curve: Curves.easeOut,
-  //         )),
-  //         child: child,
-  //       );
-  //     },
-  //   );
-  // }
-
-  //ENd User Details Side Tray
-
 // ----------To show modal and Total projects number in title bar inside the modal for project selection------working perfectly-------
 
   void _showProjectSelectionModal() {
@@ -1438,6 +1196,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // ---------Start Header for Porject ----------
+
+                      // ---------Start Header for Project ----------
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -1446,7 +1206,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                               const Text(
                                 "Select Project",
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 10, // ✅ Changed from 18
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -1461,63 +1221,13 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                                 child: Text(
                                   "Total: ${_projects.length}",
                                   style: const TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 10, // ✅ Changed from 13
                                     color: Colors.blueAccent,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 8),
-
-                              // ---------- Add Project Button ----------
-                              // ElevatedButton.icon(
-                              //   onPressed: () {
-                              //     Navigator.pop(
-                              //         context); // Close modal before adding
-                              //     _showAddProjectDialog(); // Open Add Project dialog
-                              //   },
-                              //   icon: const Icon(Icons.add, size: 16),
-                              //   label: const Text(
-                              //     "Add",
-                              //     style: TextStyle(fontSize: 13),
-                              //   ),
-                              //   style: ElevatedButton.styleFrom(
-                              //     padding: const EdgeInsets.symmetric(
-                              //         horizontal: 12, vertical: 6),
-                              //     minimumSize: Size.zero, // fit to content
-                              //     tapTargetSize:
-                              //         MaterialTapTargetSize.shrinkWrap,
-                              //   ),
-                              // ),
-
-                              // ---------- Add Project Button ----------
-                              // ElevatedButton(
-                              //   onPressed: () {
-                              //     Navigator.pop(
-                              //         context); // Close modal before adding
-                              //     _showAddProjectDialog(); // Open Add Project dialog
-                              //   },
-                              //   style: ElevatedButton.styleFrom(
-                              //     backgroundColor: Color.fromARGB(
-                              //         255, 122, 183, 123), // ✅ Blue background
-                              //     shape: RoundedRectangleBorder(
-                              //       borderRadius: BorderRadius.circular(
-                              //           4), // ✅ Square edges
-                              //     ),
-                              //     padding: const EdgeInsets.all(
-                              //         10), // ✅ Make it look balanced
-                              //     minimumSize: const Size(
-                              //         36, 36), // ✅ Square button size
-                              //     tapTargetSize:
-                              //         MaterialTapTargetSize.shrinkWrap,
-                              //   ),
-                              //   child: const Icon(
-                              //     Icons.add,
-                              //     color:
-                              //         Colors.white, // ✅ White icon for contrast
-                              //     size: 18,
-                              //   ),
-                              // ),
 
                               // ---------- Add Project Button ----------
                               Tooltip(
@@ -1530,32 +1240,29 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                                   },
                                   icon: const Icon(
                                     Icons.add,
-                                    color: Colors
-                                        .white, // ✅ White icon for contrast
-                                    size: 18,
+                                    color: Colors.white,
+                                    size: 14, // ✅ Slightly smaller icon
                                   ),
                                   label: const Text(
                                     "Add Project",
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 13,
+                                      fontSize: 10, // ✅ Changed from 13
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color.fromARGB(
-                                        255,
-                                        122,
-                                        183,
-                                        123), // ✅ Your existing greenish-blue
+                                    backgroundColor: const Color.fromARGB(
+                                        255, 122, 183, 123), // ✅ same color
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(
                                           4), // ✅ Square edges
                                     ),
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 8),
+                                        horizontal: 6,
+                                        vertical: 4), // ✅ smaller padding
                                     minimumSize:
-                                        const Size(36, 36), // ✅ Compact size
+                                        const Size(28, 28), // ✅ smaller button
                                     tapTargetSize:
                                         MaterialTapTargetSize.shrinkWrap,
                                   ),
@@ -1571,21 +1278,25 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                         ],
                       ),
 
-                      // ----------End Header for Porject Header ----------
+                      // ----------End Header for Project Header ----------
 
                       const SizedBox(height: 8),
 
-                      // ---------- Search Field ----------
+                      // ----------Start Search Field ----------
                       TextField(
                         decoration: InputDecoration(
                           hintText: "Search project...",
-                          prefixIcon: const Icon(Icons.search),
+                          hintStyle:
+                              const TextStyle(fontSize: 10), // ✅ font 10px
+                          prefixIcon: const Icon(Icons.search,
+                              size: 16), // slightly smaller icon
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           contentPadding:
                               const EdgeInsets.symmetric(vertical: 8),
                         ),
+                        style: const TextStyle(fontSize: 10), // ✅ font 10px
                         onChanged: (value) {
                           setModalState(() {
                             _filteredProjects = _projects
@@ -1597,14 +1308,17 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                         },
                       ),
                       const SizedBox(height: 12),
+                      // ----------End Search Field ----------
 
-                      // ---------- Project List ----------
+                      // ----------Start Project List ----------
                       Expanded(
                         child: _filteredProjects.isEmpty
                             ? const Center(
                                 child: Text(
                                   "No projects found",
-                                  style: TextStyle(color: Colors.grey),
+                                  style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 10), // ✅ font 10px
                                 ),
                               )
                             : ListView.builder(
@@ -1626,7 +1340,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                                         clipBehavior: Clip.none,
                                         children: [
                                           Icon(Icons.folder,
-                                              color: projectColor, size: 28),
+                                              color: projectColor,
+                                              size: 24), // smaller
                                           if (project.taskCount > 0)
                                             Positioned(
                                               right: -6,
@@ -1639,7 +1354,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                                                   '${project.taskCount}',
                                                   style: const TextStyle(
                                                     color: Colors.white,
-                                                    fontSize: 10,
+                                                    fontSize: 10, // ✅ font 10px
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
@@ -1650,21 +1365,26 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                                       title: Text(
                                         project.name,
                                         style: const TextStyle(
-                                            fontWeight: FontWeight.w600),
+                                          fontSize: 10, // ✅ font 10px
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                       subtitle: Text(
                                         "Owner: ${project.project_owner_name}",
-                                        style: const TextStyle(fontSize: 12),
+                                        style: const TextStyle(
+                                          fontSize: 10, // ✅ font 10px
+                                        ),
                                       ),
                                       trailing: CircleAvatar(
-                                        radius: 14,
+                                        radius: 12, // slightly smaller
                                         backgroundColor: projectColor,
                                         child: Text(
                                           getFirstAndLastLetter(
                                               project.project_owner_name),
                                           style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12),
+                                            color: Colors.white,
+                                            fontSize: 10, // ✅ font 10px
+                                          ),
                                         ),
                                       ),
                                       onTap: () {
@@ -1684,6 +1404,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                                 },
                               ),
                       ),
+                      // ----------End Project List ----------
                     ],
                   );
                 },
@@ -1962,13 +1683,16 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   final phoneRegex = RegExp(r'^(01)[0-9]{9}$'); // Bangladeshi 11-digit number
   final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
-  //----------------- Start Period Dialog-------------------
+//----------------- Start Period Dialog-------------------
   void _showPeriodDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text("Select Period"),
+        title: const Text(
+          "Select Period",
+          style: TextStyle(fontSize: 10), // 🔹 font set to 10px
+        ),
         content: StatefulBuilder(
           builder: (context, setStateDialog) => Column(
             mainAxisSize: MainAxisSize.min,
@@ -1981,7 +1705,10 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 items: numbers
                     .map((num) => DropdownMenuItem(
                           value: num,
-                          child: Text(num.toString()),
+                          child: Text(
+                            num.toString(),
+                            style: const TextStyle(fontSize: 10), // 🔹
+                          ),
                         ))
                     .toList(),
                 onChanged: (value) =>
@@ -1995,7 +1722,10 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 items: units
                     .map((unit) => DropdownMenuItem(
                           value: unit,
-                          child: Text(unit),
+                          child: Text(
+                            unit,
+                            style: const TextStyle(fontSize: 10), // 🔹
+                          ),
                         ))
                     .toList(),
                 onChanged: (value) =>
@@ -2006,49 +1736,337 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel")),
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "Cancel",
+              style: TextStyle(fontSize: 10), // 🔹
+            ),
+          ),
           ElevatedButton(
             onPressed: () {
               setState(() {}); // update AppBar
               Navigator.pop(context);
               getTaskData(); // fetch tasks instantly
             },
-            child: const Text("Apply"),
+            child: const Text(
+              "Apply",
+              style: TextStyle(fontSize: 10), // 🔹
+            ),
           ),
         ],
       ),
     );
   }
-  //----------------- End Period Dialog-------------------
+//----------------- End Period Dialog-------------------
 
-  // ------------------Start Add Column ------------------
   void _showAddColumnDialog() {
     TextEditingController _controller = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Column'),
-        content: TextField(
-            controller: _controller,
-            decoration: const InputDecoration(hintText: 'Column Name')),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          TextButton(
-            onPressed: () {
-              if (_controller.text.isNotEmpty) {
-                addColumn(_controller.text);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Add'),
+      builder: (context) {
+        // Get the available height after keyboard opens
+        final availableHeight = MediaQuery.of(context).size.height -
+            MediaQuery.of(context).viewInsets.bottom;
+
+        return AlertDialog(
+          scrollable: true,
+          title: const Text(
+            'Add Column',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ],
-      ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: availableHeight * 0.5, // Half of remaining screen
+            ),
+            child: SingleChildScrollView(
+              child: TextField(
+                controller: _controller,
+                decoration: const InputDecoration(
+                  hintText: 'Column Name',
+                  hintStyle: TextStyle(fontSize: 10),
+                  border: UnderlineInputBorder(),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                ),
+                style: const TextStyle(fontSize: 10),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontSize: 10),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                if (_controller.text.isNotEmpty) {
+                  addColumn(_controller.text);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text(
+                'Add',
+                style: TextStyle(fontSize: 10),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
+
+// // ------------------Start Add Column ------------------
+//   void _showAddColumnDialog() {
+//     TextEditingController _controller = TextEditingController();
+
+//     showDialog(
+//       context: context,
+//       builder: (context) => AlertDialog(
+//         scrollable: true, // ✅ makes dialog scrollable when keyboard opens
+//         title: const Text(
+//           'Add Column',
+//           style: TextStyle(
+//             fontSize: 11, // ~10px equivalent
+//             fontWeight: FontWeight.bold, // ✅ bold text
+//           ),
+//         ),
+//         content: Padding(
+//           padding: EdgeInsets.only(
+//             bottom: MediaQuery.of(context).viewInsets.bottom,
+//           ),
+//           child: TextField(
+//             controller: _controller,
+//             decoration: const InputDecoration(
+//               hintText: 'Column Name',
+//               hintStyle: TextStyle(fontSize: 10),
+//               border: UnderlineInputBorder(), // ✅ straight underline
+//               enabledBorder: UnderlineInputBorder(
+//                 borderSide: BorderSide(color: Colors.grey),
+//               ),
+//               focusedBorder: UnderlineInputBorder(
+//                 borderSide: BorderSide(color: Colors.blue),
+//               ),
+//             ),
+//             style: const TextStyle(fontSize: 10),
+//           ),
+//         ),
+//         actions: [
+//           TextButton(
+//             onPressed: () => Navigator.pop(context),
+//             child: const Text(
+//               'Cancel',
+//               style: TextStyle(fontSize: 10),
+//             ),
+//           ),
+//           TextButton(
+//             onPressed: () {
+//               if (_controller.text.isNotEmpty) {
+//                 addColumn(_controller.text);
+//                 Navigator.pop(context);
+//               }
+//             },
+//             child: const Text(
+//               'Add',
+//               style: TextStyle(fontSize: 10),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// // ------------------End Add Column ------------------
+
+  // void _showAddColumnDialog() {
+  //   TextEditingController _controller = TextEditingController();
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       scrollable: true, // ✅ allows dialog to scroll when keyboard opens
+  //       title: const Text(
+  //         'Add Column',
+  //         style: TextStyle(
+  //           fontSize: 11,
+  //           fontWeight: FontWeight.bold,
+  //         ),
+  //       ),
+  //       content: ConstrainedBox(
+  //         constraints: BoxConstraints(
+  //           maxHeight: MediaQuery.of(context).size.height * 0.5,
+  //         ),
+  //         child: SingleChildScrollView(
+  //           child: TextField(
+  //             controller: _controller,
+  //             decoration: const InputDecoration(
+  //               hintText: 'Column Name',
+  //               hintStyle: TextStyle(fontSize: 10),
+  //               border: UnderlineInputBorder(), // ✅ straight underline
+  //               enabledBorder: UnderlineInputBorder(
+  //                 borderSide: BorderSide(color: Colors.grey),
+  //               ),
+  //               focusedBorder: UnderlineInputBorder(
+  //                 borderSide: BorderSide(color: Colors.green),
+  //               ),
+  //             ),
+  //             style: const TextStyle(fontSize: 10),
+  //           ),
+  //         ),
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text(
+  //             'Cancel',
+  //             style: TextStyle(fontSize: 10),
+  //           ),
+  //         ),
+  //         TextButton(
+  //           onPressed: () {
+  //             if (_controller.text.isNotEmpty) {
+  //               addColumn(_controller.text);
+  //               Navigator.pop(context);
+  //             }
+  //           },
+  //           child: const Text(
+  //             'Add',
+  //             style: TextStyle(fontSize: 10),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+// // ------------------Start Add Column ------------------
+//   void _showAddColumnDialog() {
+//     TextEditingController _controller = TextEditingController();
+//     showDialog(
+//       context: context,
+//       builder: (context) => AlertDialog(
+//         title: const Text(
+//           'Add Column',
+//           style: TextStyle(
+//             fontSize: 11, // ~10px equivalent
+//             fontWeight: FontWeight.bold, // ✅ bold text
+//           ),
+//         ),
+//         content: ConstrainedBox(
+//           constraints: BoxConstraints(
+//             maxHeight:
+//                 MediaQuery.of(context).size.height * 0.5, // ✅ limit height
+//           ),
+//           child: SingleChildScrollView(
+//             child: TextField(
+//               controller: _controller,
+//               decoration: const InputDecoration(
+//                 hintText: 'Column Name',
+//                 hintStyle: TextStyle(fontSize: 10), // 🔹
+//                 border: UnderlineInputBorder(), // ✅ straight underline
+//                 enabledBorder: UnderlineInputBorder(
+//                   borderSide:
+//                       BorderSide(color: Colors.grey), // default underline color
+//                 ),
+//                 focusedBorder: UnderlineInputBorder(
+//                   borderSide: BorderSide(
+//                       color: Colors.green), // underline color on focus
+//                 ),
+//               ),
+//               style: const TextStyle(fontSize: 10), // 🔹
+//             ),
+//           ),
+//         ),
+//         actions: [
+//           TextButton(
+//             onPressed: () => Navigator.pop(context),
+//             child: const Text(
+//               'Cancel',
+//               style: TextStyle(fontSize: 10), // 🔹
+//             ),
+//           ),
+//           TextButton(
+//             onPressed: () {
+//               if (_controller.text.isNotEmpty) {
+//                 addColumn(_controller.text);
+//                 Navigator.pop(context);
+//               }
+//             },
+//             child: const Text(
+//               'Add',
+//               style: TextStyle(fontSize: 10), // 🔹
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// // ------------------End Add Column ------------------
+
+// // ------------------Start Add Column ------------------
+
+  // void _showAddColumnDialog() {
+  //   TextEditingController _controller = TextEditingController();
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text(
+  //         'Add Column',
+  //         style: TextStyle(
+  //           fontSize: 11, // ~10px equivalent
+  //           fontWeight: FontWeight.bold, // ✅ bold text
+  //         ),
+  //       ),
+  //       content: ConstrainedBox(
+  //         constraints: BoxConstraints(
+  //           maxHeight:
+  //               MediaQuery.of(context).size.height * 0.5, // ✅ limit height
+  //         ),
+  //         child: SingleChildScrollView(
+  //           child: TextField(
+  //             controller: _controller,
+  //             decoration: const InputDecoration(
+  //               hintText: 'Column Name',
+  //               hintStyle: TextStyle(fontSize: 10), // 🔹
+  //             ),
+  //             style: const TextStyle(fontSize: 10), // 🔹
+  //           ),
+  //         ),
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text(
+  //             'Cancel',
+  //             style: TextStyle(fontSize: 10), // 🔹
+  //           ),
+  //         ),
+  //         TextButton(
+  //           onPressed: () {
+  //             if (_controller.text.isNotEmpty) {
+  //               addColumn(_controller.text);
+  //               Navigator.pop(context);
+  //             }
+  //           },
+  //           child: const Text(
+  //             'Add',
+  //             style: TextStyle(fontSize: 10), // 🔹
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+// // ------------------End Add Column ------------------
 
   // ------------------ Start Edit Task ------------------
   void _showEditTask(int columnIndex, KTask task) {

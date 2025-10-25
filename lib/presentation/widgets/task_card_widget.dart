@@ -32,7 +32,7 @@ class TaskCard extends StatelessWidget {
           child: Draggable<KData>(
             onDragUpdate: dragListener,
             feedback: Material(
-              color: Colors.red,
+              color: Color.fromARGB(255, 165, 228, 181),
               borderRadius: BorderRadius.circular(10.0),
               child: Container(
                 height: 70,
@@ -42,120 +42,138 @@ class TaskCard extends StatelessWidget {
                 child: TaskText(title: task.title),
               ),
             ),
-            childWhenDragging: Container(color: Colors.black12),
+            childWhenDragging: Container(color: Colors.white),
             data: KData(
               from: columnIndex,
               task: task,
               taskId: task.taskId,
             ),
-            child: Container(
-              color: const Color.fromARGB(255, 234, 237, 237),
-              child: ListTile(
-                dense: true,
-                title: TaskText(title: task.title),
-                subtitle: Column(
-                  // ✅ Added subtitle
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 6),
-                    Text(
-                      "By-: ${task.createdBy}",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    Text(
-                      "At-: ${task.createdAt}",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
 
-                trailing: PopupMenuButton<String>(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  icon: const Icon(
-                    Icons.more_vert,
-                    color: Colors.black54,
-                  ),
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      updateItemHandler(columnIndex, task);
-                    } else if (value == 'delete') {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (context) => TaskMenu(
-                          deleteHandler: () =>
-                              deleteItemHandler(columnIndex, task),
-                        ),
-                      );
-                    }
+            //-----------Start Conatiner---------------
+
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click, // hover cursor
+              child: Container(
+                height: 120, // fixed height for consistency
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFEFEF), // soft Claude off-white tone
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // ---------- Actions Button Top-Right ----------
+                          Align(
+                            alignment:
+                                Alignment.topRight, // 👈 moved to right corner
+                            child: PopupMenuButton<String>(
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              color: const Color(
+                                  0xFFF9F9F9), // off-white dropdown background
+                              icon: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Text(
+                                    "Actions",
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Icon(Icons.arrow_drop_down, size: 14),
+                                ],
+                              ),
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  updateItemHandler(columnIndex, task);
+                                } else if (value == 'delete') {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    builder: (context) => TaskMenu(
+                                      deleteHandler: () =>
+                                          deleteItemHandler(columnIndex, task),
+                                    ),
+                                  );
+                                }
+                              },
+                              itemBuilder: (BuildContext context) => [
+                                PopupMenuItem<String>(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.edit,
+                                          color: Color.fromARGB(
+                                              255, 120, 214, 184),
+                                          size: 14),
+                                      SizedBox(width: 6),
+                                      Text('Edit',
+                                          style: TextStyle(fontSize: 10)),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem<String>(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.delete,
+                                          color: Colors.black87, size: 14),
+                                      SizedBox(width: 6),
+                                      Text('Delete',
+                                          style: TextStyle(fontSize: 10)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          // ---------- Task Title ----------
+                          Text(
+                            task.title,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+
+                          // ---------- Task Info ----------
+                          Text(
+                            "By-: ${task.createdBy}",
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          Text(
+                            "At-: ${task.createdAt}",
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
                   },
-                  itemBuilder: (BuildContext context) => [
-                    PopupMenuItem<String>(
-                      value: 'edit',
-                      child: Row(
-                        children: const [
-                          Icon(Icons.edit, color: Colors.blueAccent, size: 18),
-                          SizedBox(width: 8),
-                          Text('Edit'),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Row(
-                        children: const [
-                          Icon(Icons.delete, color: Colors.redAccent, size: 18),
-                          SizedBox(width: 8),
-                          Text('Delete'),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
-
-                //-------Old trailing code- 2025-10-15------//
-
-                //  trailing: Row(
-                //     mainAxisSize: MainAxisSize.min,
-                //     children: [
-                //       InkWell(
-                //         onTap: () {
-                //           updateItemHandler(columnIndex, task);
-                //         },
-                //         child: const Icon(
-                //           //-------Edit Icon Color Changed-------//
-                //           Icons.edit,
-                //           color: Color.fromARGB(255, 163, 233, 175),
-                //           size: 18.0,
-                //         ),
-                //       ),
-                //       const SizedBox(width: 8),
-                //       InkWell(
-                //         onTap: () => showModalBottomSheet(
-                //           context: context,
-                //           builder: (context) => TaskMenu(
-                //             deleteHandler: () =>
-                //                 deleteItemHandler(columnIndex, task),
-                //           ),
-                //         ),
-                //         child: const Icon(
-                //           //-------Delete Icon Color Changed-------//
-                //           Icons.delete,
-                //           color: Color.fromARGB(255, 125, 220, 128),
-                //           size: 18,
-                //         ),
-                //       ),
-                //     ],
-                //   ),
               ),
             ),
+
+            //------End Conatiner--------------
           ),
         );
       },
