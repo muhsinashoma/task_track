@@ -64,7 +64,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
             projectName = data['project_name'] ?? ''; // <-- Add this line
             imageUrl = (data['owner_image'] != null &&
                     data['owner_image'].toString().isNotEmpty)
-                ? 'http://192.168.0.101/API/uploads/${data['owner_image']}'
+                ? 'http://192.168.32.181/API/uploads/${data['owner_image']}'
                 : '';
           });
         } else {

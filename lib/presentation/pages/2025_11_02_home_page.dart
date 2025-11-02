@@ -661,118 +661,109 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     return Scaffold(
       // ✅ Responsive, balanced AppBar layout
 
-      //---------Start AppBar----------------
-
+      //---------Start AppBar-----------
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
         titleSpacing: 0,
         title: LayoutBuilder(
           builder: (context, constraints) {
             final isSmallScreen = constraints.maxWidth < 360;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            return Row(
               children: [
-                // 🔹 Your Original Code (unchanged)
-                Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 2),
-                      child: SizedBox(
-                        width: isSmallScreen ? 130 : 145,
-                        child: GestureDetector(
-                          onTap: () => _showProjectSelectionModal(),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: _borderColor,
-                                width: 1.2,
+                // -------- Project Selector ----------
+                Padding(
+                  padding:
+                      const EdgeInsets.only(left: 2), // 👈 slightly more left
+                  child: SizedBox(
+                    width:
+                        isSmallScreen ? 130 : 145, // adjusts width dynamically
+                    child: GestureDetector(
+                      onTap: () => _showProjectSelectionModal(),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: _borderColor,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                _selectedProjectName ?? "Select Project",
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 10, // 🔹 changed
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    _selectedProjectName ?? "Select Project",
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const Icon(Icons.arrow_drop_down,
-                                    color: Colors.white, size: 16),
-                              ],
-                            ),
-                          ),
+                            const Icon(Icons.arrow_drop_down,
+                                color: Colors.white, size: 16),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    CircleAvatar(
-                      radius: 11,
-                      backgroundColor: Colors.white,
-                      child: Text(
-                        '$_selectedProjectTaskCount',
+                  ),
+                ),
+
+                const SizedBox(width: 6),
+
+                // -------- Task Count Avatar ----------
+                CircleAvatar(
+                  radius: 11,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    '$_selectedProjectTaskCount',
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10, // 🔹 changed
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 6),
+
+                // -------- Search Icon + Period ----------
+                GestureDetector(
+                  onTap: _showPeriodDialog,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, color: Colors.black87, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        periodText == "1 days" ? "1d" : periodText,
                         style: const TextStyle(
                           color: Colors.green,
                           fontWeight: FontWeight.bold,
-                          fontSize: 10,
+                          fontSize: 10, // 🔹 changed
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: _showPeriodDialog,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.search,
-                              color: Colors.black87, size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            periodText == "1 days" ? "1d" : periodText,
-                            style: const TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: Text(
-                        DateFormat("MMM dd, yyyy").format(DateTime.now()),
-                        style: const TextStyle(
-                          fontFamily: 'Montserrat',
-                          color: Color.fromARGB(255, 47, 46, 46),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
-                // 🔹 Added Workflow Path (beautiful and user-friendly)
-                const SizedBox(height: 2),
-                const Text(
-                  "Workflow :: Project -->  Task Board  -->  Task",
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w500,
-                    fontStyle: FontStyle.italic,
-                    letterSpacing: 0.4,
+                const Spacer(),
+
+                // -------- Current Date ----------
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Text(
+                    DateFormat("MMM dd, yyyy").format(DateTime.now()),
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      color: Color.fromARGB(255, 47, 46, 46),
+                      fontSize: 10, // 🔹 changed
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
@@ -784,327 +775,343 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
       //---------Start Drawer----------
       drawer: Drawer(
-        child: Theme(
-          data: Theme.of(context).copyWith(
-            listTileTheme: const ListTileThemeData(
-              dense: true, // make all ListTiles compact
-              minVerticalPadding: 0, // remove extra inner padding
-              visualDensity:
-                  VisualDensity(vertical: -4), // reduce space between items
-              contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16), // keep left/right padding
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            // ---------- Drawer Header ----------
+            DrawerHeader(
+              padding: EdgeInsets.zero,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    'assets/icons/task_management.png',
+                    fit: BoxFit.cover,
+                  ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: double.infinity,
+                      color: Colors.black54,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: const Text(
+                        'Task Management',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10, // ✅ font 10px
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              // ---------- Drawer Header ----------
-              DrawerHeader(
-                padding: EdgeInsets.zero,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      'assets/icons/task_management.png',
-                      fit: BoxFit.cover,
-                    ),
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        width: double.infinity,
-                        color: Colors.black54,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: const Text(
-                          'Task Management',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
+
+            // ---------- Default Menu ----------
+            // ListTile(
+            //   leading: const Icon(Icons.dashboard),
+            //   title: const Text(
+            //     'Dashboard',
+            //     style: TextStyle(fontSize: 10), // ✅ font 10px
+            //   ),
+            //   onTap: () {
+            //     Navigator.pop(context); // Close the drawer first
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (context) => KanbanSetStatePage()),
+            //     );
+            //   },
+            // ),
+
+            ListTile(
+              leading: const Icon(Icons.dashboard),
+              title: const Text(
+                'Dashboard',
+                style: TextStyle(fontSize: 10),
+              ),
+              onTap: () {
+                Navigator.pop(context); // close drawer
+                showDashboard(); // switch to dashboard
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(
+                Icons.add,
+                color: Colors.grey,
+              ),
+              title: const Text(
+                'Add Column',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 10, // ✅ font 10px
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _showAddColumnDialog();
+              },
+            ),
+
+            //-------------- Start About Me--------------
+            ListTile(
+              leading: const Icon(
+                Icons.info,
+                color: Colors.orange,
+              ),
+              title: const Text(
+                'About Me',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 10, // ✅ font 10px
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+
+                showDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (context) {
+                    final screenSize = MediaQuery.of(context).size;
+                    final screenWidth = screenSize.width;
+                    final screenHeight = screenSize.height;
+
+                    final inset = screenWidth < 500 ? 32.0 : 96.0;
+                    final maxDialogHeight = screenHeight < 600
+                        ? screenHeight * 0.9
+                        : screenHeight * 0.6;
+
+                    return Dialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ---------- Default Menu ----------
-              ListTile(
-                leading: const Icon(Icons.dashboard),
-                title: const Text(
-                  'Dashboard',
-                  style: TextStyle(fontSize: 10),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  showDashboard();
-                },
-              ),
-
-              ListTile(
-                leading: const Icon(Icons.add, color: Colors.grey),
-                title: const Text(
-                  'Add Column',
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 10,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showAddColumnDialog();
-                },
-              ),
-
-              //-------------- Start About Me--------------
-              ListTile(
-                leading: const Icon(Icons.info, color: Colors.orange),
-                title: const Text(
-                  'About Me',
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 10,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-
-                  showDialog(
-                    context: context,
-                    barrierDismissible: true,
-                    builder: (context) {
-                      final screenSize = MediaQuery.of(context).size;
-                      final screenWidth = screenSize.width;
-                      final screenHeight = screenSize.height;
-
-                      final inset = screenWidth < 500 ? 32.0 : 96.0;
-                      final maxDialogHeight = screenHeight < 600
-                          ? screenHeight * 0.9
-                          : screenHeight * 0.6;
-
-                      return Dialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                      insetPadding: EdgeInsets.all(inset),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: maxDialogHeight,
+                          maxWidth: screenWidth < 600
+                              ? screenWidth * 0.9
+                              : screenWidth * 0.5,
                         ),
-                        insetPadding: EdgeInsets.all(inset),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: maxDialogHeight,
-                            maxWidth: screenWidth < 600
-                                ? screenWidth * 0.9
-                                : screenWidth * 0.5,
-                          ),
-                          child: Stack(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(20),
-                                child: SingleChildScrollView(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: const [
-                                      SizedBox(height: 20),
-                                      AboutMePage(),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                right: 0,
-                                top: 0,
-                                child: IconButton(
-                                  icon: const Icon(Icons.close,
-                                      color: Colors.grey),
-                                  iconSize: 28,
-                                  splashRadius: 20,
-                                  tooltip: 'Close',
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-              //-------------- End About Me--------------
-
-              //--------------User Details-------------
-              ListTile(
-                leading: const Icon(Icons.person, color: Colors.green),
-                title: const Text(
-                  'User Details',
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 10,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showUserDetailsTray(context);
-                },
-              ),
-              //--------------End Details-------------
-
-              //--------------Start More App-------------
-              ListTile(
-                leading: const Icon(Icons.apps, color: Colors.lightBlue),
-                title: const Text(
-                  'More App',
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 10,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ArabicWordListPage()),
-                  );
-                },
-              ),
-              //--------------End More App-------------
-
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.feedback, color: Colors.blueGrey),
-                title: const Text(
-                  'Feedback',
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-
-              const Divider(),
-
-              // ---------- Projects Section ----------
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "My Projects",
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    if (_projects.isNotEmpty)
-                      Text(
-                        "Owner",
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              if (_isLoadingProjects)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else if (_projects.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    "No projects found.",
-                    style: TextStyle(fontSize: 10),
-                  ),
-                )
-              else
-                ..._projects.asMap().entries.map((entry) {
-                  int index = entry.key;
-                  var project = entry.value;
-                  Color projectColor = generateProjectColor(index);
-
-                  return ListTile(
-                    leading: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Icon(
-                          Icons.folder,
-                          color: projectColor,
-                          size: 28,
-                        ),
-                        if (project.taskCount > 0)
-                          Positioned(
-                            right: -6,
-                            top: -6,
-                            child: CircleAvatar(
-                              radius: 10,
-                              backgroundColor:
-                                  const Color.fromARGB(255, 162, 163, 162),
-                              child: Text(
-                                '${project.taskCount}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+                        child: Stack(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    SizedBox(height: 20),
+                                    AboutMePage(), // your About Me content
+                                  ],
                                 ),
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                    title: Text(
-                      project.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 10,
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              child: IconButton(
+                                icon:
+                                    const Icon(Icons.close, color: Colors.grey),
+                                iconSize: 28,
+                                splashRadius: 20,
+                                tooltip: 'Close',
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      overflow: TextOverflow.ellipsis,
+                    );
+                  },
+                );
+              },
+            ),
+            //-------------- End About Me--------------
+
+            //--------------User Details-------------
+            ListTile(
+              leading: const Icon(
+                Icons.person,
+                color: Colors.green,
+              ),
+              title: const Text(
+                'User Details',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 10, // ✅ font 10px
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _showUserDetailsTray(context);
+              },
+            ),
+            //--------------End Details-------------
+
+            //--------------Start More App-------------
+            ListTile(
+              leading: const Icon(
+                Icons.apps,
+                color: Colors.lightBlue,
+              ),
+              title: const Text(
+                'More App',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 10, // ✅ font 10px
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ArabicWordListPage()),
+                );
+              },
+            ),
+            //--------------End More App-------------
+
+            const Divider(),
+            ListTile(
+              leading: const Icon(
+                Icons.feedback,
+                color: Colors.blueGrey,
+              ),
+              title: const Text(
+                'Feedback',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 10, // ✅ font 10px
+                ),
+              ),
+            ),
+
+            const Divider(),
+
+            // ---------- Projects Section ----------
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "My Projects",
+                    style: TextStyle(
+                      fontSize: 10, // ✅ font 10px
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
                     ),
-                    trailing: Tooltip(
-                      message: project.project_owner_name,
-                      child: CircleAvatar(
-                        radius: 16,
-                        backgroundColor: projectColor,
-                        child: Text(
-                          getFirstAndLastLetter(project.project_owner_name),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 10,
+                  ),
+                  if (_projects.isNotEmpty)
+                    Text(
+                      "Owner",
+                      style: const TextStyle(
+                        fontSize: 10, // ✅ font 10px
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            if (_isLoadingProjects)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_projects.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  "No projects found.",
+                  style: TextStyle(fontSize: 10), // ✅ font 10px
+                ),
+              )
+            else
+              ..._projects.asMap().entries.map((entry) {
+                int index = entry.key;
+                var project = entry.value;
+                Color projectColor = generateProjectColor(index);
+
+                return ListTile(
+                  leading: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(
+                        Icons.folder,
+                        color: projectColor,
+                        size: 28,
+                      ),
+                      if (project.taskCount > 0)
+                        Positioned(
+                          right: -6,
+                          top: -6,
+                          child: CircleAvatar(
+                            radius: 10,
+                            backgroundColor: Color.fromARGB(255, 162, 163, 162),
+                            child: Text(
+                              '${project.taskCount}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10, // ✅ font 10px
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
+                        ),
+                    ],
+                  ),
+                  title: Text(
+                    project.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 10, // ✅ font 10px
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: Tooltip(
+                    message: project.project_owner_name,
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: projectColor,
+                      child: Text(
+                        getFirstAndLastLetter(project.project_owner_name),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 10, // ✅ font 10px
                         ),
                       ),
                     ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      setState(() {
-                        _selectedProjectId = project.id;
-                        _selectedProjectName = project.name;
-                        _selectedProjectTaskCount = project.taskCount;
-                      });
-                      getTaskData();
-                    },
-                  );
-                }).toList(),
-            ],
-          ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      _selectedProjectId = project.id;
+                      _selectedProjectName = project.name;
+                      _selectedProjectTaskCount = project.taskCount;
+                    });
+                    getTaskData();
+                  },
+                );
+              }).toList(),
+          ],
         ),
       ),
-      //---------End Drawer-------------------
+      //---------End Drawer--------------------
 
       // ----------Start Kanban Board Body ----------
       body: SafeArea(
