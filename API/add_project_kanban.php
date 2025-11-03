@@ -1,124 +1,190 @@
- <?php
-
-
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+<?php
 
 include 'config.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json");
+
+// -------------------- Read POST values --------------------
+$project_name = isset($_POST['project_name']) ? trim($_POST['project_name']) : '';
+$project_owner_name = isset($_POST['project_owner_name']) ? trim($_POST['project_owner_name']) : '';
+$contact_number = isset($_POST['contact_number']) ? trim($_POST['contact_number']) : '';
+$email_address = isset($_POST['email_address']) ? trim($_POST['email_address']) : '';
+$permanent_address = isset($_POST['permanent_address']) ? trim($_POST['permanent_address']) : '';
+$created_by = isset($_POST['created_by']) ? trim($_POST['created_by']) : $project_owner_name;
+$device_user_id = isset($_POST['device_user_id']) ? trim($_POST['device_user_id']) : '';
+
+// -------------------- Minimal validation --------------------
+if (empty($project_name) || empty($project_owner_name) || empty($device_user_id)) {
+    echo json_encode(['success' => false, 'error' => 'Missing required fields']);
+    exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+// -------------------- Create uploads folder if not exist --------------------
+$uploadDir = "uploads/";
+if (!file_exists($uploadDir)) {
+    mkdir($uploadDir, 0777, true);
+}
 
-    $project_name       = mysqli_real_escape_string($con, $_POST['project_name']);
-    $project_owner_name = mysqli_real_escape_string($con, $_POST['project_owner_name']);
-    $contact_number     = mysqli_real_escape_string($con, $_POST['contact_number']);
-    $email_address      = mysqli_real_escape_string($con, $_POST['email_address']);
-    $permanent_address  = mysqli_real_escape_string($con, $_POST['permanent_address']);
-    $user_identifier    = mysqli_real_escape_string($con, $_POST['user_identifier']); // 👈 new field
-    $created_by         = $project_owner_name;
-    $created_at         = date('Y-m-d H:i:s');
+// -------------------- Max file sizes --------------------
+$maxImageSize = 5 * 1024 * 1024;   // 5 MB
+$maxFileSize  = 20 * 1024 * 1024;  // 20 MB
 
-    $attached_file = null;
-    if (isset($_FILES['attached_file']) && $_FILES['attached_file']['error'] === 0) {
-        $uploadDir = "uploads/";
-        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+// -------------------- Handle optional owner image --------------------
+$owner_image = NULL;
+if (isset($_FILES['owner_image']) && $_FILES['owner_image']['error'] === UPLOAD_ERR_OK) {
+    if ($_FILES['owner_image']['size'] > $maxImageSize) {
+        echo json_encode(['success' => false, 'error' => 'Owner image exceeds 5 MB']);
+        exit;
+    }
+    $owner_image_name = time() . '_' . basename($_FILES['owner_image']['name']);
+    $targetOwnerImage = $uploadDir . $owner_image_name;
+    if (move_uploaded_file($_FILES['owner_image']['tmp_name'], $targetOwnerImage)) {
+        $owner_image = $owner_image_name;
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Failed to upload owner image']);
+        exit;
+    }
+}
 
-        $fileName = time() . "_" . basename($_FILES['attached_file']['name']);
-        $targetFile = $uploadDir . $fileName;
-
-        if (move_uploaded_file($_FILES['attached_file']['tmp_name'], $targetFile)) {
-            $attached_file = $fileName;
-        } else {
-            echo json_encode(["success"=>false, "message"=>"File upload failed"]);
-            exit();
+// -------------------- Handle multiple attached files --------------------
+$attached_files_array = [];
+if (isset($_FILES['attached_file'])) {
+    foreach ($_FILES['attached_file']['tmp_name'] as $key => $tmp_name) {
+        if ($_FILES['attached_file']['error'][$key] === UPLOAD_ERR_OK) {
+            if ($_FILES['attached_file']['size'][$key] > $maxFileSize) {
+                echo json_encode(['success' => false, 'error' => 'Attached file exceeds 20 MB']);
+                exit;
+            }
+            $attached_file_name = time() . '_' . basename($_FILES['attached_file']['name'][$key]);
+            $targetAttachedFile = $uploadDir . $attached_file_name;
+            if (move_uploaded_file($tmp_name, $targetAttachedFile)) {
+                $attached_files_array[] = $attached_file_name;
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Failed to upload attached file']);
+                exit;
+            }
         }
     }
-
-    $stmt = $con->prepare("INSERT INTO tbl_project_details 
-        (project_name, project_owner_name, attached_file, contact_number, email_address, permanent_address, created_by, user_identifier, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssssss", $project_name, $project_owner_name, $attached_file, $contact_number, $email_address, $permanent_address, $created_by, $user_identifier, $created_at);
-
-    if ($stmt->execute()) {
-        echo json_encode(["success"=>true, "message"=>"Project added successfully", "file"=>$attached_file]);
-    } else {
-        echo json_encode(["success"=>false, "message"=>"DB Error: ".$stmt->error]);
-    }
-
-    $stmt->close();
-    $con->close();
-} else {
-    echo json_encode(["success"=>false, "message"=>"Invalid Request Method"]);
 }
 
+// Convert attached files array to JSON string to store in DB
+$attached_files_json = !empty($attached_files_array) ? json_encode($attached_files_array) : NULL;
+
+// -------------------- Insert into database --------------------
+$query = "INSERT INTO tbl_project_details
+    (project_name, project_owner_name, owner_image, attached_file, contact_number, email_address, permanent_address, created_by, created_at, status, device_user_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 1, ?)";
+
+if ($stmt = $con->prepare($query)) {
+    $stmt->bind_param(
+        "sssssssss",
+        $project_name,
+        $project_owner_name,
+        $owner_image,
+        $attached_files_json,  // store as JSON string
+        $contact_number,
+        $email_address,
+        $permanent_address,
+        $created_by,
+        $device_user_id
+    );
+
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'id' => $con->insert_id]);
+    } else {
+        echo json_encode(['success' => false, 'error' => $stmt->error]);
+    }
+    $stmt->close();
+} else {
+    echo json_encode(['success' => false, 'error' => 'Prepare failed']);
+}
+
+$con->close();
 
 
 
-// ----------------------------- Start Backup Code--------------------
 
-// header("Access-Control-Allow-Origin: *");
-// header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-// header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
+// add_project_kanban.php
 // include 'config.php';
+// header("Access-Control-Allow-Origin: *");
+// header("Access-Control-Allow-Methods: POST, OPTIONS");
+// header("Access-Control-Allow-Headers: Content-Type, Authorization");
+// header("Content-Type: application/json");
 
-// if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-//     http_response_code(200);
-//     exit();
+// // Read POST values (form-data)
+// $project_name = isset($_POST['project_name']) ? trim($_POST['project_name']) : '';
+// $project_owner_name = isset($_POST['project_owner_name']) ? trim($_POST['project_owner_name']) : '';
+// $contact_number = isset($_POST['contact_number']) ? trim($_POST['contact_number']) : '';
+// $email_address = isset($_POST['email_address']) ? trim($_POST['email_address']) : '';
+// $permanent_address = isset($_POST['permanent_address']) ? trim($_POST['permanent_address']) : '';
+// $created_by = isset($_POST['created_by']) ? trim($_POST['created_by']) : $project_owner_name;
+// $device_user_id = isset($_POST['device_user_id']) ? trim($_POST['device_user_id']) : '';
+
+// // minimal validation
+// if (empty($project_name) || empty($project_owner_name) || empty($device_user_id)) {
+//     echo json_encode(['success' => false, 'error' => 'Missing required fields']);
+//     exit;
 // }
 
-// if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-//     // Collect form data
-//     $project_name       = mysqli_real_escape_string($con, $_POST['project_name']);
-//     $project_owner_name = mysqli_real_escape_string($con, $_POST['project_owner_name']);
-//     $contact_number     = mysqli_real_escape_string($con, $_POST['contact_number']);
-//     $email_address      = mysqli_real_escape_string($con, $_POST['email_address']);
-//     $permanent_address  = mysqli_real_escape_string($con, $_POST['permanent_address']);
-//     $created_by         = $project_owner_name; // created_by = ownerName
-//     $created_at         = date('Y-m-d H:i:s');
 
-//     // File upload
-//     $attached_file = null;
-//     if (isset($_FILES['attached_file']) && $_FILES['attached_file']['error'] === 0) {
-//         $uploadDir = "uploads/";
-//         if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+// $uploadDir = "uploads/";
+// if (!file_exists($uploadDir)) {
+//     mkdir($uploadDir, 0777, true); // Create folder if it doesn't exist
+// }
 
-//         $fileName = time() . "_" . basename($_FILES['attached_file']['name']);
-//         $targetFile = $uploadDir . $fileName;
-
-//         if (move_uploaded_file($_FILES['attached_file']['tmp_name'], $targetFile)) {
-//             $attached_file = $fileName;
-//         } else {
-//             echo json_encode(["success"=>false, "message"=>"File upload failed"]);
-//             exit();
-//         }
+// // Optional owner image
+// $owner_image = NULL;
+// if (isset($_FILES['owner_image']) && $_FILES['owner_image']['error'] === UPLOAD_ERR_OK) {
+//     $owner_image_name = time() . '_' . basename($_FILES['owner_image']['name']);
+//     $targetOwnerImage = $uploadDir . $owner_image_name;
+//     if (move_uploaded_file($_FILES['owner_image']['tmp_name'], $targetOwnerImage)) {
+//         $owner_image = $owner_image_name;
 //     }
+// }
 
-//     // Insert into database
-//     $stmt = $con->prepare("INSERT INTO tbl_project_details 
-//         (project_name, project_owner_name, attached_file, contact_number, email_address, permanent_address, created_by, created_at)
-//         VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-//     $stmt->bind_param("ssssssss", $project_name, $project_owner_name, $attached_file, $contact_number, $email_address, $permanent_address, $created_by, $created_at);
+// // Optional attached file
+// $attached_file = NULL;
+// if (isset($_FILES['attached_file']) && $_FILES['attached_file']['error'] === UPLOAD_ERR_OK) {
+//     $attached_file_name = time() . '_' . basename($_FILES['attached_file']['name']);
+//     $targetAttachedFile = $uploadDir . $attached_file_name;
+//     if (move_uploaded_file($_FILES['attached_file']['tmp_name'], $targetAttachedFile)) {
+//         $attached_file = $attached_file_name;
+//     }
+// }
+
+
+
+// // Prepare query
+// $query = "INSERT INTO tbl_project_details
+//     (project_name, project_owner_name, owner_image, attached_file, contact_number, email_address, permanent_address, created_by, created_at, status, device_user_id)
+//     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 1, ?)";
+
+// if ($stmt = $con->prepare($query)) {
+//     $stmt->bind_param(
+//         "sssssssss",
+//         $project_name,
+//         $project_owner_name,
+//         $owner_image,
+//         $attached_file,
+//         $contact_number,
+//         $email_address,
+//         $permanent_address,
+//         $created_by,
+//         $device_user_id
+//     );
 
 //     if ($stmt->execute()) {
-//         echo json_encode(["success"=>true, "message"=>"Project added successfully", "file"=>$attached_file]);
+//         echo json_encode(['success' => true, 'id' => $con->insert_id]);
 //     } else {
-//         echo json_encode(["success"=>false, "message"=>"DB Error: ".$stmt->error]);
+//         echo json_encode(['success' => false, 'error' => $stmt->error]);
 //     }
-
 //     $stmt->close();
-//     $con->close();
 // } else {
-//     echo json_encode(["success"=>false, "message"=>"Invalid Request Method"]);
+//     echo json_encode(['success' => false, 'error' => 'Prepare failed']);
 // }
 
-// ----------------------------- End Backup Code--------------------
+// $con->close();
 ?>
-
-
-

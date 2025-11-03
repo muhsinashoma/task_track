@@ -18,7 +18,7 @@ class Project {
       try {
         files = List<String>.from(jsonDecode(json['attached_file']));
       } catch (e) {
-// in case attached_file is not JSON
+        // In case attached_file is not JSON
         files = [json['attached_file'].toString()];
       }
     }
@@ -87,6 +87,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                 ? 'http://10.0.2.2/API/uploads/${dataList[0]['owner_image']}'
                 : '';
 
+            // Map all projects
             projects = dataList.map((e) => Project.fromJson(e)).toList();
           });
         }
@@ -223,26 +224,12 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                   ),
                   const SizedBox(height: 10),
                   const Divider(),
-                  // ----------------- Project Name as Chips -----------------
-                  _infoRowWidget(
-                    Icons.perm_identity,
-                    "Project Name",
-                    projects.isNotEmpty
-                        ? Wrap(
-                            spacing: 6,
-                            runSpacing: 4,
-                            children: projects
-                                .map((p) => Chip(
-                                      label: Text(
-                                        p.name,
-                                        style: const TextStyle(fontSize: 10),
-                                      ),
-                                      backgroundColor: Colors.green.shade100,
-                                    ))
-                                .toList(),
-                          )
-                        : const Text('Unknown', style: TextStyle(fontSize: 10)),
-                  ),
+                  _infoRow(
+                      Icons.perm_identity,
+                      "Project Name",
+                      projects.isNotEmpty
+                          ? projects.map((p) => p.name).join(' | ')
+                          : 'Unknown'),
                   const SizedBox(height: 15),
                   _infoRow(Icons.phone, "Contact",
                       contact.isNotEmpty ? contact : 'No Contact Found'),
@@ -253,7 +240,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
               ),
             ),
             const SizedBox(height: 25),
-            // ----------------- Multiple Projects with attachments -----------------
+            // ----------------- Multiple Projects Card -----------------
             if (projects.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -323,35 +310,6 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-// Info row with Widget instead of String for value
-  Widget _infoRowWidget(IconData icon, String label, Widget value) {
-    const oceanColor = Color.fromARGB(255, 158, 223, 180);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: oceanColor, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                        color: Colors.black87)),
-                const SizedBox(height: 4),
-                value,
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

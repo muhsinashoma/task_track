@@ -26,6 +26,7 @@ dependencies:
   shared_preferences: 2.2.3
   dropdown_search: ^6.0.1
   device_info_plus: ^10.1.2
+  url_launcher: ^6.1.10
   # bangla_utilities: ^1.5.0
   # bangla_date: ^1.0.1
 

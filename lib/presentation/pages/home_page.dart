@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-//import 'package:dropdown_search/dropdown_search.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +21,7 @@ import 'kanban_board_controller.dart';
 import 'user_details_page.dart';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'package:http_parser/http_parser.dart'; // For contentType
 // 👈 Add this
 
 class ProjectListItem {
@@ -53,9 +53,6 @@ class ProjectListItem {
   }
 }
 
-bool isDashboardSelected = true; // initially show Dashboard
-File? selectedOwnerImage;
-
 String? _selectedProjectName;
 int? _selectedProjectId;
 String? _projectOwnerName;
@@ -75,6 +72,13 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     implements KanbanBoardController {
   String? deviceId; // store globally for use anywhere
   // ---------------------- USER IDENTIFIER ----------------------
+
+  List<File> selectedFiles = []; // global not needed now, handled per project
+  List<Uint8List> selectedFilesBytes = []; // global not needed now
+  File? selectedOwnerImage;
+  Uint8List? selectedOwnerImageBytes;
+
+  bool isDashboardSelected = true; // initially show Dashboard
 
   // ---------- Method to show dashboard ----------
   void showDashboard() {
@@ -347,20 +351,58 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
 //------------------- Add Project using BaseURL Today -----------------------
 
+//------------------- Add Project with Multiple Attached Files API Ens Point -----------------------
+
   Future<Map<String, dynamic>> addProjectDetails({
     required String projectName,
     required String ownerName,
     required String contact,
     required String email,
     required String address,
-    File? file, // Mobile file
-    File? ownerImage, // Mobile owner image
-    Uint8List? ownerImageBytes, // Web owner image
+    List<File>? files, // multiple attached files for mobile/tablet
+    List<Uint8List>? filesBytes, // multiple attached files for web
+    File? ownerImage, // single owner image mobile/tablet
+    Uint8List? ownerImageBytes, // single owner image web
   }) async {
+    const maxImageSize = 5 * 1024 * 1024; // 5 MB
+    const maxFileSize = 20 * 1024 * 1024; // 20 MB
+
+    // Check owner image size
+    if (!kIsWeb &&
+        ownerImage != null &&
+        await ownerImage.length() > maxImageSize) {
+      return {"success": false, "message": "Owner image exceeds 5 MB"};
+    }
+    if (kIsWeb &&
+        ownerImageBytes != null &&
+        ownerImageBytes.length > maxImageSize) {
+      return {"success": false, "message": "Owner image exceeds 5 MB"};
+    }
+
+    // Check attached files sizes
+    if (!kIsWeb && files != null) {
+      for (var f in files) {
+        if (await f.length() > maxFileSize) {
+          return {
+            "success": false,
+            "message": "${f.path.split('/').last} exceeds 20 MB"
+          };
+        }
+      }
+    }
+    if (kIsWeb && filesBytes != null) {
+      for (var f in filesBytes) {
+        if (f.length > maxFileSize) {
+          return {
+            "success": false,
+            "message": "One of the attached files exceeds 20 MB"
+          };
+        }
+      }
+    }
+
     final prefs = await SharedPreferences.getInstance();
     String? deviceUserId = prefs.getString('device_user_id');
-    String? userId = prefs.getString('user_id');
-
     deviceUserId ??= const Uuid().v4();
     await prefs.setString('device_user_id', deviceUserId);
 
@@ -372,40 +414,51 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       "permanent_address": address,
       "created_by": ownerName,
       "device_user_id": deviceUserId,
-      if (userId != null) "user_id": userId,
     };
 
-    // Attach project file (mobile only)
-    if (file != null) {
-      formMap["attached_file"] = await MultipartFile.fromFile(
-        file.path,
-        filename: file.path.split('/').last,
-      );
-    }
-
     // Attach owner image
-    if (kIsWeb && ownerImageBytes != null) {
-      formMap["owner_image"] = MultipartFile.fromBytes(
-        ownerImageBytes,
-        filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
-      );
-    } else if (!kIsWeb && ownerImage != null) {
+    if (!kIsWeb && ownerImage != null) {
       formMap["owner_image"] = await MultipartFile.fromFile(
         ownerImage.path,
         filename: ownerImage.path.split('/').last,
+        contentType: MediaType("image", "jpeg"),
+      );
+    } else if (kIsWeb && ownerImageBytes != null) {
+      formMap["owner_image"] = MultipartFile.fromBytes(
+        ownerImageBytes,
+        filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
+        contentType: MediaType("image", "png"),
       );
     }
 
-    FormData formData = FormData.fromMap(formMap);
+    // Attach multiple files
+    if (!kIsWeb && files != null) {
+      formMap["attached_file[]"] = [
+        for (var f in files)
+          await MultipartFile.fromFile(
+            f.path,
+            filename: f.path.split('/').last,
+            contentType: MediaType("application", "octet-stream"),
+          )
+      ];
+    } else if (kIsWeb && filesBytes != null) {
+      formMap["attached_file[]"] = [
+        for (var f in filesBytes)
+          MultipartFile.fromBytes(
+            f,
+            filename: "file_${DateTime.now().millisecondsSinceEpoch}",
+            contentType: MediaType("application", "octet-stream"),
+          )
+      ];
+    }
 
     final dio = Dio();
-    //final url = "YOUR_BASE_URL/add_project_kanban.php";
     final url = "${baseUrl}add_project_kanban.php";
 
     try {
       final response = await dio.post(
         url,
-        data: formData,
+        data: FormData.fromMap(formMap),
         options: Options(headers: {'Content-Type': 'multipart/form-data'}),
       );
       return response.data;
@@ -414,7 +467,229 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     }
   }
 
-  //---------------------------Add Column using Based UrL----------------------------
+  // Future<Map<String, dynamic>> addProjectDetails({
+  //   required String projectName,
+  //   required String ownerName,
+  //   required String contact,
+  //   required String email,
+  //   required String address,
+  //   File? file, // optional attached file (mobile/tablet)
+  //   Uint8List? fileBytes, // optional attached file (web)
+  //   File? ownerImage, // optional mobile/tablet image
+  //   Uint8List? ownerImageBytes, // optional web image
+  // }) async {
+  //   const maxImageSize = 5 * 1024 * 1024; // 5 MB
+  //   const maxFileSize = 20 * 1024 * 1024; // 20 MB
+
+  //   // Check file sizes before uploading
+  //   if (!kIsWeb &&
+  //       ownerImage != null &&
+  //       await ownerImage.length() > maxImageSize) {
+  //     return {"success": false, "message": "Owner image exceeds 5 MB"};
+  //   }
+  //   if (kIsWeb &&
+  //       ownerImageBytes != null &&
+  //       ownerImageBytes.length > maxImageSize) {
+  //     return {"success": false, "message": "Owner image exceeds 5 MB"};
+  //   }
+
+  //   if (!kIsWeb && file != null && await file.length() > maxFileSize) {
+  //     return {"success": false, "message": "Attached file exceeds 20 MB"};
+  //   }
+  //   if (kIsWeb && fileBytes != null && fileBytes.length > maxFileSize) {
+  //     return {"success": false, "message": "Attached file exceeds 20 MB"};
+  //   }
+
+  //   final prefs = await SharedPreferences.getInstance();
+  //   String? deviceUserId = prefs.getString('device_user_id');
+  //   deviceUserId ??= const Uuid().v4();
+  //   await prefs.setString('device_user_id', deviceUserId);
+
+  //   Map<String, dynamic> formMap = {
+  //     "project_name": projectName,
+  //     "project_owner_name": ownerName,
+  //     "contact_number": contact,
+  //     "email_address": email,
+  //     "permanent_address": address,
+  //     "created_by": ownerName,
+  //     "device_user_id": deviceUserId,
+  //   };
+
+  //   // Attach files
+  //   if (!kIsWeb && file != null) {
+  //     formMap["attached_file"] = await MultipartFile.fromFile(
+  //       file.path,
+  //       filename: file.path.split('/').last,
+  //       contentType: MediaType("application", "octet-stream"),
+  //     );
+  //   } else if (kIsWeb && fileBytes != null) {
+  //     formMap["attached_file"] = MultipartFile.fromBytes(
+  //       fileBytes,
+  //       filename: "file_${DateTime.now().millisecondsSinceEpoch}",
+  //       contentType: MediaType("application", "octet-stream"),
+  //     );
+  //   }
+
+  //   if (!kIsWeb && ownerImage != null) {
+  //     formMap["owner_image"] = await MultipartFile.fromFile(
+  //       ownerImage.path,
+  //       filename: ownerImage.path.split('/').last,
+  //       contentType: MediaType("image", "jpeg"),
+  //     );
+  //   } else if (kIsWeb && ownerImageBytes != null) {
+  //     formMap["owner_image"] = MultipartFile.fromBytes(
+  //       ownerImageBytes,
+  //       filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
+  //       contentType: MediaType("image", "png"),
+  //     );
+  //   }
+
+  //   final dio = Dio();
+  //   final url = "${baseUrl}add_project_kanban.php";
+
+  //   try {
+  //     final response = await dio.post(
+  //       url,
+  //       data: FormData.fromMap(formMap),
+  //       options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+  //     );
+  //     return response.data;
+  //   } catch (e) {
+  //     return {"success": false, "message": "Upload failed: $e"};
+  //   }
+  // }
+
+  // Future<Map<String, dynamic>> addProjectDetails({
+  //   required String projectName,
+  //   required String ownerName,
+  //   required String contact,
+  //   required String email,
+  //   required String address,
+  //   File? file, // optional attached file
+  //   File? ownerImage, // optional mobile owner image
+  //   Uint8List? ownerImageBytes, // optional web owner image
+  // }) async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   String? deviceUserId = prefs.getString('device_user_id');
+  //   deviceUserId ??= const Uuid().v4();
+  //   await prefs.setString('device_user_id', deviceUserId);
+
+  //   Map<String, dynamic> formMap = {
+  //     "project_name": projectName,
+  //     "project_owner_name": ownerName,
+  //     "contact_number": contact,
+  //     "email_address": email,
+  //     "permanent_address": address,
+  //     "created_by": ownerName,
+  //     "device_user_id": deviceUserId,
+  //   };
+
+  //   // Attach files only if provided
+  //   if (file != null) {
+  //     formMap["attached_file"] = await MultipartFile.fromFile(
+  //       file.path,
+  //       filename: file.path.split('/').last,
+  //     );
+  //   }
+
+  //   if (kIsWeb && ownerImageBytes != null) {
+  //     formMap["owner_image"] = MultipartFile.fromBytes(
+  //       ownerImageBytes,
+  //       filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
+  //     );
+  //   } else if (!kIsWeb && ownerImage != null) {
+  //     formMap["owner_image"] = await MultipartFile.fromFile(
+  //       ownerImage.path,
+  //       filename: ownerImage.path.split('/').last,
+  //     );
+  //   }
+
+  //   final dio = Dio();
+  //   final url = "${baseUrl}add_project_kanban.php";
+
+  //   try {
+  //     final response = await dio.post(
+  //       url,
+  //       data: FormData.fromMap(formMap),
+  //       options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+  //     );
+  //     return response.data;
+  //   } catch (e) {
+  //     return {"success": false, "message": "Upload failed: $e"};
+  //   }
+  // }
+
+  //---------Below is the old code before refactoring----------
+  // Future<Map<String, dynamic>> addProjectDetails({
+  //   required String projectName,
+  //   required String ownerName,
+  //   required String contact,
+  //   required String email,
+  //   required String address,
+  //   File? file, // Mobile file
+  //   File? ownerImage, // Mobile owner image
+  //   Uint8List? ownerImageBytes, // Web owner image
+  // }) async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   String? deviceUserId = prefs.getString('device_user_id');
+  //   String? userId = prefs.getString('user_id');
+
+  //   deviceUserId ??= const Uuid().v4();
+  //   await prefs.setString('device_user_id', deviceUserId);
+
+  //   Map<String, dynamic> formMap = {
+  //     "project_name": projectName,
+  //     "project_owner_name": ownerName,
+  //     "contact_number": contact,
+  //     "email_address": email,
+  //     "permanent_address": address,
+  //     "created_by": ownerName,
+  //     "device_user_id": deviceUserId,
+  //     if (userId != null) "user_id": userId,
+  //   };
+
+  //   // Attach project file (mobile only)
+  //   if (file != null) {
+  //     formMap["attached_file"] = await MultipartFile.fromFile(
+  //       file.path,
+  //       filename: file.path.split('/').last,
+  //     );
+  //   }
+
+  //   // Attach owner image
+  //   if (kIsWeb && ownerImageBytes != null) {
+  //     formMap["owner_image"] = MultipartFile.fromBytes(
+  //       ownerImageBytes,
+  //       filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
+  //     );
+  //   } else if (!kIsWeb && ownerImage != null) {
+  //     formMap["owner_image"] = await MultipartFile.fromFile(
+  //       ownerImage.path,
+  //       filename: ownerImage.path.split('/').last,
+  //     );
+  //   }
+
+  //   FormData formData = FormData.fromMap(formMap);
+
+  //   final dio = Dio();
+  //   //final url = "YOUR_BASE_URL/add_project_kanban.php";
+  //   final url = "${baseUrl}add_project_kanban.php";
+
+  //   try {
+  //     final response = await dio.post(
+  //       url,
+  //       data: formData,
+  //       options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+  //     );
+  //     return response.data;
+  //   } catch (e) {
+  //     return {"success": false, "message": "Upload failed: $e"};
+  //   }
+  // }
+
+//------------------- End Project using BaseURL Today -----------------------
+
+//---------------------------Add Column using Based UrL----------------------------
   @override
   void addColumn(String title) async {
     int newId = columns.length + 1;
@@ -1436,18 +1711,20 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
 
 // ----------End The modal for project selection------
 
-// ----------To Add a New Project using a Dialog---------
-// ----------To Add a New Project using a Dialog---------
+// ----------To Start Add a New Project using a Dialog-- Today-------
+
   void _showAddProjectDialog() {
-    final _projectController = TextEditingController();
+    final List<TextEditingController> _projectControllers = [
+      TextEditingController()
+    ];
     final _ownerController = TextEditingController();
     final _contactController = TextEditingController();
     final _emailController = TextEditingController();
     final _addressController = TextEditingController();
 
-    File? selectedFile; // Project attachment (mobile)
-    File? selectedOwnerImage; // Owner image (mobile)
-    Uint8List? selectedOwnerImageBytes; // Owner image (web)
+    // Per-project attached files
+    List<List<File>> attachedFiles = List.generate(1, (_) => []);
+    List<List<Uint8List>> attachedFilesBytes = List.generate(1, (_) => []);
 
     showDialog(
       context: context,
@@ -1456,30 +1733,164 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
+            constraints: const BoxConstraints(maxWidth: 500),
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Add Project',
-                      style:
-                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Project Name
-                    TextField(
-                      controller: _projectController,
-                      decoration: const InputDecoration(
-                        labelText: 'Project Name',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.business),
+                    Center(
+                      child: Text(
+                        'Add Project',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal.shade700,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
+
+                    // Multiple project name fields
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _projectControllers.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _projectControllers[index],
+                                      decoration: InputDecoration(
+                                        labelText: 'Project Name ${index + 1}',
+                                        border: const OutlineInputBorder(),
+                                        prefixIcon: const Icon(Icons.business),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  // Add project field button
+                                  if (index == _projectControllers.length - 1)
+                                    IconButton(
+                                      icon: const Icon(Icons.add_circle,
+                                          color: Colors.blueAccent),
+                                      onPressed: () {
+                                        setState(() {
+                                          _projectControllers
+                                              .add(TextEditingController());
+                                          attachedFiles.add([]);
+                                          attachedFilesBytes.add([]);
+                                        });
+                                      },
+                                    ),
+                                  // Remove project field button
+                                  if (_projectControllers.length > 1)
+                                    IconButton(
+                                      icon: const Icon(Icons.remove_circle,
+                                          color: Colors.redAccent),
+                                      onPressed: () {
+                                        setState(() {
+                                          _projectControllers.removeAt(index);
+                                          attachedFiles.removeAt(index);
+                                          attachedFilesBytes.removeAt(index);
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Attached files for this project
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  // Mobile/tablet files
+                                  ...attachedFiles[index].map((file) {
+                                    return Chip(
+                                      label: Text(
+                                        file.path.split('/').last,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      deleteIcon: const Icon(Icons.close),
+                                      onDeleted: () {
+                                        setState(() {
+                                          attachedFiles[index].remove(file);
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+
+                                  // Web files
+                                  ...attachedFilesBytes[index].map((bytes) {
+                                    int fileIndex = attachedFilesBytes[index]
+                                            .indexOf(bytes) +
+                                        1;
+                                    return Chip(
+                                      label: Text("File $fileIndex"),
+                                      deleteIcon: const Icon(Icons.close),
+                                      onDeleted: () {
+                                        setState(() {
+                                          attachedFilesBytes[index]
+                                              .remove(bytes);
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+
+                                  // Add file button
+                                  ActionChip(
+                                    label: const Text("Add File"),
+                                    avatar: const Icon(Icons.attach_file),
+                                    onPressed: () async {
+                                      FilePickerResult? result =
+                                          await FilePicker.platform.pickFiles(
+                                        allowMultiple: true,
+                                        type: FileType.custom,
+                                        allowedExtensions: [
+                                          'png',
+                                          'jpg',
+                                          'jpeg',
+                                          'xlsx',
+                                          'pdf'
+                                        ],
+                                        withData: kIsWeb,
+                                      );
+
+                                      if (result != null) {
+                                        setState(() {
+                                          if (kIsWeb) {
+                                            attachedFilesBytes[index].addAll(
+                                                result.files
+                                                    .map((f) => f.bytes!)
+                                                    .toList());
+                                          } else {
+                                            attachedFiles[index].addAll(result
+                                                .paths
+                                                .map((p) => File(p!))
+                                                .toList());
+                                          }
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
 
                     // Owner Name
                     TextField(
@@ -1492,77 +1903,61 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     ),
                     const SizedBox(height: 12),
 
-                    // Owner Image Picker
-                    GestureDetector(
-                      onTap: () async {
-                        FilePickerResult? result =
-                            await FilePicker.platform.pickFiles(
-                          type: FileType.image,
-                          withData: true, // important for Web
-                        );
-                        if (result != null) {
-                          if (kIsWeb) {
+                    // Owner image picker
+                    Center(
+                      child: GestureDetector(
+                        onTap: () async {
+                          FilePickerResult? result =
+                              await FilePicker.platform.pickFiles(
+                            type: FileType.image,
+                            withData: true,
+                          );
+
+                          if (result != null) {
                             setState(() {
-                              selectedOwnerImageBytes =
-                                  result.files.single.bytes;
-                            });
-                          } else {
-                            setState(() {
-                              selectedOwnerImage =
-                                  File(result.files.single.path!);
+                              if (kIsWeb) {
+                                selectedOwnerImageBytes =
+                                    result.files.single.bytes;
+                              } else {
+                                selectedOwnerImage =
+                                    File(result.files.single.path!);
+                              }
                             });
                           }
-                        }
-                      },
-                      child: CircleAvatar(
-                        radius: 30,
-                        backgroundImage: kIsWeb
-                            ? (selectedOwnerImageBytes != null
-                                ? MemoryImage(selectedOwnerImageBytes!)
-                                : const AssetImage(
-                                        "assets/icons/default_user.png")
-                                    as ImageProvider)
-                            : (selectedOwnerImage != null
-                                ? FileImage(selectedOwnerImage!)
-                                : const AssetImage(
-                                        "assets/icons/default_user.png")
-                                    as ImageProvider),
-                        child: (kIsWeb
-                                ? selectedOwnerImageBytes == null
-                                : selectedOwnerImage == null)
-                            ? const Icon(Icons.add_a_photo)
-                            : null,
+                        },
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 35,
+                              backgroundImage: kIsWeb
+                                  ? (selectedOwnerImageBytes != null
+                                      ? MemoryImage(selectedOwnerImageBytes!)
+                                      : const AssetImage(
+                                              "assets/icons/default_user.png")
+                                          as ImageProvider)
+                                  : (selectedOwnerImage != null
+                                      ? FileImage(selectedOwnerImage!)
+                                      : const AssetImage(
+                                              "assets/icons/default_user.png")
+                                          as ImageProvider),
+                              child: (kIsWeb
+                                      ? selectedOwnerImageBytes == null
+                                      : selectedOwnerImage == null)
+                                  ? const Icon(Icons.add_a_photo,
+                                      color: Colors.white)
+                                  : null,
+                            ),
+                            const SizedBox(height: 6),
+                            const Text("Tap to upload owner image",
+                                style: TextStyle(fontSize: 11)),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
 
-                    // Project File Picker
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        FilePickerResult? result =
-                            await FilePicker.platform.pickFiles(
-                          type: FileType.custom,
-                          allowedExtensions: [
-                            'png',
-                            'jpg',
-                            'jpeg',
-                            'xlsx',
-                            'pdf'
-                          ],
-                        );
-                        if (result != null) {
-                          selectedFile = File(result.files.single.path!);
-                          setState(() {}); // refresh button text
-                        }
-                      },
-                      icon: const Icon(Icons.attach_file),
-                      label: Text(selectedFile == null
-                          ? "Pick File"
-                          : "Selected: ${selectedFile!.path.split('/').last}"),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
 
-                    // Contact
+                    // Contact, Email, Address
                     TextField(
                       controller: _contactController,
                       keyboardType: TextInputType.phone,
@@ -1572,8 +1967,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                           prefixIcon: Icon(Icons.phone)),
                     ),
                     const SizedBox(height: 12),
-
-                    // Email
                     TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -1583,8 +1976,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                           prefixIcon: Icon(Icons.email)),
                     ),
                     const SizedBox(height: 12),
-
-                    // Address
                     TextField(
                       controller: _addressController,
                       maxLines: 2,
@@ -1595,79 +1986,68 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     ),
                     const SizedBox(height: 20),
 
-                    // -------------Add Project Button---------------
-                    ElevatedButton(
-                      onPressed: () async {
-                        final projectName = _projectController.text.trim();
-                        final ownerName = _ownerController.text.trim();
-                        final contact = _contactController.text.trim();
-                        final email = _emailController.text.trim();
-                        final address = _addressController.text.trim();
+                    // Add Projects Button
+                    Center(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 14),
+                        ),
+                        icon:
+                            const Icon(Icons.cloud_upload, color: Colors.white),
+                        label: const Text("Add Projects",
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 16)),
+                        onPressed: () async {
+                          final ownerName = _ownerController.text.trim();
+                          final contact = _contactController.text.trim();
+                          final email = _emailController.text.trim();
+                          final address = _addressController.text.trim();
 
-                        // Validation
-                        if (projectName.isEmpty ||
-                            ownerName.isEmpty ||
-                            contact.isEmpty ||
-                            email.isEmpty) {
-                          _showErrorDialog(context,
-                              "Project name, owner, contact, and email are required.");
-                          return;
-                        }
+                          if (ownerName.isEmpty ||
+                              contact.isEmpty ||
+                              email.isEmpty) {
+                            _showErrorDialog(context,
+                                "Owner, contact, and email are required.");
+                            return;
+                          }
 
-                        if (!phoneRegex.hasMatch(contact)) {
-                          _showErrorDialog(context,
-                              "Enter a valid Bangladeshi number (11 digits, starts with 01).");
-                          return;
-                        }
+                          for (int i = 0; i < _projectControllers.length; i++) {
+                            final projectName =
+                                _projectControllers[i].text.trim();
+                            if (projectName.isEmpty) continue;
 
-                        if (!emailRegex.hasMatch(email)) {
-                          _showErrorDialog(
-                              context, "Enter a valid email address.");
-                          return;
-                        }
+                            final res = await addProjectDetails(
+                              projectName: projectName,
+                              ownerName: ownerName,
+                              contact: contact,
+                              email: email,
+                              address: address,
+                              files: attachedFiles[i],
+                              filesBytes: attachedFilesBytes[i],
+                              ownerImage: selectedOwnerImage,
+                              ownerImageBytes: selectedOwnerImageBytes,
+                            );
 
-                        // API Call
-                        final res = await addProjectDetails(
-                          projectName: projectName,
-                          ownerName: ownerName,
-                          contact: contact,
-                          email: email,
-                          address: address,
-                          file: selectedFile,
-                          ownerImage: selectedOwnerImage, // Mobile
-                          ownerImageBytes: selectedOwnerImageBytes, // Web
-                        );
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(res['message'] ?? "Upload completed"),
-                            backgroundColor: res['success'] == true
-                                ? Colors.green
-                                : Colors.red,
-                          ),
-                        );
-
-                        if (res['success'] == true) {
-                          // Clear fields
-                          _projectController.clear();
-                          _ownerController.clear();
-                          _contactController.clear();
-                          _emailController.clear();
-                          _addressController.clear();
-                          setState(() {
-                            selectedFile = null;
-                            selectedOwnerImage = null;
-                            selectedOwnerImageBytes = null;
-                          });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(res['message'] ??
+                                    "Project added successfully"),
+                                backgroundColor: res['success'] == true
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                            );
+                          }
 
                           Navigator.pop(context);
-                          await getProjectListData(); // refresh project list
-                        }
-                      },
-                      child: const Text("Add"),
+                          await getProjectListData();
+                        },
+                      ),
                     ),
-
-                    //-----------End Add Project Button-------------
                   ],
                 ),
               ),
@@ -1677,6 +2057,591 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       ),
     );
   }
+
+  // void _showAddProjectDialog() {
+  //   final List<TextEditingController> _projectControllers = [
+  //     TextEditingController()
+  //   ];
+  //   final _ownerController = TextEditingController();
+  //   final _contactController = TextEditingController();
+  //   final _emailController = TextEditingController();
+  //   final _addressController = TextEditingController();
+
+  //   File? selectedFile;
+  //   File? selectedOwnerImage;
+  //   Uint8List? selectedOwnerImageBytes;
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => StatefulBuilder(
+  //       builder: (context, setState) => Dialog(
+  //         shape:
+  //             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  //         child: ConstrainedBox(
+  //           constraints: const BoxConstraints(maxWidth: 420),
+  //           child: SingleChildScrollView(
+  //             child: Padding(
+  //               padding: const EdgeInsets.all(20),
+  //               child: Column(
+  //                 mainAxisSize: MainAxisSize.min,
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   Center(
+  //                     child: Text(
+  //                       'Add Project',
+  //                       style: TextStyle(
+  //                         fontSize: 22,
+  //                         fontWeight: FontWeight.bold,
+  //                         color: Colors.teal.shade700,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 16),
+
+  //                   // 🟢 Multiple Project Name Fields
+  //                   Container(
+  //                     decoration: BoxDecoration(
+  //                       color: Colors.teal.withOpacity(0.05),
+  //                       borderRadius: BorderRadius.circular(8),
+  //                       border: Border.all(color: Colors.teal.shade100),
+  //                     ),
+  //                     padding: const EdgeInsets.all(10),
+  //                     child: ListView.builder(
+  //                       shrinkWrap: true,
+  //                       physics: const NeverScrollableScrollPhysics(),
+  //                       itemCount: _projectControllers.length,
+  //                       itemBuilder: (context, index) {
+  //                         return Padding(
+  //                           padding: const EdgeInsets.only(bottom: 10),
+  //                           child: Row(
+  //                             children: [
+  //                               Expanded(
+  //                                 child: TextField(
+  //                                   controller: _projectControllers[index],
+  //                                   decoration: InputDecoration(
+  //                                     labelText: 'Project Name ${index + 1}',
+  //                                     border: const OutlineInputBorder(),
+  //                                     prefixIcon: const Icon(Icons.business),
+  //                                   ),
+  //                                 ),
+  //                               ),
+  //                               const SizedBox(width: 8),
+  //                               if (index == _projectControllers.length - 1)
+  //                                 IconButton(
+  //                                   icon: const Icon(Icons.add_circle,
+  //                                       color: Colors.blueAccent),
+  //                                   onPressed: () {
+  //                                     setState(() {
+  //                                       _projectControllers
+  //                                           .add(TextEditingController());
+  //                                     });
+  //                                   },
+  //                                 ),
+  //                               if (_projectControllers.length > 1)
+  //                                 IconButton(
+  //                                   icon: const Icon(Icons.remove_circle,
+  //                                       color: Colors.redAccent),
+  //                                   onPressed: () {
+  //                                     setState(() {
+  //                                       _projectControllers.removeAt(index);
+  //                                     });
+  //                                   },
+  //                                 ),
+  //                             ],
+  //                           ),
+  //                         );
+  //                       },
+  //                     ),
+  //                   ),
+
+  //                   const SizedBox(height: 16),
+
+  //                   // 🔵 Owner Name
+  //                   TextField(
+  //                     controller: _ownerController,
+  //                     decoration: const InputDecoration(
+  //                       labelText: 'Project Owner Name',
+  //                       border: OutlineInputBorder(),
+  //                       prefixIcon: Icon(Icons.person),
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // 🟣 Owner Image Picker
+  //                   Center(
+  //                     child: GestureDetector(
+  //                       onTap: () async {
+  //                         FilePickerResult? result =
+  //                             await FilePicker.platform.pickFiles(
+  //                           type: FileType.image,
+  //                           withData: true,
+  //                         );
+  //                         if (result != null) {
+  //                           if (kIsWeb) {
+  //                             setState(() {
+  //                               selectedOwnerImageBytes =
+  //                                   result.files.single.bytes;
+  //                             });
+  //                           } else {
+  //                             setState(() {
+  //                               selectedOwnerImage =
+  //                                   File(result.files.single.path!);
+  //                             });
+  //                           }
+  //                         }
+  //                       },
+  //                       child: Column(
+  //                         children: [
+  //                           CircleAvatar(
+  //                             radius: 35,
+  //                             backgroundImage: kIsWeb
+  //                                 ? (selectedOwnerImageBytes != null
+  //                                     ? MemoryImage(selectedOwnerImageBytes!)
+  //                                     : const AssetImage(
+  //                                             "assets/icons/default_user.png")
+  //                                         as ImageProvider)
+  //                                 : (selectedOwnerImage != null
+  //                                     ? FileImage(selectedOwnerImage!)
+  //                                     : const AssetImage(
+  //                                             "assets/icons/default_user.png")
+  //                                         as ImageProvider),
+  //                             child: (kIsWeb
+  //                                     ? selectedOwnerImageBytes == null
+  //                                     : selectedOwnerImage == null)
+  //                                 ? const Icon(Icons.add_a_photo,
+  //                                     color: Colors.white)
+  //                                 : null,
+  //                           ),
+  //                           const SizedBox(height: 6),
+  //                           const Text("Tap to upload owner image",
+  //                               style: TextStyle(fontSize: 11))
+  //                         ],
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 16),
+
+  //                   // 🟤 File Picker + Live Preview
+
+  //                   // ---------------------Start Elevated Button for project Adding and submit-----------------
+
+  //                   ElevatedButton.icon(
+  //                     style: ElevatedButton.styleFrom(
+  //                         backgroundColor: Colors.teal.shade600),
+  //                     onPressed: () async {
+  //                       FilePickerResult? result =
+  //                           await FilePicker.platform.pickFiles(
+  //                         type: FileType.custom,
+  //                         allowedExtensions: [
+  //                           'png',
+  //                           'jpg',
+  //                           'jpeg',
+  //                           'xlsx',
+  //                           'pdf'
+  //                         ],
+  //                       );
+  //                       if (result != null) {
+  //                         final filePath = result.files.single.path!;
+  //                         final fileSizeMB =
+  //                             File(filePath).lengthSync() / (1024 * 1024);
+  //                         if (fileSizeMB > 20) {
+  //                           ScaffoldMessenger.of(context).showSnackBar(
+  //                             const SnackBar(
+  //                                 content: Text(
+  //                                     "Attached file should not exceed 20 MB")),
+  //                           );
+  //                           return;
+  //                         }
+  //                         setState(() {
+  //                           selectedFile = File(filePath);
+  //                         });
+  //                       }
+  //                     },
+  //                     icon: const Icon(Icons.attach_file),
+  //                     label: const Text("Attach File"),
+  //                   ),
+
+  //                   // ------------------End Elevated Button for project Adding and submit-----------
+
+  //                   // ✅ Instant File Preview
+  //                   if (selectedFile != null) ...[
+  //                     const SizedBox(height: 8),
+  //                     Container(
+  //                       decoration: BoxDecoration(
+  //                         color: Colors.teal.shade50,
+  //                         borderRadius: BorderRadius.circular(8),
+  //                         border: Border.all(color: Colors.teal.shade100),
+  //                       ),
+  //                       padding: const EdgeInsets.all(8),
+  //                       child: Row(
+  //                         children: [
+  //                           Icon(Icons.insert_drive_file,
+  //                               color: Colors.teal.shade700, size: 20),
+  //                           const SizedBox(width: 8),
+  //                           Expanded(
+  //                             child: Text(
+  //                               selectedFile!.path.split('/').last,
+  //                               style: const TextStyle(fontSize: 12),
+  //                               overflow: TextOverflow.ellipsis,
+  //                             ),
+  //                           ),
+  //                           IconButton(
+  //                             icon: const Icon(Icons.close, size: 18),
+  //                             onPressed: () {
+  //                               setState(() {
+  //                                 selectedFile = null;
+  //                               });
+  //                             },
+  //                           )
+  //                         ],
+  //                       ),
+  //                     ),
+  //                   ],
+
+  //                   const SizedBox(height: 16),
+
+  //                   // 🟡 Contact, Email, Address (unchanged)
+  //                   TextField(
+  //                     controller: _contactController,
+  //                     keyboardType: TextInputType.phone,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Contact Number',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.phone)),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   TextField(
+  //                     controller: _emailController,
+  //                     keyboardType: TextInputType.emailAddress,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Email Address',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.email)),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   TextField(
+  //                     controller: _addressController,
+  //                     maxLines: 2,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Permanent Address',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.location_on)),
+  //                   ),
+  //                   const SizedBox(height: 20),
+
+  //                   // ✅ Add Projects Button (loop all)
+  //                   Center(
+  //                     child: ElevatedButton.icon(
+  //                       style: ElevatedButton.styleFrom(
+  //                         backgroundColor: Colors.green,
+  //                         shape: RoundedRectangleBorder(
+  //                             borderRadius: BorderRadius.circular(10)),
+  //                         padding: const EdgeInsets.symmetric(
+  //                             horizontal: 30, vertical: 14),
+  //                       ),
+  //                       icon:
+  //                           const Icon(Icons.cloud_upload, color: Colors.white),
+  //                       label: const Text("Add Projects",
+  //                           style:
+  //                               TextStyle(color: Colors.white, fontSize: 16)),
+  //                       onPressed: () async {
+  //                         final ownerName = _ownerController.text.trim();
+  //                         final contact = _contactController.text.trim();
+  //                         final email = _emailController.text.trim();
+  //                         final address = _addressController.text.trim();
+
+  //                         if (ownerName.isEmpty ||
+  //                             contact.isEmpty ||
+  //                             email.isEmpty) {
+  //                           _showErrorDialog(context,
+  //                               "Owner, contact, and email are required.");
+  //                           return;
+  //                         }
+
+  //                         for (final controller in _projectControllers) {
+  //                           final projectName = controller.text.trim();
+  //                           if (projectName.isEmpty) continue;
+
+  //                           final res = await addProjectDetails(
+  //                             projectName: projectName,
+  //                             ownerName: ownerName,
+  //                             contact: contact,
+  //                             email: email,
+  //                             address: address,
+  //                             file: selectedFile,
+  //                             ownerImage: selectedOwnerImage,
+  //                             ownerImageBytes: selectedOwnerImageBytes,
+  //                           );
+
+  //                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+  //                             content: Text(res['message'] ??
+  //                                 "Project added successfully"),
+  //                             backgroundColor: res['success'] == true
+  //                                 ? Colors.green
+  //                                 : Colors.red,
+  //                           ));
+  //                         }
+
+  //                         Navigator.pop(context);
+  //                         await getProjectListData();
+  //                       },
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+//------------------ previous Nov 02, 2025----------------
+  // void _showAddProjectDialog() {
+  //   final _projectController = TextEditingController();
+  //   final _ownerController = TextEditingController();
+  //   final _contactController = TextEditingController();
+  //   final _emailController = TextEditingController();
+  //   final _addressController = TextEditingController();
+
+  //   File? selectedFile; // Project attachment (mobile)
+  //   File? selectedOwnerImage; // Owner image (mobile)
+  //   Uint8List? selectedOwnerImageBytes; // Owner image (web)
+
+  //   //--------------Start Add Project Dialog Box----------------------
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => StatefulBuilder(
+  //       builder: (context, setState) => Dialog(
+  //         shape:
+  //             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  //         child: ConstrainedBox(
+  //           constraints: const BoxConstraints(maxWidth: 400),
+  //           child: SingleChildScrollView(
+  //             child: Padding(
+  //               padding: const EdgeInsets.all(20),
+  //               child: Column(
+  //                 mainAxisSize: MainAxisSize.min,
+  //                 children: [
+  //                   const Text(
+  //                     'Add Project',
+  //                     style:
+  //                         TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Project Name
+  //                   TextField(
+  //                     controller: _projectController,
+  //                     decoration: const InputDecoration(
+  //                       labelText: 'Project Name',
+  //                       border: OutlineInputBorder(),
+  //                       prefixIcon: Icon(Icons.business),
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Owner Name
+  //                   TextField(
+  //                     controller: _ownerController,
+  //                     decoration: const InputDecoration(
+  //                       labelText: 'Project Owner Name',
+  //                       border: OutlineInputBorder(),
+  //                       prefixIcon: Icon(Icons.person),
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Owner Image Picker
+  //                   GestureDetector(
+  //                     onTap: () async {
+  //                       FilePickerResult? result =
+  //                           await FilePicker.platform.pickFiles(
+  //                         type: FileType.image,
+  //                         withData: true, // important for Web
+  //                       );
+  //                       if (result != null) {
+  //                         if (kIsWeb) {
+  //                           setState(() {
+  //                             selectedOwnerImageBytes =
+  //                                 result.files.single.bytes;
+  //                           });
+  //                         } else {
+  //                           setState(() {
+  //                             selectedOwnerImage =
+  //                                 File(result.files.single.path!);
+  //                           });
+  //                         }
+  //                       }
+  //                     },
+  //                     child: CircleAvatar(
+  //                       radius: 30,
+  //                       backgroundImage: kIsWeb
+  //                           ? (selectedOwnerImageBytes != null
+  //                               ? MemoryImage(selectedOwnerImageBytes!)
+  //                               : const AssetImage(
+  //                                       "assets/icons/default_user.png")
+  //                                   as ImageProvider)
+  //                           : (selectedOwnerImage != null
+  //                               ? FileImage(selectedOwnerImage!)
+  //                               : const AssetImage(
+  //                                       "assets/icons/default_user.png")
+  //                                   as ImageProvider),
+  //                       child: (kIsWeb
+  //                               ? selectedOwnerImageBytes == null
+  //                               : selectedOwnerImage == null)
+  //                           ? const Icon(Icons.add_a_photo)
+  //                           : null,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Project File Picker
+  //                   ElevatedButton.icon(
+  //                     onPressed: () async {
+  //                       FilePickerResult? result =
+  //                           await FilePicker.platform.pickFiles(
+  //                         type: FileType.custom,
+  //                         allowedExtensions: [
+  //                           'png',
+  //                           'jpg',
+  //                           'jpeg',
+  //                           'xlsx',
+  //                           'pdf'
+  //                         ],
+  //                       );
+  //                       if (result != null) {
+  //                         selectedFile = File(result.files.single.path!);
+  //                         setState(() {}); // refresh button text
+  //                       }
+  //                     },
+  //                     icon: const Icon(Icons.attach_file),
+  //                     label: Text(selectedFile == null
+  //                         ? "Pick File"
+  //                         : "Selected: ${selectedFile!.path.split('/').last}"),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Contact
+  //                   TextField(
+  //                     controller: _contactController,
+  //                     keyboardType: TextInputType.phone,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Contact Number',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.phone)),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Email
+  //                   TextField(
+  //                     controller: _emailController,
+  //                     keyboardType: TextInputType.emailAddress,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Email Address',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.email)),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Address
+  //                   TextField(
+  //                     controller: _addressController,
+  //                     maxLines: 2,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Permanent Address',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.location_on)),
+  //                   ),
+  //                   const SizedBox(height: 20),
+
+  //                   // -------------Add Project Button---------------
+  //                   ElevatedButton(
+  //                     onPressed: () async {
+  //                       final projectName = _projectController.text.trim();
+  //                       final ownerName = _ownerController.text.trim();
+  //                       final contact = _contactController.text.trim();
+  //                       final email = _emailController.text.trim();
+  //                       final address = _addressController.text.trim();
+
+  //                       // Validation
+  //                       if (projectName.isEmpty ||
+  //                           ownerName.isEmpty ||
+  //                           contact.isEmpty ||
+  //                           email.isEmpty) {
+  //                         _showErrorDialog(context,
+  //                             "Project name, owner, contact, and email are required.");
+  //                         return;
+  //                       }
+
+  //                       if (!phoneRegex.hasMatch(contact)) {
+  //                         _showErrorDialog(context,
+  //                             "Enter a valid Bangladeshi number (11 digits, starts with 01).");
+  //                         return;
+  //                       }
+
+  //                       if (!emailRegex.hasMatch(email)) {
+  //                         _showErrorDialog(
+  //                             context, "Enter a valid email address.");
+  //                         return;
+  //                       }
+
+  //                       // API Call
+  //                       final res = await addProjectDetails(
+  //                         projectName: projectName,
+  //                         ownerName: ownerName,
+  //                         contact: contact,
+  //                         email: email,
+  //                         address: address,
+  //                         file: selectedFile,
+  //                         ownerImage: selectedOwnerImage, // Mobile
+  //                         ownerImageBytes: selectedOwnerImageBytes, // Web
+  //                       );
+
+  //                       ScaffoldMessenger.of(context).showSnackBar(
+  //                         SnackBar(
+  //                           content: Text(res['message'] ?? "Upload completed"),
+  //                           backgroundColor: res['success'] == true
+  //                               ? Colors.green
+  //                               : Colors.red,
+  //                         ),
+  //                       );
+
+  //                       if (res['success'] == true) {
+  //                         // Clear fields
+  //                         _projectController.clear();
+  //                         _ownerController.clear();
+  //                         _contactController.clear();
+  //                         _emailController.clear();
+  //                         _addressController.clear();
+  //                         setState(() {
+  //                           selectedFile = null;
+  //                           selectedOwnerImage = null;
+  //                           selectedOwnerImageBytes = null;
+  //                         });
+
+  //                         Navigator.pop(context);
+  //                         await getProjectListData(); // refresh project list
+  //                       }
+  //                     },
+  //                     child: const Text("Add"),
+  //                   ),
+
+  //                   //-----------End Add Project Button-------------
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+//--------------ENd Add Project Dialog Box---- Today------------------
 
 // ----------End To Add a New Project using a Dialog---------
 

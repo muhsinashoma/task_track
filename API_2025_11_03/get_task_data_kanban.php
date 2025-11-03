@@ -8,7 +8,7 @@ include 'config.php';
 $period         = isset($_GET['period']) ? intval($_GET['period']) : 1;
 $unit           = isset($_GET['unit']) ? strtolower($_GET['unit']) : "days";
 $projectId      = isset($_GET['project_id']) ? intval($_GET['project_id']) : 0;
-$userIdentifier = isset($_GET['device_user_id']) ? $_GET['device_user_id'] : ""; // 👈 new
+$userIdentifier = isset($_GET['user_identifier']) ? $_GET['user_identifier'] : ""; // 👈 new
 
 // Build condition by time
 switch ($unit) {
@@ -30,7 +30,7 @@ switch ($unit) {
 // ---------------- Fetch Boards ----------------
 $sql = "SELECT * FROM tbl_task_board WHERE status = 1";
 if (!empty($userIdentifier)) {
-    $sql .= " AND device_user_id = '$userIdentifier'"; // 👈 filter by user
+    $sql .= " AND user_identifier = '$userIdentifier'"; // 👈 filter by user
 }
 if ($projectId > 0) {
     $sql .= " AND project_id = '$projectId'"; // 👈 filter by project
@@ -61,7 +61,7 @@ if ($projectId > 0) {
     $sql .= " AND project_id = '$projectId'";
 }
 if (!empty($userIdentifier)) {
-    $sql .= " AND device_user_id = '$userIdentifier'"; // 👈 filter by user
+    $sql .= " AND user_identifier = '$userIdentifier'"; // 👈 filter by user
 }
 
 $sql .= " ORDER BY id DESC";

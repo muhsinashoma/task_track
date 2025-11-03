@@ -13,14 +13,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $model_name = mysqli_real_escape_string($con, $_POST['model_name']);
     $project_id = mysqli_real_escape_string($con, $_POST['project_id']);
     $created_by = mysqli_real_escape_string($con, $_POST['created_by']);
-    $device_user_id = mysqli_real_escape_string($con, $_POST['device_user_id']);
+    $user_identifier = mysqli_real_escape_string($con, $_POST['user_identifier']);
 
     $stmt = $con->prepare(
-        "INSERT INTO tbl_task_name (title, column_name, model_name, project_id, created_by, device_user_id) 
+        "INSERT INTO tbl_task_name (title, column_name, model_name, project_id, created_by, user_identifier) 
          VALUES (?, ?, ?, ?, ?, ?)"
     );
-    $stmt->bind_param("ssssss", $title, $column_id, $model_name, $project_id, $created_by, $device_user_id);
+    $stmt->bind_param("ssssss", $title, $column_id, $model_name, $project_id, $created_by, $user_identifier);
 
+    // if ($stmt->execute()) {
+    //     echo json_encode(["success" => true, "message" => "Task Added Successfully"]);
+    // } else {
+    //     echo json_encode(["success" => false, "message" => "Error: " . $stmt->error]);
+    // }
 
     if ($stmt->execute()) {
     echo json_encode(["success" => 1, "message" => "Task Added Successfully"]);
