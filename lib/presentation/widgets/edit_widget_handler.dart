@@ -64,7 +64,7 @@ class _EditItemPageState extends State<EditItemPage> {
         "edited_at": updatedAt
       };
 
-      print('----------------Edited Data-----------------');
+      //print('----------------Edited Data-----------------');
       print(responseData);
 
       Response response = await dio.post(

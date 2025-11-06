@@ -1,0 +1,82 @@
+
+2025-10-23
+
+https://chatgpt.com/c/68fa0b1d-6e88-8324-b806-fa1547a8e41e
+
+
+https://chatgpt.com/c/68fa0b1d-6e88-8324-b806-fa1547a8e41e
+
+http://192.168.0.105/API/get_user_profile_kanban.php?device_user_id=190abfa9-3ca2-4b4c-bc3f-8e8f0f156100
+
+
+http://192.168.0.105/API/uploads/1761222098_owner_1761222098258.png
+
+
+---------------------------------------------------------------------
+https://chatgpt.com/c/68f76ddf-d040-8320-a5fb-7e24435a5c82
+-------------------------------------------------------------------
+
+-------------------------------------------------------------------
+
+
+https://chatgpt.com/c/68fa0b1d-6e88-8324-b806-fa1547a8e41e
+
+browser for image : http://192.168.0.105/API/uploads/1761222098_owner_1761222098258.png
+
+
+
+postman :
+
+http://192.168.0.105/API/get_user_profile_kanban.php?device_user_id=5cdce2af-7d35-4a62-9bc7-ea5c53d9142e
+
+
+GET Method :  http://192.168.32.168/API/get_user_profile_kanban.php?device_user_id=6a3dc9c8-2f0c-45de-9fc9-0d2800691732
+
+
+key: device_user_id  
+value : 6a3dc9c8-2f0c-45de-9fc9-0d2800691732
+
+
+
+{
+    "success": true,
+    "data": {
+        "id": 2,
+        "project_name": "My Project",
+        "project_owner_name": "New User",
+        "owner_image": null,
+        "attached_file": null,
+        "contact_number": "",
+        "email_address": "",
+        "permanent_address": "",
+        "created_by": "App System",
+        "created_at": "2025-10-23 16:48:03",
+        "device_user_id": "6a3dc9c8-2f0c-45de-9fc9-0d2800691732",
+        "user_id": "c632c3ecb559c167f1b7645fa923875d"
+    }
+}
+
+----------------------------------------------------------------------
+
+browser link
+
+
+http://192.168.32.168/API/get_user_profile_kanban.php?device_user_id=6a3dc9c8-2f0c-45de-9fc9-0d2800691732
+
+{
+  "success": true,
+  "data": {
+    "id": 2,
+    "project_name": "My Project",
+    "project_owner_name": "New User",
+    "owner_image": null,
+    "attached_file": null,
+    "contact_number": "",
+    "email_address": "",
+    "permanent_address": "",
+    "created_by": "App System",
+    "created_at": "2025-10-23 16:48:03",
+    "device_user_id": "6a3dc9c8-2f0c-45de-9fc9-0d2800691732",
+    "user_id": "c632c3ecb559c167f1b7645fa923875d"
+  }
+}

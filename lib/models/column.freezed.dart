@@ -19,6 +19,7 @@ mixin _$KColumn {
   int get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   List<KTask> get children => throw _privateConstructorUsedError;
+  Color get color => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $KColumnCopyWith<KColumn> get copyWith => throw _privateConstructorUsedError;
@@ -29,7 +30,7 @@ abstract class $KColumnCopyWith<$Res> {
   factory $KColumnCopyWith(KColumn value, $Res Function(KColumn) then) =
       _$KColumnCopyWithImpl<$Res, KColumn>;
   @useResult
-  $Res call({int id, String title, List<KTask> children});
+  $Res call({int id, String title, List<KTask> children, Color color});
 }
 
 /// @nodoc
@@ -48,6 +49,7 @@ class _$KColumnCopyWithImpl<$Res, $Val extends KColumn>
     Object? id = null,
     Object? title = null,
     Object? children = null,
+    Object? color = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -62,6 +64,10 @@ class _$KColumnCopyWithImpl<$Res, $Val extends KColumn>
           ? _value.children
           : children // ignore: cast_nullable_to_non_nullable
               as List<KTask>,
+      color: null == color
+          ? _value.color
+          : color // ignore: cast_nullable_to_non_nullable
+              as Color,
     ) as $Val);
   }
 }
@@ -73,7 +79,7 @@ abstract class _$$KColumnImplCopyWith<$Res> implements $KColumnCopyWith<$Res> {
       __$$KColumnImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int id, String title, List<KTask> children});
+  $Res call({int id, String title, List<KTask> children, Color color});
 }
 
 /// @nodoc
@@ -90,6 +96,7 @@ class __$$KColumnImplCopyWithImpl<$Res>
     Object? id = null,
     Object? title = null,
     Object? children = null,
+    Object? color = null,
   }) {
     return _then(_$KColumnImpl(
       id: null == id
@@ -104,6 +111,10 @@ class __$$KColumnImplCopyWithImpl<$Res>
           ? _value.children
           : children // ignore: cast_nullable_to_non_nullable
               as List<KTask>,
+      color: null == color
+          ? _value.color
+          : color // ignore: cast_nullable_to_non_nullable
+              as Color,
     ));
   }
 }
@@ -112,7 +123,10 @@ class __$$KColumnImplCopyWithImpl<$Res>
 
 class _$KColumnImpl implements _KColumn {
   const _$KColumnImpl(
-      {required this.id, required this.title, required this.children});
+      {required this.id,
+      required this.title,
+      required this.children,
+      this.color = Colors.blue});
 
   @override
   final int id;
@@ -120,10 +134,13 @@ class _$KColumnImpl implements _KColumn {
   final String title;
   @override
   final List<KTask> children;
+  @override
+  @JsonKey()
+  final Color color;
 
   @override
   String toString() {
-    return 'KColumn(id: $id, title: $title, children: $children)';
+    return 'KColumn(id: $id, title: $title, children: $children, color: $color)';
   }
 
   @override
@@ -133,12 +150,13 @@ class _$KColumnImpl implements _KColumn {
             other is _$KColumnImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.title, title) || other.title == title) &&
-            const DeepCollectionEquality().equals(other.children, children));
+            const DeepCollectionEquality().equals(other.children, children) &&
+            (identical(other.color, color) || other.color == color));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, id, title, const DeepCollectionEquality().hash(children));
+  int get hashCode => Object.hash(runtimeType, id, title,
+      const DeepCollectionEquality().hash(children), color);
 
   @JsonKey(ignore: true)
   @override
@@ -151,7 +169,8 @@ abstract class _KColumn implements KColumn {
   const factory _KColumn(
       {required final int id,
       required final String title,
-      required final List<KTask> children}) = _$KColumnImpl;
+      required final List<KTask> children,
+      final Color color}) = _$KColumnImpl;
 
   @override
   int get id;
@@ -159,6 +178,8 @@ abstract class _KColumn implements KColumn {
   String get title;
   @override
   List<KTask> get children;
+  @override
+  Color get color;
   @override
   @JsonKey(ignore: true)
   _$$KColumnImplCopyWith<_$KColumnImpl> get copyWith =>

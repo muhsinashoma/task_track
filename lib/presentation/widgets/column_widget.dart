@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 import '../../models/models.dart';
+import '../../url/api_service.dart';
 import 'card_column.dart';
 import 'task_card_widget.dart';
+import '../../../../api_service.dart'; //  api endpoint service
 
 class KanbanColumn extends StatefulWidget {
   final KColumn column;
@@ -31,8 +34,12 @@ class KanbanColumn extends StatefulWidget {
 }
 
 class _KanbanColumnState extends State<KanbanColumn> {
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   String _searchText = '';
+
+  late TextEditingController _titleController;
+  bool _isEditing = false;
+  final Dio _dio = Dio();
 
   @override
   void initState() {
@@ -42,12 +49,30 @@ class _KanbanColumnState extends State<KanbanColumn> {
         _searchText = _searchController.text;
       });
     });
+    _titleController = TextEditingController(text: widget.column.title);
+  }
+
+  @override
+  void didUpdateWidget(covariant KanbanColumn oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.column.title != widget.column.title) {
+      _titleController.text = widget.column.title;
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _titleController.dispose();
     super.dispose();
+  }
+
+  // --- Generate unique color for each column ---
+  Color generateProjectColor(int index) {
+    double hue = (index * 45) % 360;
+    double saturation = 0.6;
+    double value = 0.85;
+    return HSVColor.fromAHSV(1, hue, saturation, value).toColor();
   }
 
   List<KTask> getFilteredTasks() {
@@ -58,21 +83,77 @@ class _KanbanColumnState extends State<KanbanColumn> {
         .toList();
   }
 
+  // --- Update column title function using baseUrL---------------
+  Future<void> _updateColumnTitle(String newTitle) async {
+    if (newTitle.trim().isEmpty) return;
+
+    print("🔹 Attempting to update column title...");
+    print("➡️ Column ID: ${widget.column.id}");
+    print("➡️ New Title: $newTitle");
+
+    try {
+      // ✅ Use baseUrl here
+      var url = Uri.parse("${baseUrl}update_column_kanban.php");
+      print("📡 Sending update to: $url");
+
+      final response = await _dio.post(
+        url.toString(),
+        data: {
+          "id": widget.column.id,
+          "title": newTitle,
+          "edited_by": "muhsina",
+        },
+        options: Options(
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
+      );
+
+      print("✅ Server response received:");
+      print("Status Code: ${response.statusCode}");
+      print("Response Data: ${response.data}");
+
+      if (response.statusCode == 200 &&
+          response.data.toString().contains("success")) {
+        setState(() {
+          _titleController.text = newTitle;
+          _isEditing = false;
+        });
+        //print("🎯 Column title updated locally to: $newTitle");
+      } else {
+        // print("⚠️ Unexpected server response: ${response.data}");
+      }
+    } catch (e) {
+      // print("❌ Error updating column title: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final Color columnColor = generateProjectColor(widget.index);
+
     return Stack(
       children: <Widget>[
         CardColumn(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _buildTitleColumn(),
-                _buildSearchBar(),
-                _buildListItemsColumn(),
-                _buildButtonNewTask(widget.index),
-              ],
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: columnColor, // 🔹 colorful top border
+                  width: 4,
+                ),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _buildTitleColumn(columnColor),
+                  _buildSearchBar(),
+                  _buildListItemsColumn(),
+                  _buildButtonNewTask(widget.index),
+                ],
+              ),
             ),
           ),
         ),
@@ -91,35 +172,74 @@ class _KanbanColumnState extends State<KanbanColumn> {
     );
   }
 
-// Backup 25 August, 2025
-  Widget _buildTitleColumn() {
-    final taskCount = widget.column.children.length; // 👈 count tasks
+  // ---------------- Start Build Column Title ------------------
+  Widget _buildTitleColumn(Color titleColor) {
+    final taskCount = widget.column.children.length;
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            widget.column.title,
-            style: const TextStyle(
-              fontSize: 20,
-              color: Colors.black,
-              fontWeight: FontWeight.w700,
+          Expanded(
+            child: _isEditing
+                ? TextField(
+                    controller: _titleController,
+                    autofocus: true,
+                    onSubmitted: (value) {
+                      print("Enter pressed! New title: $value");
+                      _updateColumnTitle(value.trim());
+                    },
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      border: OutlineInputBorder(),
+                    ),
+                  )
+                : GestureDetector(
+                    onTap: () {
+                      print("Tapped column title!");
+                      setState(() => _isEditing = true);
+                    },
+                    child: Text(
+                      _titleController.text,
+                      style: TextStyle(
+                        fontSize: 12, //display Column Title 12 px
+                        color: titleColor, // 🔹 dynamic color
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+          ),
+          IconButton(
+            icon: Icon(
+              _isEditing ? Icons.check : Icons.edit,
+              color: titleColor.withOpacity(0.8), // 🔹 colorized icon
+              size: 20,
             ),
+            onPressed: () {
+              if (_isEditing) {
+                print(
+                    "Check icon pressed! New title: ${_titleController.text}");
+                _updateColumnTitle(_titleController.text.trim());
+              } else {
+                setState(() => _isEditing = true);
+              }
+            },
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              // color: Color.fromARGB(255, 224, 226, 226),
-              color: Color.fromARGB(255, 189, 237, 190),
+              color: titleColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              '$taskCount', // 👈 show total tasks
-              style: const TextStyle(
+              '$taskCount',
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: titleColor, // 🔹 count text color
               ),
             ),
           ),
@@ -127,7 +247,9 @@ class _KanbanColumnState extends State<KanbanColumn> {
       ),
     );
   }
+  // ---------------- End Build Column Title ------------------
 
+// ------------Start Search bar ----------------------------
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -135,22 +257,37 @@ class _KanbanColumnState extends State<KanbanColumn> {
         controller: _searchController,
         decoration: InputDecoration(
           hintText: 'Search tasks...',
-          prefixIcon: const Icon(Icons.search),
+          hintStyle: const TextStyle(
+            fontSize: 12, // set hint text to 12 px
+            color: Colors.grey,
+          ),
+          prefixIcon: const Icon(
+            Icons.search,
+            size: 20, // optional: adjust icon size
+          ),
           suffixIcon: _searchText.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                  },
+                  icon: const Icon(
+                    Icons.clear,
+                    size: 20, // optional: adjust icon size
+                  ),
+                  onPressed: () => _searchController.clear(),
                 )
               : null,
           border: const OutlineInputBorder(),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        ),
+        style: const TextStyle(
+          fontSize: 12, // optional: text input size 12 px
         ),
       ),
     );
   }
 
-  // To Show Task as a Mini Card using Hover Tooltip
+// ------------End Search bar ------------------------
+
+  // ----------Show Task list Under Each Column--------------------
   Widget _buildListItemsColumn() {
     final filteredTasks = getFilteredTasks();
     return Expanded(
@@ -164,19 +301,19 @@ class _KanbanColumnState extends State<KanbanColumn> {
           for (final task in filteredTasks)
             Tooltip(
               key: ValueKey(task),
-              // Instead of 'message', we use 'richMessage' to wrap in a container like a card
               richMessage: WidgetSpan(
                 child: Container(
-                  constraints: BoxConstraints(maxWidth: 220),
+                  constraints: const BoxConstraints(maxWidth: 220),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
+                    color: const Color.fromARGB(255, 245, 244, 244),
                     borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 4,
-                          offset: Offset(2, 3))
+                        //color: Colors.black26,
+                        blurRadius: 4,
+                        offset: Offset(2, 3),
+                      )
                     ],
                   ),
                   child: Column(
@@ -185,7 +322,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
                       Text(
                         task.title,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
@@ -193,13 +330,13 @@ class _KanbanColumnState extends State<KanbanColumn> {
                       const SizedBox(height: 6),
                       Text(
                         "By: ${task.createdBy}",
-                        style: const TextStyle(
-                            fontSize: 12, color: Colors.black54),
+                        style:
+                            const TextStyle(fontSize: 8, color: Colors.black54),
                       ),
                       Text(
                         "At: ${task.createdAt}",
-                        style: const TextStyle(
-                            fontSize: 12, color: Colors.black54),
+                        style:
+                            const TextStyle(fontSize: 8, color: Colors.black54),
                       ),
                     ],
                   ),
@@ -220,6 +357,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
     );
   }
 
+  // --- Add new task button ---
   Widget _buildButtonNewTask(int index) {
     return ListTile(
       dense: true,

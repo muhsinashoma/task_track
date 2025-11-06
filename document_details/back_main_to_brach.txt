@@ -1,0 +1,69 @@
+PS D:\Flutter-Project\task_track> git branch
+* master
+  muhsina
+  submaster
+PS D:\Flutter-Project\task_track> git checkout muhsina
+error: Your local changes to the following files would be overwritten by checkout:
+        .flutter-plugins-dependencies
+Please commit your changes or stash them before you switch branches.
+Aborting
+PS D:\Flutter-Project\task_track> git add .flutter-plugins-dependencies
+PS D:\Flutter-Project\task_track> git commit -m "To Back to Muhsina Branch"
+[master 50b5260] To Back to Muhsina Branch
+PS D:\Flutter-Project\task_track> git branch
+* master
+  muhsina
+  submaster
+PS D:\Flutter-Project\task_track> git checkout muhsina
+error: Your local changes to the following files would be overwritten by checkout:
+        .flutter-plugins-dependencies
+Please commit your changes or stash them before you switch branches.
+Aborting
+PS D:\Flutter-Project\task_track> git add .flutter-plugins-dependencies
+PS D:\Flutter-Project\task_track> git commit -m "To Back to Muhsina Branch"
+[master 50b5260] To Back to Muhsina Branch
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+PS D:\Flutter-Project\task_track> git checkout muhsina
+PS D:\Flutter-Project\task_track> git branch
+* master
+  muhsina
+  submaster
+PS D:\Flutter-Project\task_track> git checkout muhsina
+error: Your local changes to the following files would be overwritten by checkout:
+        .flutter-plugins-dependencies
+Please commit your changes or stash them before you switch branches.
+Aborting
+PS D:\Flutter-Project\task_track> git add .flutter-plugins-dependencies
+PS D:\Flutter-Project\task_track> git commit -m "To Back to Muhsina Branch"
+[master 50b5260] To Back to Muhsina Branch
+  submaster
+PS D:\Flutter-Project\task_track> git checkout muhsina
+error: Your local changes to the following files would be overwritten by checkout:
+        .flutter-plugins-dependencies
+Please commit your changes or stash them before you switch branches.
+Aborting
+PS D:\Flutter-Project\task_track> git add .flutter-plugins-dependencies
+PS D:\Flutter-Project\task_track> git commit -m "To Back to Muhsina Branch"
+[master 50b5260] To Back to Muhsina Branch
+Aborting
+PS D:\Flutter-Project\task_track> git add .flutter-plugins-dependencies
+PS D:\Flutter-Project\task_track> git commit -m "To Back to Muhsina Branch"
+[master 50b5260] To Back to Muhsina Branch
+PS D:\Flutter-Project\task_track> git commit -m "To Back to Muhsina Branch"
+[master 50b5260] To Back to Muhsina Branch
+[master 50b5260] To Back to Muhsina Branch
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+PS D:\Flutter-Project\task_track> git checkout muhsina
+Switched to branch 'muhsina'
+Your branch is up to date with 'origin/muhsina'.
+PS D:\Flutter-Project\task_track> git pull origin muhsina
+From https://github.com/muhsinashoma/task_track
+ * branch            muhsina    -> FETCH_HEAD
+Already up to date.
+PS D:\Flutter-Project\task_track> git log -1
+commit b32f38b18e03e81580d03eb3ec179337cf40ac03 (HEAD -> muhsina, origin/muhsina)
+Author: muhsinashoma <muhsina.akter2@gmail.com>
+Date:   Tue Sep 23 11:08:00 2025 +0600
+
+    To Show Total Task Under Respective Project
+PS D:\Flutter-Project\task_track>

@@ -1,41 +1,40 @@
 <?php
-header("Access-Control-Allow-Origin: *"); // Allows all origins
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS"); // Allows specific methods
-header("Access-Control-Allow-Headers: Content-Type, Authorization"); // Allows specific headers
+
+
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 include 'config.php';
 
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $title = mysqli_real_escape_string($con, $_POST['title']);
+    $column_id = mysqli_real_escape_string($con, $_POST['column_id']);
+    $model_name = mysqli_real_escape_string($con, $_POST['model_name']);
+    $project_id = mysqli_real_escape_string($con, $_POST['project_id']);
+    $created_by = mysqli_real_escape_string($con, $_POST['created_by']);
+    $device_user_id = mysqli_real_escape_string($con, $_POST['device_user_id']);
 
-if($_SERVER['REQUEST_METHOD'] == 'POST'){
-      // Retrieve and sanitize the input data
-      $title = mysqli_real_escape_string($con, $_POST['title']);
-      $column_name = $_POST['column_id'];
-      $model_name = $_POST['model_name'];
-      $project_id  = $_POST['project_id'];
-      $created_by = mysqli_real_escape_string($con, $_POST['created_by']);
+    $stmt = $con->prepare(
+        "INSERT INTO tbl_task_name (title, column_name, model_name, project_id, created_by, device_user_id) 
+         VALUES (?, ?, ?, ?, ?, ?)"
+    );
+    $stmt->bind_param("ssssss", $title, $column_id, $model_name, $project_id, $created_by, $device_user_id);
 
-      //Prepare the SQL Statement
 
-      $sql = "INSERT INTO tbl_task_name(title,column_name, model_name,project_id,created_by, edited_at) VALUES('$title', '$column_name', '$model_name', '$project_id', '$created_by', NOW())";
+    if ($stmt->execute()) {
+    echo json_encode(["success" => 1, "message" => "Task Added Successfully"]);
+    } else {
+        echo json_encode(["success" => 0, "message" => "Error: " . $stmt->error]);
+    }
 
-      //Execute the query and check for errors
 
-      if($con->query($sql)===TRUE){
-        echo json_encode(["success"=>true, "message"=>"Task Added Successfully"]);
-      }
-      else{
-
-        //Error Response
-        echo json_encode(["success"=>false, "message"=>"Error". $con->error]);
-      }
-} else{
-         // Invalid request method response
-         echo json_encode(["success"=>false, "message"=>"Invalid Request Method"]);
-
-         //Close Database Connection
-
-         $con->close();
+    $stmt->close();
+} else {
+    echo json_encode(["success" => false, "message" => "Invalid Request Method"]);
 }
+
+$con->close();
 
 
 

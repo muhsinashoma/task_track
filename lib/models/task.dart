@@ -9,7 +9,8 @@ class KTask with _$KTask {
     required String title,
     required String taskId,
     required String createdBy, // new field
-    required String createdAt, // new field
+    required String createdAt,
+    required int projectId, // ✅ required projectId👈 add this // new field
   }) = _KTask;
 
   factory KTask.fromJson(Map<String, dynamic> json) => _$KTaskFromJson(json);

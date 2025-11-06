@@ -1,54 +1,43 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'dart:io';
 
-import 'package:uuid/uuid.dart';
-import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../data/data.dart';
 import '../../models/models.dart';
+import '../../url/api_service.dart'; // Import your baseUrl
 import '../widgets/edit_task_widget.dart';
 import '../widgets/kanban_board.dart';
+import 'about_me_page.dart';
+import 'arabic_words_in_bangla.dart';
 import 'kanban_board_controller.dart';
-import 'package:file_picker/file_picker.dart';
-
-// class ProjectListItem {
-//   final int id;
-//   final String name;
-//   final String project_owner_name;
-//   final String? attached_file;
-
-//   ProjectListItem({
-//     required this.id,
-//     required this.name,
-//     required this.project_owner_name,
-//     this.attached_file,
-//   });
-
-//   factory ProjectListItem.fromJson(Map<String, dynamic> json) {
-//     return ProjectListItem(
-//       id: int.tryParse(json['id'].toString()) ?? 0, // safe parsing
-//       name: json['project_name'] ?? "Unnamed Project",
-//       project_owner_name: json['project_owner_name'] ?? "Unknown",
-//       attached_file: json['attached_file'],
-//     );
-//   }
-// }
+import 'user_details_page.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'package:http_parser/http_parser.dart'; // For contentType
+// 👈 Add this
 
 class ProjectListItem {
   final int id;
   final String name;
   final String project_owner_name;
-  final String? attached_file;
-  final int taskCount; // 👈 add this
+  final String? attached_file; // project file
+  final String? owner_image; // owner image
+  int taskCount;
 
   ProjectListItem({
     required this.id,
     required this.name,
     required this.project_owner_name,
     this.attached_file,
+    this.owner_image,
     this.taskCount = 0,
   });
 
@@ -58,20 +47,19 @@ class ProjectListItem {
       name: json['project_name'] ?? "Unnamed Project",
       project_owner_name: json['project_owner_name'] ?? "Unknown",
       attached_file: json['attached_file'],
-      taskCount: int.tryParse(json['task_count']?.toString() ?? "0") ??
-          0, // 👈 parse total tasks
+      owner_image: json['owner_image'], // map from backend
+      taskCount: int.tryParse(json['task_count']?.toString() ?? "0") ?? 0,
     );
   }
 }
-
-// Format today's date
-// DateTime now = DateTime.now();
-// String englishDate = DateFormat("MMM dd, yyyy").format(now);
 
 String? _selectedProjectName;
 int? _selectedProjectId;
 String? _projectOwnerName;
 int _selectedProjectTaskCount = 0; // 👈 default 0
+
+bool _isBlinking = false;
+Color _borderColor = Colors.red;
 
 class KanbanSetStatePage extends StatefulWidget {
   const KanbanSetStatePage({super.key});
@@ -82,8 +70,42 @@ class KanbanSetStatePage extends StatefulWidget {
 
 class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     implements KanbanBoardController {
+  String? deviceId; // store globally for use anywhere
+  // ---------------------- USER IDENTIFIER ----------------------
+
+  List<File> selectedFiles = []; // global not needed now, handled per project
+  List<Uint8List> selectedFilesBytes = []; // global not needed now
+  File? selectedOwnerImage;
+  Uint8List? selectedOwnerImageBytes;
+
+  bool isDashboardSelected = true; // initially show Dashboard
+
+  // ---------- Method to show dashboard ----------
+  void showDashboard() {
+    setState(() {
+      _selectedProjectId = null;
+      _selectedProjectName = null;
+      _selectedProjectTaskCount = 0;
+      _projectOwnerName = '';
+      isDashboardSelected = true;
+    });
+    getTaskData();
+  }
+
+//The function you posted creates and stores a unique ID for that device:
+  Future<String> getUserIdentifier() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? id = prefs.getString('device_user_id');
+    if (id == null) {
+      id = const Uuid().v4();
+      await prefs.setString('device_user_id', id);
+    }
+    return id;
+  }
+
   // ------------------ Add this ------------------
   DateTime selectedDate = DateTime.now();
+
   // ---------- Selected period ----------
   int selectedNumber = 1;
   String selectedUnit = "Days"; // default period
@@ -98,15 +120,92 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   ];
   String get periodText => "$selectedNumber $selectedUnit";
 
-  // ---------- Kanban columns ----------
+  // ---------- End Selected period ----------
+
+  // ----------Start Selected period ---------------------
+//   int selectedNumber = 1;
+//   String selectedUnit = "Days"; // default period
+//   final List<int> numbers = List.generate(10, (i) => i + 1);
+//   final List<String> units = [
+//     "Days",
+//     "Months",
+//     "Years",
+//     "Last Days",
+//     "Last Months",
+//     "Last Years"
+//   ];
+
+// // Smart formatted period text for AppBar
+//   String get periodText {
+//     switch (selectedUnit) {
+//       case "Last Days":
+//         return "${selectedNumber}LD";
+//       case "Last Months":
+//         return "${selectedNumber}LM";
+//       case "Last Years":
+//         return "${selectedNumber}LY";
+//       case "Days":
+//         return "${selectedNumber}d";
+//       case "Months":
+//         return "${selectedNumber}m";
+//       case "Years":
+//         return "${selectedNumber}y";
+//       default:
+//         return "$selectedNumber $selectedUnit";
+//     }
+//   }
+
+  // ----------End Selected period ---------------------
+
+  // ---------- Kanban columns ------------------------
   List<KColumn> columns = [];
 
   @override
   void initState() {
     super.initState();
-    getColumnData();
+    _startBlinking();
+
+    //getColumnData();
     getTaskData();
     getProjectListData();
+    _initDeviceId();
+  }
+
+  Future<void> _initDeviceId() async {
+    final id = await getDeviceUserId();
+    setState(() {
+      deviceId = id;
+    });
+
+    print("✅ Device ID initialized: $deviceId");
+  }
+
+  //To get Device User ID Dynamically
+
+  Future<String> getDeviceUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? deviceId = prefs.getString('device_user_id');
+
+    if (deviceId == null) {
+      deviceId = const Uuid().v4(); // Generate a new unique ID
+      await prefs.setString('device_user_id', deviceId);
+    }
+
+    return deviceId;
+  }
+
+// blanking effect and focus for project selector
+
+  void _startBlinking() {
+    if (_selectedProjectId != null) return; // stop if selected
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        _isBlinking = !_isBlinking;
+        _borderColor = _isBlinking ? Colors.red : Colors.white;
+      });
+      _startBlinking();
+    });
   }
 
   String getFirstAndLastLetter(String name) {
@@ -121,7 +220,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   }
 
 // Generates a unique color for each project based on its index
-
   Color generateProjectColor(int index) {
     // Hue cycles through 0-360 degrees
     double hue =
@@ -138,11 +236,15 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   Future<void> getProjectListData() async {
     try {
       final dio = Dio();
-      var response = await dio.get(
-        "http://192.168.32.105/API/get_project_list_kanban.php",
-      );
 
-      // Decode JSON string into a List
+      // ✅ Step 1: Build your URL using baseUrl
+      var url = Uri.parse("${baseUrl}get_project_list_kanban.php");
+      print("Fetching project list from: $url");
+
+      // ✅ Step 2: Make the request
+      var response = await dio.get(url.toString());
+
+      // ✅ Step 3: Decode response
       List data = jsonDecode(response.data);
 
       _projects = data.map((json) => ProjectListItem.fromJson(json)).toList();
@@ -151,7 +253,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         _isLoadingProjects = false;
       });
 
-      //print("Projects loaded: ${_projects.length}");
+      print("Projects loaded: ${_projects.length}");
     } catch (e) {
       print("Error fetching projects: $e");
       setState(() {
@@ -176,69 +278,24 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       dayWidgets.add(Container(width: 28, height: 40));
     }
 
-    // Add day widgets
-    for (int day = 1; day <= daysInMonth; day++) {
-      DateTime date = DateTime(year, month, day);
-      bool isToday = day == todayDay;
-      bool isHoliday = holidays.contains(date.weekday);
-
-      dayWidgets.add(Column(
-        children: [
-          Text(
-            weekDays[date.weekday % 7],
-            style: TextStyle(
-                fontSize: 10, color: isHoliday ? Colors.red : Colors.black),
-          ),
-          const SizedBox(height: 2),
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: isToday
-                  ? Colors.green
-                  : isHoliday
-                      ? Colors.red.withOpacity(0.3)
-                      : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              '$day',
-              style: TextStyle(
-                  color: isToday ? Colors.white : Colors.black87, fontSize: 12),
-            ),
-          ),
-        ],
-      ));
-    }
-
     return dayWidgets;
   }
 
-  // ---------- Fetch columns ----------
-  Future<void> getColumnData() async {
-    try {
-      final dio = Dio();
-      var response =
-          await dio.get("http://192.168.32.105/API/get_column_data_kanban.php");
-
-      columns = Data.getColumns(response.data)
-          .map((col) => col.copyWith(children: col.children ?? []))
-          .toList();
-
-      setState(() {});
-    } catch (e) {
-      print("Error fetching columns: $e");
-    }
-  }
-
-  // ---------- Fetch tasks ----------
+//------------------- getTaskData To show Kanban Board using BaseURL-----------------------
 
   Future<void> getTaskData() async {
     try {
       final dio = Dio();
+
+      // Use baseUrl here
+      var url = Uri.parse("${baseUrl}get_task_data_kanban.php");
+
+      //var url = Uri.parse("${baseUrl}get_dashboard_kanban.php");
+
+      print("Fetching data from: $url");
+
       var response = await dio.get(
-        "http://192.168.32.105/API/get_task_data_kanban.php",
+        url.toString(),
         queryParameters: {
           "project_id": _selectedProjectId ?? 0,
           "period": selectedNumber,
@@ -250,11 +307,11 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         var taskData = response.data['task_boards'] as List;
 
         List<Map<String, dynamic>> tasksForColumns = [];
-        int totalTaskCount = 0; // 👈 new counter
+        int totalTaskCount = 0;
 
         for (var board in taskData) {
           var tasks = board['tasks'] as List;
-          totalTaskCount += tasks.length; // 👈 count tasks
+          totalTaskCount += tasks.length;
 
           tasksForColumns.add({
             'id': int.tryParse(board['id'].toString()) ?? 0,
@@ -271,12 +328,18 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           });
         }
 
-        // Update columns
-        columns = Data.getColumns(jsonEncode(tasksForColumns))
-            .map((col) => col.copyWith(children: col.children ?? []))
-            .toList();
+        List<KColumn> fetchedColumns =
+            Data.getColumns(jsonEncode(tasksForColumns))
+                .map((col) => col.copyWith(children: col.children ?? []))
+                .toList();
 
-        // Update task count 👇
+        columns = List.generate(
+          fetchedColumns.length,
+          (index) => fetchedColumns[index].copyWith(
+            color: generateProjectColor(index),
+          ),
+        );
+
         setState(() {
           _selectedProjectTaskCount = totalTaskCount;
         });
@@ -285,6 +348,562 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       print("Error fetching tasks: $e");
     }
   }
+
+//------------------- Add Project using BaseURL Today -----------------------
+
+//------------------- Add Project with Multiple Attached Files API Ens Point -----------------------
+
+  Future<Map<String, dynamic>> addProjectDetails({
+    required String projectName,
+    required String ownerName,
+    required String contact,
+    required String email,
+    required String address,
+    List<File>? files, // multiple attached files for mobile/tablet
+    List<Uint8List>? filesBytes, // multiple attached files for web
+    File? ownerImage, // single owner image mobile/tablet
+    Uint8List? ownerImageBytes, // single owner image web
+  }) async {
+    const maxImageSize = 5 * 1024 * 1024; // 5 MB
+    const maxFileSize = 20 * 1024 * 1024; // 20 MB
+
+    // Check owner image size
+    if (!kIsWeb &&
+        ownerImage != null &&
+        await ownerImage.length() > maxImageSize) {
+      return {"success": false, "message": "Owner image exceeds 5 MB"};
+    }
+    if (kIsWeb &&
+        ownerImageBytes != null &&
+        ownerImageBytes.length > maxImageSize) {
+      return {"success": false, "message": "Owner image exceeds 5 MB"};
+    }
+
+    // Check attached files sizes
+    if (!kIsWeb && files != null) {
+      for (var f in files) {
+        if (await f.length() > maxFileSize) {
+          return {
+            "success": false,
+            "message": "${f.path.split('/').last} exceeds 20 MB"
+          };
+        }
+      }
+    }
+    if (kIsWeb && filesBytes != null) {
+      for (var f in filesBytes) {
+        if (f.length > maxFileSize) {
+          return {
+            "success": false,
+            "message": "One of the attached files exceeds 20 MB"
+          };
+        }
+      }
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    String? deviceUserId = prefs.getString('device_user_id');
+    deviceUserId ??= const Uuid().v4();
+    await prefs.setString('device_user_id', deviceUserId);
+
+    Map<String, dynamic> formMap = {
+      "project_name": projectName,
+      "project_owner_name": ownerName,
+      "contact_number": contact,
+      "email_address": email,
+      "permanent_address": address,
+      "created_by": ownerName,
+      "device_user_id": deviceUserId,
+    };
+
+    // Attach owner image
+    if (!kIsWeb && ownerImage != null) {
+      formMap["owner_image"] = await MultipartFile.fromFile(
+        ownerImage.path,
+        filename: ownerImage.path.split('/').last,
+        contentType: MediaType("image", "jpeg"),
+      );
+    } else if (kIsWeb && ownerImageBytes != null) {
+      formMap["owner_image"] = MultipartFile.fromBytes(
+        ownerImageBytes,
+        filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
+        contentType: MediaType("image", "png"),
+      );
+    }
+
+    // Attach multiple files
+    if (!kIsWeb && files != null) {
+      formMap["attached_file[]"] = [
+        for (var f in files)
+          await MultipartFile.fromFile(
+            f.path,
+            filename: f.path.split('/').last,
+            contentType: MediaType("application", "octet-stream"),
+          )
+      ];
+    } else if (kIsWeb && filesBytes != null) {
+      formMap["attached_file[]"] = [
+        for (var f in filesBytes)
+          MultipartFile.fromBytes(
+            f,
+            filename: "file_${DateTime.now().millisecondsSinceEpoch}",
+            contentType: MediaType("application", "octet-stream"),
+          )
+      ];
+    }
+
+    final dio = Dio();
+    final url = "${baseUrl}add_project_kanban.php";
+
+    try {
+      final response = await dio.post(
+        url,
+        data: FormData.fromMap(formMap),
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+      );
+      return response.data;
+    } catch (e) {
+      return {"success": false, "message": "Upload failed: $e"};
+    }
+  }
+
+  // Future<Map<String, dynamic>> addProjectDetails({
+  //   required String projectName,
+  //   required String ownerName,
+  //   required String contact,
+  //   required String email,
+  //   required String address,
+  //   File? file, // optional attached file (mobile/tablet)
+  //   Uint8List? fileBytes, // optional attached file (web)
+  //   File? ownerImage, // optional mobile/tablet image
+  //   Uint8List? ownerImageBytes, // optional web image
+  // }) async {
+  //   const maxImageSize = 5 * 1024 * 1024; // 5 MB
+  //   const maxFileSize = 20 * 1024 * 1024; // 20 MB
+
+  //   // Check file sizes before uploading
+  //   if (!kIsWeb &&
+  //       ownerImage != null &&
+  //       await ownerImage.length() > maxImageSize) {
+  //     return {"success": false, "message": "Owner image exceeds 5 MB"};
+  //   }
+  //   if (kIsWeb &&
+  //       ownerImageBytes != null &&
+  //       ownerImageBytes.length > maxImageSize) {
+  //     return {"success": false, "message": "Owner image exceeds 5 MB"};
+  //   }
+
+  //   if (!kIsWeb && file != null && await file.length() > maxFileSize) {
+  //     return {"success": false, "message": "Attached file exceeds 20 MB"};
+  //   }
+  //   if (kIsWeb && fileBytes != null && fileBytes.length > maxFileSize) {
+  //     return {"success": false, "message": "Attached file exceeds 20 MB"};
+  //   }
+
+  //   final prefs = await SharedPreferences.getInstance();
+  //   String? deviceUserId = prefs.getString('device_user_id');
+  //   deviceUserId ??= const Uuid().v4();
+  //   await prefs.setString('device_user_id', deviceUserId);
+
+  //   Map<String, dynamic> formMap = {
+  //     "project_name": projectName,
+  //     "project_owner_name": ownerName,
+  //     "contact_number": contact,
+  //     "email_address": email,
+  //     "permanent_address": address,
+  //     "created_by": ownerName,
+  //     "device_user_id": deviceUserId,
+  //   };
+
+  //   // Attach files
+  //   if (!kIsWeb && file != null) {
+  //     formMap["attached_file"] = await MultipartFile.fromFile(
+  //       file.path,
+  //       filename: file.path.split('/').last,
+  //       contentType: MediaType("application", "octet-stream"),
+  //     );
+  //   } else if (kIsWeb && fileBytes != null) {
+  //     formMap["attached_file"] = MultipartFile.fromBytes(
+  //       fileBytes,
+  //       filename: "file_${DateTime.now().millisecondsSinceEpoch}",
+  //       contentType: MediaType("application", "octet-stream"),
+  //     );
+  //   }
+
+  //   if (!kIsWeb && ownerImage != null) {
+  //     formMap["owner_image"] = await MultipartFile.fromFile(
+  //       ownerImage.path,
+  //       filename: ownerImage.path.split('/').last,
+  //       contentType: MediaType("image", "jpeg"),
+  //     );
+  //   } else if (kIsWeb && ownerImageBytes != null) {
+  //     formMap["owner_image"] = MultipartFile.fromBytes(
+  //       ownerImageBytes,
+  //       filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
+  //       contentType: MediaType("image", "png"),
+  //     );
+  //   }
+
+  //   final dio = Dio();
+  //   final url = "${baseUrl}add_project_kanban.php";
+
+  //   try {
+  //     final response = await dio.post(
+  //       url,
+  //       data: FormData.fromMap(formMap),
+  //       options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+  //     );
+  //     return response.data;
+  //   } catch (e) {
+  //     return {"success": false, "message": "Upload failed: $e"};
+  //   }
+  // }
+
+  // Future<Map<String, dynamic>> addProjectDetails({
+  //   required String projectName,
+  //   required String ownerName,
+  //   required String contact,
+  //   required String email,
+  //   required String address,
+  //   File? file, // optional attached file
+  //   File? ownerImage, // optional mobile owner image
+  //   Uint8List? ownerImageBytes, // optional web owner image
+  // }) async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   String? deviceUserId = prefs.getString('device_user_id');
+  //   deviceUserId ??= const Uuid().v4();
+  //   await prefs.setString('device_user_id', deviceUserId);
+
+  //   Map<String, dynamic> formMap = {
+  //     "project_name": projectName,
+  //     "project_owner_name": ownerName,
+  //     "contact_number": contact,
+  //     "email_address": email,
+  //     "permanent_address": address,
+  //     "created_by": ownerName,
+  //     "device_user_id": deviceUserId,
+  //   };
+
+  //   // Attach files only if provided
+  //   if (file != null) {
+  //     formMap["attached_file"] = await MultipartFile.fromFile(
+  //       file.path,
+  //       filename: file.path.split('/').last,
+  //     );
+  //   }
+
+  //   if (kIsWeb && ownerImageBytes != null) {
+  //     formMap["owner_image"] = MultipartFile.fromBytes(
+  //       ownerImageBytes,
+  //       filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
+  //     );
+  //   } else if (!kIsWeb && ownerImage != null) {
+  //     formMap["owner_image"] = await MultipartFile.fromFile(
+  //       ownerImage.path,
+  //       filename: ownerImage.path.split('/').last,
+  //     );
+  //   }
+
+  //   final dio = Dio();
+  //   final url = "${baseUrl}add_project_kanban.php";
+
+  //   try {
+  //     final response = await dio.post(
+  //       url,
+  //       data: FormData.fromMap(formMap),
+  //       options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+  //     );
+  //     return response.data;
+  //   } catch (e) {
+  //     return {"success": false, "message": "Upload failed: $e"};
+  //   }
+  // }
+
+  //---------Below is the old code before refactoring----------
+  // Future<Map<String, dynamic>> addProjectDetails({
+  //   required String projectName,
+  //   required String ownerName,
+  //   required String contact,
+  //   required String email,
+  //   required String address,
+  //   File? file, // Mobile file
+  //   File? ownerImage, // Mobile owner image
+  //   Uint8List? ownerImageBytes, // Web owner image
+  // }) async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   String? deviceUserId = prefs.getString('device_user_id');
+  //   String? userId = prefs.getString('user_id');
+
+  //   deviceUserId ??= const Uuid().v4();
+  //   await prefs.setString('device_user_id', deviceUserId);
+
+  //   Map<String, dynamic> formMap = {
+  //     "project_name": projectName,
+  //     "project_owner_name": ownerName,
+  //     "contact_number": contact,
+  //     "email_address": email,
+  //     "permanent_address": address,
+  //     "created_by": ownerName,
+  //     "device_user_id": deviceUserId,
+  //     if (userId != null) "user_id": userId,
+  //   };
+
+  //   // Attach project file (mobile only)
+  //   if (file != null) {
+  //     formMap["attached_file"] = await MultipartFile.fromFile(
+  //       file.path,
+  //       filename: file.path.split('/').last,
+  //     );
+  //   }
+
+  //   // Attach owner image
+  //   if (kIsWeb && ownerImageBytes != null) {
+  //     formMap["owner_image"] = MultipartFile.fromBytes(
+  //       ownerImageBytes,
+  //       filename: "owner_${DateTime.now().millisecondsSinceEpoch}.png",
+  //     );
+  //   } else if (!kIsWeb && ownerImage != null) {
+  //     formMap["owner_image"] = await MultipartFile.fromFile(
+  //       ownerImage.path,
+  //       filename: ownerImage.path.split('/').last,
+  //     );
+  //   }
+
+  //   FormData formData = FormData.fromMap(formMap);
+
+  //   final dio = Dio();
+  //   //final url = "YOUR_BASE_URL/add_project_kanban.php";
+  //   final url = "${baseUrl}add_project_kanban.php";
+
+  //   try {
+  //     final response = await dio.post(
+  //       url,
+  //       data: formData,
+  //       options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+  //     );
+  //     return response.data;
+  //   } catch (e) {
+  //     return {"success": false, "message": "Upload failed: $e"};
+  //   }
+  // }
+
+//------------------- End Project using BaseURL Today -----------------------
+
+//---------------------------Add Column using Based UrL----------------------------
+  @override
+  void addColumn(String title) async {
+    int newId = columns.length + 1;
+
+    // ✅ Add locally for instant UI response
+    setState(() => columns.add(KColumn(id: newId, title: title, children: [])));
+
+    final dio = Dio();
+    String userIdentifier =
+        await getUserIdentifier(); // from shared_preferences
+    String projectId = _selectedProjectId.toString();
+
+    try {
+      // ✅ Use baseUrl instead of hardcoding
+      var url = Uri.parse("${baseUrl}add_column_kanban.php");
+      print("📡 Sending column to: $url");
+
+      final response = await dio.post(
+        url.toString(),
+        data: {
+          "title": title,
+          "project_id": projectId,
+          "device_user_id": userIdentifier,
+        },
+        options: Options(
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
+      );
+
+      print("✅ Add Column Response: ${response.data}");
+    } catch (e) {
+      print("❌ Add column error: $e");
+    }
+  }
+
+//-----------------------------------Add Task using Based UrL----------------------------
+
+  void addTask(String title, int column) async {
+    if (_selectedProjectId == null || _projectOwnerName == null) {
+      print("⚠️ No project selected!");
+      return;
+    }
+
+    final taskId = Uuid().v4();
+    String userIdentifier = await getUserIdentifier();
+
+    final newTask = KTask(
+      title: title,
+      taskId: taskId,
+      createdBy: _projectOwnerName!,
+      createdAt: DateTime.now().toIso8601String(),
+      projectId: _selectedProjectId!,
+    );
+
+    // ✅ Add task locally first
+    setState(() => columns[column].children.insert(0, newTask));
+
+    // ✅ Update task count
+    setState(() {
+      final index = _projects.indexWhere((p) => p.id == _selectedProjectId);
+      if (index != -1) {
+        _projects[index].taskCount += 1;
+        _selectedProjectTaskCount = _projects[index].taskCount;
+      }
+    });
+
+    // ✅ Send to backend
+    final dio = Dio();
+    try {
+      int columnId = columns[column].id;
+
+      // Use baseUrl here 👇
+      var url = Uri.parse("${baseUrl}add_task_kanban.php");
+      print("📡 Sending task to: $url");
+
+      final response = await dio.post(
+        url.toString(),
+        data: {
+          "title": title,
+          "column_id": columnId.toString(),
+          "model_name": "1",
+          "project_id": _selectedProjectId.toString(),
+          "created_by": _projectOwnerName!,
+          "device_user_id": userIdentifier,
+        },
+        options: Options(
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
+      );
+
+      final resData = response.data;
+      if (resData['success'] == false) {
+        print("❌ Backend error: ${resData['message']}");
+      } else {
+        print("✅ Task added successfully to backend");
+      }
+    } catch (e) {
+      print("❌ Add task error: $e");
+    }
+  }
+
+// ------------------Start Delete Task from Board using baseUrl-----------------
+
+  @override
+  Future<void> deleteItem(int columnIndex, KTask task) async {
+    setState(() => columns[columnIndex].children.remove(task));
+
+    final dio = Dio();
+    try {
+      // ✅ Use baseUrl here
+      var url = Uri.parse("${baseUrl}delete_task_kanban.php");
+      print("🗑️ Delete task URL: $url");
+
+      await dio.post(
+        url.toString(),
+        data: {
+          "id": task.taskId,
+          "deleted_by": "muhsina",
+        },
+        options: Options(
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
+      );
+
+      print("✅ Task deleted successfully (ID: ${task.taskId})");
+    } catch (e) {
+      print("❌ Delete error: $e");
+    }
+  }
+
+  // End Delete Task from Board using baseUrl
+
+  // Start Drag and Drop with API call
+
+  @override
+  void dragHandler(KData data, int index) async {
+    setState(() {
+      columns[data.from].children.remove(data.task);
+      columns[index].children.add(data.task);
+    });
+
+    final dio = Dio();
+    try {
+      // ✅ Use baseUrl just like your other API functions
+      var url = Uri.parse("${baseUrl}drag_drop_kanban.php");
+      print("📡 Drag-drop update URL: $url");
+
+      await dio.post(
+        url.toString(),
+        data: {
+          "id": data.taskId,
+          "column_name": index + 1,
+          "previous_status": data.from + 1,
+          "model_name": 1,
+          "project_name": 1,
+          "status_change_by": "muhsina",
+        },
+        options: Options(
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
+      );
+
+      print("✅ Drag-drop update successful");
+    } catch (e) {
+      print("❌ Drag error: $e");
+    }
+  }
+
+  //End Drag and Drop with API call
+
+  //Start Updated to use dynamic baseUrl
+
+  @override
+  void updateItem(int columnIndex, KTask task) async {
+    final dio = Dio();
+
+    try {
+      // ✅ Use baseUrl dynamically
+      var url = Uri.parse("${baseUrl}update_task_kanban.php");
+      print("📡 Updating task via: $url");
+
+      await dio.post(
+        url.toString(),
+        data: {
+          "id": task.taskId,
+          "title": task.title,
+          "edited_by": "muhsina",
+          "edited_at": DateTime.now().toString(),
+        },
+        options: Options(
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
+      );
+
+      print("✅ Task updated successfully on backend");
+    } catch (e) {
+      print("❌ Update error: $e");
+    }
+  }
+
+  //End Updated to use dynamic baseUrl
+
+//Start Handle Reorder
+  @override
+  void handleReOrder(int oldIndex, int newIndex, int index) {
+    setState(() {
+      if (oldIndex != newIndex) {
+        final task = columns[index].children.removeAt(oldIndex);
+        columns[index].children.insert(newIndex, task);
+      }
+    });
+  }
+
+  //End Handle Reorder
 
   // ------------------- Date Suffix -------------------
   String suffix(int day) {
@@ -314,751 +933,455 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   // ------------------ Build UI ------------------
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-
-    // English
-    final englishDate = DateFormat('MMMM dd, yyyy').format(now);
-
-    // Bangla
-    final banglaDate = DateFormat('d MMMM yyyy', 'bn').format(now);
-
-    // Hijri
-    final hijri = HijriCalendar.fromDate(now);
-    final hijriDate =
-        "${hijri.hDay}${suffix(hijri.hDay)} ${hijri.longMonthName} ${hijri.hYear} AH";
-
     return Scaffold(
-      // ---------- App Bar ----------
+      // ✅ Responsive, balanced AppBar layout
 
-//       appBar: AppBar(
-//         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
-//         title: Row(
-//           children: [
-// // -------- Project Dropdown in AppBar ----------
-//             SizedBox(
-//               width: 180, // 👈 fixed standard width (tune this value)
-//               child: DropdownButtonHideUnderline(
-//                 child: DropdownButton<int>(
-//                   value: _selectedProjectId,
-//                   hint: const Text(
-//                     "Select Project",
-//                     style: TextStyle(
-//                       color: Colors.white,
-//                       fontSize: 12,
-//                       fontWeight: FontWeight.w600,
-//                     ),
-//                     overflow: TextOverflow.ellipsis,
-//                   ),
-//                   isExpanded: true,
-//                   dropdownColor: Colors.white,
-//                   icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-//                   items: _projects.asMap().entries.map((entry) {
-//                     int index = entry.key;
-//                     var project = entry.value;
-//                     Color projectColor = generateProjectColor(index);
+      //---------Start AppBar----------------
 
-//                     return DropdownMenuItem<int>(
-//                       value: project.id,
-//                       child: Row(
-//                         children: [
-//                           Icon(Icons.folder, color: projectColor, size: 18),
-//                           const SizedBox(width: 6),
-//                           Expanded(
-//                             child: Text(
-//                               project.name,
-//                               overflow: TextOverflow.ellipsis,
-//                               style: const TextStyle(
-//                                 color: Colors.black87,
-//                                 fontSize: 12,
-//                                 fontWeight: FontWeight.w600,
-//                               ),
-//                             ),
-//                           ),
-//                           const SizedBox(width: 6),
-//                           CircleAvatar(
-//                             radius: 12,
-//                             backgroundColor: projectColor,
-//                             child: Text(
-//                               getFirstAndLastLetter(project.project_owner_name),
-//                               style: const TextStyle(
-//                                 color: Colors.white,
-//                                 fontWeight: FontWeight.w500,
-//                                 fontSize: 11,
-//                               ),
-//                             ),
-//                           ),
-//                         ],
-//                       ),
-//                     );
-//                   }).toList(),
-//                   onChanged: (value) {
-//                     setState(() {
-//                       _selectedProjectId = value;
-//                       _selectedProjectName =
-//                           _projects.firstWhere((p) => p.id == value).name;
-//                     });
-//                     getTaskData();
-//                   },
-//                 ),
-//               ),
-//             ),
-
-//             const SizedBox(width: 6),
-
-//             // -------- Task Count Avatar ----------
-//             CircleAvatar(
-//               radius: 12,
-//               backgroundColor: Colors.white,
-//               child: Text(
-//                 '$_selectedProjectTaskCount',
-//                 style: const TextStyle(
-//                   color: Colors.green,
-//                   fontWeight: FontWeight.bold,
-//                   fontSize: 12,
-//                 ),
-//               ),
-//             ),
-
-//             const SizedBox(width: 8),
-
-//             // ----------- Period Filter ----------
-//             GestureDetector(
-//               onTap: _showPeriodDialog,
-//               child: Row(
-//                 children: [
-//                   const Icon(Icons.filter_alt, color: Colors.green, size: 18),
-//                   const SizedBox(width: 2),
-//                   Text(
-//                     periodText == "1 days"
-//                         ? "1d"
-//                         : periodText, // 👈 shorten "1 days" to "1d"
-//                     style: const TextStyle(
-//                       color: Colors.green,
-//                       fontWeight: FontWeight.bold,
-//                       fontSize: 13,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-
-//             const Spacer(),
-
-//             // ----------- Calendar ----------
-//             GestureDetector(
-//               onTap: _showCalendarModal,
-//               child: Row(
-//                 children: [
-//                   Column(
-//                     crossAxisAlignment: CrossAxisAlignment.end,
-//                     children: [
-//                       Text(
-//                         DateFormat("MMM dd, yyyy")
-//                             .format(DateTime.now()), // 👈 formatted here
-//                         style: const TextStyle(
-//                           fontFamily: 'Montserrat',
-//                           color: Color.fromARGB(255, 47, 46, 46),
-//                           fontSize: 11,
-//                         ),
-//                       ),
-//                       Text(
-//                         banglaDate,
-//                         style: const TextStyle(
-//                           fontFamily: 'NotoSansBengali',
-//                           color: Color.fromARGB(255, 47, 46, 46),
-//                           fontSize: 11,
-//                         ),
-//                       ),
-//                       Text(
-//                         hijriDate,
-//                         style: const TextStyle(
-//                           fontFamily: 'NotoSansArabic',
-//                           color: Color.fromARGB(255, 47, 46, 46),
-//                           fontSize: 11,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                   const SizedBox(width: 6),
-//                   const Icon(
-//                     Icons.calendar_today,
-//                     color: Color.fromARGB(255, 5, 144, 46),
-//                     size: 18,
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-
-// ---------- App Bar ---------
-
-// ---------- AppBar ----------
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 158, 223, 180),
-        title: Row(
-          children: [
-            // -------- Project Dropdown ----------
-            // SizedBox(
-            //   width: 180,
-            //   child: DropdownButtonHideUnderline(
-            //     child: DropdownButton<int>(
-            //       value: _selectedProjectId,
-            //       hint: const Text(
-            //         "Select Project",
-            //         style: TextStyle(
-            //             color: Colors.white,
-            //             fontSize: 12,
-            //             fontWeight: FontWeight.w600),
-            //         overflow: TextOverflow.ellipsis,
-            //       ),
-            //       isExpanded: true,
-            //       dropdownColor: Colors.white,
-            //       icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-            //       items: _projects.map((project) {
-            //         Color projectColor =
-            //             generateProjectColor(_projects.indexOf(project));
-            //         return DropdownMenuItem<int>(
-            //           value: project.id,
-            //           child: Row(
-            //             children: [
-            //               Icon(Icons.folder, color: projectColor, size: 18),
-            //               const SizedBox(width: 6),
-            //               Expanded(
-            //                 child: Text(
-            //                   project.name,
-            //                   overflow: TextOverflow.ellipsis,
-            //                   style: const TextStyle(
-            //                     color: Colors.black87,
-            //                     fontSize: 12,
-            //                     fontWeight: FontWeight.w600,
-            //                   ),
-            //                 ),
-            //               ),
-            //               const SizedBox(width: 6),
-            //               CircleAvatar(
-            //                 radius: 12,
-            //                 backgroundColor: projectColor,
-            //                 child: Text(
-            //                   getFirstAndLastLetter(project.project_owner_name),
-            //                   style: const TextStyle(
-            //                     color: Colors.white,
-            //                     fontWeight: FontWeight.w500,
-            //                     fontSize: 11,
-            //                   ),
-            //                 ),
-            //               ),
-            //             ],
-            //           ),
-            //         );
-            //       }).toList(),
-            //       onChanged: (value) {
-            //         setState(() {
-            //           _selectedProjectId = value;
-            //           _selectedProjectName =
-            //               _projects.firstWhere((p) => p.id == value).name;
-            //         });
-            //         getTaskData();
-            //       },
-            //     ),
-            //   ),
-            // ),
-
-            // -------- Project Dropdown ----------
-            SizedBox(
-              width: 180,
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<int>(
-                  value: _selectedProjectId,
-                  hint: const Text(
-                    "Select Project",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  isExpanded: true,
-                  dropdownColor: Colors.white,
-                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                  items: _projects.map((project) {
-                    Color projectColor =
-                        generateProjectColor(_projects.indexOf(project));
-                    return DropdownMenuItem<int>(
-                      value: project.id,
-                      child: Row(
-                        children: [
-                          // -------- Folder with Task Count Badge --------
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Icon(Icons.folder, color: projectColor, size: 18),
-                              if (project.taskCount > 0)
-                                Positioned(
-                                  right: -6,
-                                  top: -6,
-                                  child: CircleAvatar(
-                                    radius: 8,
-                                    backgroundColor:
-                                        Color.fromARGB(255, 171, 168, 168),
-                                    child: Text(
-                                      '${project.taskCount}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(width: 6),
-
-                          Expanded(
-                            child: Text(
-                              project.name,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+        titleSpacing: 0,
+        title: LayoutBuilder(
+          builder: (context, constraints) {
+            final isSmallScreen = constraints.maxWidth < 360;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 🔹 Your Original Code (unchanged)
+                Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 2),
+                      child: SizedBox(
+                        width: isSmallScreen ? 130 : 145,
+                        child: GestureDetector(
+                          onTap: () => _showProjectSelectionModal(),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: _borderColor,
+                                width: 1.2,
                               ),
                             ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    _selectedProjectName ?? "Select Project",
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_drop_down,
+                                    color: Colors.white, size: 16),
+                              ],
+                            ),
                           ),
-                          const SizedBox(width: 6),
-
-                          // -------- Project Owner Avatar --------
-                          CircleAvatar(
-                            radius: 12,
-                            backgroundColor: projectColor,
-                            child: Text(
-                              getFirstAndLastLetter(project.project_owner_name),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 11,
-                              ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    CircleAvatar(
+                      radius: 11,
+                      backgroundColor: Colors.white,
+                      child: Text(
+                        '$_selectedProjectTaskCount',
+                        style: const TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: _showPeriodDialog,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.search,
+                              color: Colors.black87, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            periodText == "1 days" ? "1d" : periodText,
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
                             ),
                           ),
                         ],
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedProjectId = value;
-                      _selectedProjectName =
-                          _projects.firstWhere((p) => p.id == value).name;
-                      _selectedProjectTaskCount = _projects
-                          .firstWhere((p) => p.id == value)
-                          .taskCount; // update
-                    });
-                    getTaskData();
-                  },
-                ),
-              ),
-            ),
-
-            //End SizedBox
-
-            const SizedBox(width: 6),
-
-            // -------- Task Count Avatar ----------
-            CircleAvatar(
-              radius: 12,
-              backgroundColor: Colors.white,
-              child: Text(
-                '$_selectedProjectTaskCount',
-                style: const TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 8),
-
-            // -------- Period Filter ----------
-            GestureDetector(
-              onTap: _showPeriodDialog,
-              child: Row(
-                children: [
-                  const Icon(Icons.filter_alt, color: Colors.green, size: 18),
-                  const SizedBox(width: 2),
-                  Text(
-                    periodText == "1 days" ? "1d" : periodText,
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
                     ),
+                    const Spacer(),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Text(
+                        DateFormat("MMM dd, yyyy").format(DateTime.now()),
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          color: Color.fromARGB(255, 47, 46, 46),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // 🔹 Added Workflow Path (beautiful and user-friendly)
+                const SizedBox(height: 2),
+                const Text(
+                  "Workflow :: Project -->  Task Board  -->  Task",
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w500,
+                    fontStyle: FontStyle.italic,
+                    letterSpacing: 0.4,
                   ),
-                ],
-              ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+      //---------End AppBar-----------
+
+      //---------Start Drawer----------
+      drawer: Drawer(
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            listTileTheme: const ListTileThemeData(
+              dense: true, // make all ListTiles compact
+              minVerticalPadding: 0, // remove extra inner padding
+              visualDensity:
+                  VisualDensity(vertical: -4), // reduce space between items
+              contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16), // keep left/right padding
             ),
-
-            const Spacer(),
-
-            // -------- English date ----------
-            Text(
-              DateFormat("MMM dd yyyy").format(DateTime.now()),
-              style: const TextStyle(
-                fontFamily: 'Montserrat',
-                color: Color.fromARGB(255, 47, 46, 46),
-                fontSize: 12,
+          ),
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              // ---------- Drawer Header ----------
+              DrawerHeader(
+                padding: EdgeInsets.zero,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset(
+                      'assets/icons/task_management.png',
+                      fit: BoxFit.cover,
+                    ),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        width: double.infinity,
+                        color: Colors.black54,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: const Text(
+                          'Task Management',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(width: 6),
+              // ---------- Default Menu ----------
+              ListTile(
+                leading: const Icon(Icons.dashboard),
+                title: const Text(
+                  'Dashboard',
+                  style: TextStyle(fontSize: 10),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  showDashboard();
+                },
+              ),
 
-            //To show Bangla and Hijri date in calendar modal and test
-            // Usage inside your GestureDetector
-            GestureDetector(
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    DateTime today = DateTime.now();
-                    int displayedYear = today.year;
+              ListTile(
+                leading: const Icon(Icons.add, color: Colors.grey),
+                title: const Text(
+                  'Add Column',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showAddColumnDialog();
+                },
+              ),
 
-                    String banglaMonth = 'Ashwin';
-                    String hijriMonth = 'Rabiul Awal';
+              //-------------- Start About Me--------------
+              ListTile(
+                leading: const Icon(Icons.info, color: Colors.orange),
+                title: const Text(
+                  'About Me',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
 
-                    int englishDays =
-                        DateTime(displayedYear, 10, 0).day; // Sept
-                    int banglaDays = 30; // Approx
-                    int hijriDays = 30; // Approx
+                  showDialog(
+                    context: context,
+                    barrierDismissible: true,
+                    builder: (context) {
+                      final screenSize = MediaQuery.of(context).size;
+                      final screenWidth = screenSize.width;
+                      final screenHeight = screenSize.height;
 
-                    int banglaToday = 5;
-                    int hijriToday = 28;
+                      final inset = screenWidth < 500 ? 32.0 : 96.0;
+                      final maxDialogHeight = screenHeight < 600
+                          ? screenHeight * 0.9
+                          : screenHeight * 0.6;
 
-                    Set<int> holidays = {5, 6}; // Friday=5, Saturday=6
-
-                    return StatefulBuilder(builder: (context, setState) {
                       return Dialog(
-                        insetPadding: const EdgeInsets.all(12),
-                        child: Container(
-                          width: 900,
-                          height: 500,
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        insetPadding: EdgeInsets.all(inset),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: maxDialogHeight,
+                            maxWidth: screenWidth < 600
+                                ? screenWidth * 0.9
+                                : screenWidth * 0.5,
+                          ),
+                          child: Stack(
                             children: [
-                              // Header with year navigation
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                      icon: const Icon(Icons.arrow_back),
-                                      onPressed: () {
-                                        setState(() {
-                                          displayedYear--;
-                                        });
-                                      }),
-                                  Text('Three-Month Calendar - $displayedYear',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18)),
-                                  IconButton(
-                                      icon: const Icon(Icons.arrow_forward),
-                                      onPressed: () {
-                                        setState(() {
-                                          displayedYear++;
-                                        });
-                                      }),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              // Three calendars
-                              Expanded(
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // English
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text('September (English)',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold)),
-                                          const SizedBox(height: 6),
-                                          Wrap(
-                                            spacing: 4,
-                                            runSpacing: 4,
-                                            children: buildCalendarDays(
-                                                displayedYear,
-                                                9,
-                                                englishDays,
-                                                today.day,
-                                                holidays),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const VerticalDivider(),
-                                    // Bangla
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text('$banglaMonth (Bangla)',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold)),
-                                          const SizedBox(height: 6),
-                                          Wrap(
-                                            spacing: 4,
-                                            runSpacing: 4,
-                                            children: buildCalendarDays(
-                                                displayedYear,
-                                                9,
-                                                banglaDays,
-                                                banglaToday,
-                                                holidays),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const VerticalDivider(),
-                                    // Hijri
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text('$hijriMonth (Hijri)',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold)),
-                                          const SizedBox(height: 6),
-                                          Wrap(
-                                            spacing: 4,
-                                            runSpacing: 4,
-                                            children: buildCalendarDays(
-                                                displayedYear,
-                                                9,
-                                                hijriDays,
-                                                hijriToday,
-                                                holidays),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                              Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      SizedBox(height: 20),
+                                      AboutMePage(),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              TextButton(
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: IconButton(
+                                  icon: const Icon(Icons.close,
+                                      color: Colors.grey),
+                                  iconSize: 28,
+                                  splashRadius: 20,
+                                  tooltip: 'Close',
                                   onPressed: () => Navigator.pop(context),
-                                  child: const Text('Close')),
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       );
-                    });
-                  },
-                );
-              },
-              child: const Icon(
-                Icons.calendar_today,
-                color: Color.fromARGB(255, 5, 144, 46),
-                size: 18,
+                    },
+                  );
+                },
               ),
-            ),
+              //-------------- End About Me--------------
 
-            // GestureDetector
-          ],
-        ),
-      ),
-
-      //---------Start Drawer----------
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            // ---------- Drawer Header ----------
-            DrawerHeader(
-              padding: EdgeInsets.zero,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    'assets/icons/task_management.png',
-                    fit: BoxFit.cover,
+              //--------------User Details-------------
+              ListTile(
+                leading: const Icon(Icons.person, color: Colors.green),
+                title: const Text(
+                  'User Details',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
                   ),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      width: double.infinity,
-                      color: Colors.black54,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: const Text(
-                        'Task Management',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ---------- Default Menu ----------
-            ListTile(
-              leading: const Icon(Icons.dashboard),
-              title: const Text('Dashboard'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text('Add Column'),
-              onTap: () {
-                Navigator.pop(context);
-                _showAddColumnDialog();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.info),
-              title: const Text('About Me'),
-              onTap: () => Navigator.pop(context),
-            ),
-
-            ListTile(
-              leading: CircleAvatar(
-                radius: 18,
-                backgroundImage: const AssetImage('assets/icons/app_icon.png'),
-                backgroundColor: Colors.transparent,
-              ),
-              title: const Text('More App'),
-              onTap: () => Navigator.pop(context),
-            ),
-
-            const Divider(),
-
-            // ---------- Projects Section ----------
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "My Projects",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  if (_projects.isNotEmpty)
-                    Text(
-                      // "Owner: ${_projects.first.project_owner_name}", // show beside My Projects
-
-                      "Owner",
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            if (_isLoadingProjects)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: CircularProgressIndicator(),
                 ),
-              )
-            else if (_projects.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("No projects found."),
-              )
-            else
-              ..._projects.asMap().entries.map((entry) {
-                int index = entry.key;
-                var project = entry.value;
+                onTap: () {
+                  Navigator.pop(context);
+                  _showUserDetailsTray(context);
+                },
+              ),
+              //--------------End Details-------------
 
-                // Dynamic HSV-based color
-                Color projectColor = generateProjectColor(index);
+              //--------------Start More App-------------
+              ListTile(
+                leading: const Icon(Icons.apps, color: Colors.lightBlue),
+                title: const Text(
+                  'More App',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ArabicWordListPage()),
+                  );
+                },
+              ),
+              //--------------End More App-------------
 
-                return ListTile(
-                  leading: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Icon(
-                        Icons.folder,
-                        color: projectColor,
-                        size: 28,
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.feedback, color: Colors.blueGrey),
+                title: const Text(
+                  'Feedback',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+
+              const Divider(),
+
+              // ---------- Projects Section ----------
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "My Projects",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black54,
                       ),
-                      if (project.taskCount > 0)
-                        Positioned(
-                          right: -6,
-                          top: -6,
-                          child: CircleAvatar(
-                            radius: 10,
-                            backgroundColor: Color.fromARGB(255, 162, 163, 162),
-                            child: Text(
-                              '${project.taskCount}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                    ),
+                    if (_projects.isNotEmpty)
+                      Text(
+                        "Owner",
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              if (_isLoadingProjects)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (_projects.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    "No projects found.",
+                    style: TextStyle(fontSize: 10),
+                  ),
+                )
+              else
+                ..._projects.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  var project = entry.value;
+                  Color projectColor = generateProjectColor(index);
+
+                  return ListTile(
+                    leading: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(
+                          Icons.folder,
+                          color: projectColor,
+                          size: 28,
+                        ),
+                        if (project.taskCount > 0)
+                          Positioned(
+                            right: -6,
+                            top: -6,
+                            child: CircleAvatar(
+                              radius: 10,
+                              backgroundColor:
+                                  const Color.fromARGB(255, 162, 163, 162),
+                              child: Text(
+                                '${project.taskCount}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                  title: Text(
-                    project.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
+                      ],
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: Tooltip(
-                    message: project.project_owner_name,
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: projectColor,
-                      child: Text(
-                        getFirstAndLastLetter(project.project_owner_name),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
+                    title: Text(
+                      project.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 10,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: Tooltip(
+                      message: project.project_owner_name,
+                      child: CircleAvatar(
+                        radius: 16,
+                        backgroundColor: projectColor,
+                        child: Text(
+                          getFirstAndLastLetter(project.project_owner_name),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 10,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    setState(() {
-                      _selectedProjectId = project.id;
-                      _selectedProjectName = project.name;
-                      _selectedProjectTaskCount =
-                          project.taskCount; // 👈 update selected task count
-                    });
-                    getTaskData();
-                  },
-                );
-              }).toList(),
-          ],
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        _selectedProjectId = project.id;
+                        _selectedProjectName = project.name;
+                        _selectedProjectTaskCount = project.taskCount;
+                      });
+                      getTaskData();
+                    },
+                  );
+                }).toList(),
+            ],
+          ),
         ),
       ),
-      //---------End Drawer----------
+      //---------End Drawer-------------------
 
+      // ----------Start Kanban Board Body ----------
       body: SafeArea(
         child: KanbanBoard(
           columns: columns,
@@ -1066,6 +1389,8 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           updateItemHandler: _showEditTask,
         ),
       ),
+
+      // ----------End Kanban Board Body ----------
 
       // ---------- Add floating + button ----------
       floatingActionButton: FloatingActionButton(
@@ -1080,15 +1405,326 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-// ---------- Project Dialog ---------
+  //Start User Details Side Tray
+
+  void _showUserDetailsTray(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'User Details',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            elevation: 8,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              bottomLeft: Radius.circular(16),
+            ),
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.75,
+              height: MediaQuery.of(context).size.height,
+              color: Colors.white,
+              padding: const EdgeInsets.all(16),
+              // ✅ Just open UserDetailsPage directly
+              child: const UserDetailsPage(),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOut,
+          )),
+          child: child,
+        );
+      },
+    );
+  }
+
+// ----------To show modal and Total projects number in title bar inside the modal for project selection------working perfectly-------
+
+  void _showProjectSelectionModal() {
+    List<ProjectListItem> _filteredProjects = List.from(_projects);
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        final isMobile = MediaQuery.of(context).size.width < 600;
+        final modalWidth = isMobile
+            ? MediaQuery.of(context).size.width * 0.95
+            : MediaQuery.of(context).size.width * 0.5;
+        final modalHeight = isMobile
+            ? MediaQuery.of(context).size.height * 0.8
+            : MediaQuery.of(context).size.height * 0.7;
+
+        return Center(
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: modalWidth,
+              height: modalHeight,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: StatefulBuilder(
+                builder: (context, setModalState) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ---------Start Header for Porject ----------
+
+                      // ---------Start Header for Project ----------
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                "Select Project",
+                                style: TextStyle(
+                                  fontSize: 10, // ✅ Changed from 18
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  "Total: ${_projects.length}",
+                                  style: const TextStyle(
+                                    fontSize: 10, // ✅ Changed from 13
+                                    color: Colors.blueAccent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // ---------- Add Project Button ----------
+                              Tooltip(
+                                message: 'Add Project', // 👈 Hover text
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(
+                                        context); // Close modal before adding
+                                    _showAddProjectDialog(); // Open Add Project dialog
+                                  },
+                                  icon: const Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                    size: 14, // ✅ Slightly smaller icon
+                                  ),
+                                  label: const Text(
+                                    "Add Project",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10, // ✅ Changed from 13
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color.fromARGB(
+                                        255, 122, 183, 123), // ✅ same color
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          4), // ✅ Square edges
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 4), // ✅ smaller padding
+                                    minimumSize:
+                                        const Size(28, 28), // ✅ smaller button
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            icon:
+                                const Icon(Icons.close, color: Colors.black54),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+
+                      // ----------End Header for Project Header ----------
+
+                      const SizedBox(height: 8),
+
+                      // ----------Start Search Field ----------
+                      TextField(
+                        decoration: InputDecoration(
+                          hintText: "Search project...",
+                          hintStyle:
+                              const TextStyle(fontSize: 10), // ✅ font 10px
+                          prefixIcon: const Icon(Icons.search,
+                              size: 16), // slightly smaller icon
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        style: const TextStyle(fontSize: 10), // ✅ font 10px
+                        onChanged: (value) {
+                          setModalState(() {
+                            _filteredProjects = _projects
+                                .where((p) => p.name
+                                    .toLowerCase()
+                                    .contains(value.toLowerCase()))
+                                .toList();
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      // ----------End Search Field ----------
+
+                      // ----------Start Project List ----------
+                      Expanded(
+                        child: _filteredProjects.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  "No projects found",
+                                  style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 10), // ✅ font 10px
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: _filteredProjects.length,
+                                itemBuilder: (context, index) {
+                                  final project = _filteredProjects[index];
+                                  final projectColor = generateProjectColor(
+                                      _projects.indexOf(project));
+
+                                  return Card(
+                                    elevation: 2,
+                                    margin:
+                                        const EdgeInsets.symmetric(vertical: 6),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: ListTile(
+                                      leading: Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          Icon(Icons.folder,
+                                              color: projectColor,
+                                              size: 24), // smaller
+                                          if (project.taskCount > 0)
+                                            Positioned(
+                                              right: -6,
+                                              top: -6,
+                                              child: CircleAvatar(
+                                                radius: 10,
+                                                backgroundColor:
+                                                    Colors.grey[600],
+                                                child: Text(
+                                                  '${project.taskCount}',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10, // ✅ font 10px
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      title: Text(
+                                        project.name,
+                                        style: const TextStyle(
+                                          fontSize: 10, // ✅ font 10px
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        "Owner: ${project.project_owner_name}",
+                                        style: const TextStyle(
+                                          fontSize: 10, // ✅ font 10px
+                                        ),
+                                      ),
+                                      trailing: CircleAvatar(
+                                        radius: 12, // slightly smaller
+                                        backgroundColor: projectColor,
+                                        child: Text(
+                                          getFirstAndLastLetter(
+                                              project.project_owner_name),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10, // ✅ font 10px
+                                          ),
+                                        ),
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedProjectId = project.id;
+                                          _selectedProjectName = project.name;
+                                          _selectedProjectTaskCount =
+                                              project.taskCount;
+                                          _projectOwnerName =
+                                              project.project_owner_name;
+                                        });
+                                        getTaskData();
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                      // ----------End Project List ----------
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+// ----------End The modal for project selection------
+
+// ----------To Start Add a New Project using a Dialog-- Today-------
+
   void _showAddProjectDialog() {
-    final _projectController = TextEditingController();
+    final List<TextEditingController> _projectControllers = [
+      TextEditingController()
+    ];
     final _ownerController = TextEditingController();
     final _contactController = TextEditingController();
     final _emailController = TextEditingController();
     final _addressController = TextEditingController();
 
-    File? selectedFile;
+    // Per-project attached files
+    List<List<File>> attachedFiles = List.generate(1, (_) => []);
+    List<List<Uint8List>> attachedFilesBytes = List.generate(1, (_) => []);
 
     showDialog(
       context: context,
@@ -1097,62 +1733,231 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
+            constraints: const BoxConstraints(maxWidth: 500),
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Add Project',
-                      style:
-                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    Center(
+                      child: Text(
+                        'Add Project',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal.shade700,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
 
-                    // Project Name
-                    TextField(
-                      controller: _projectController,
-                      decoration: const InputDecoration(
-                          labelText: 'Project Name',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.business)),
+                    // Multiple project name fields
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _projectControllers.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _projectControllers[index],
+                                      decoration: InputDecoration(
+                                        labelText: 'Project Name ${index + 1}',
+                                        border: const OutlineInputBorder(),
+                                        prefixIcon: const Icon(Icons.business),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  // Add project field button
+                                  if (index == _projectControllers.length - 1)
+                                    IconButton(
+                                      icon: const Icon(Icons.add_circle,
+                                          color: Colors.blueAccent),
+                                      onPressed: () {
+                                        setState(() {
+                                          _projectControllers
+                                              .add(TextEditingController());
+                                          attachedFiles.add([]);
+                                          attachedFilesBytes.add([]);
+                                        });
+                                      },
+                                    ),
+                                  // Remove project field button
+                                  if (_projectControllers.length > 1)
+                                    IconButton(
+                                      icon: const Icon(Icons.remove_circle,
+                                          color: Colors.redAccent),
+                                      onPressed: () {
+                                        setState(() {
+                                          _projectControllers.removeAt(index);
+                                          attachedFiles.removeAt(index);
+                                          attachedFilesBytes.removeAt(index);
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Attached files for this project
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  // Mobile/tablet files
+                                  ...attachedFiles[index].map((file) {
+                                    return Chip(
+                                      label: Text(
+                                        file.path.split('/').last,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      deleteIcon: const Icon(Icons.close),
+                                      onDeleted: () {
+                                        setState(() {
+                                          attachedFiles[index].remove(file);
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+
+                                  // Web files
+                                  ...attachedFilesBytes[index].map((bytes) {
+                                    int fileIndex = attachedFilesBytes[index]
+                                            .indexOf(bytes) +
+                                        1;
+                                    return Chip(
+                                      label: Text("File $fileIndex"),
+                                      deleteIcon: const Icon(Icons.close),
+                                      onDeleted: () {
+                                        setState(() {
+                                          attachedFilesBytes[index]
+                                              .remove(bytes);
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+
+                                  // Add file button
+                                  ActionChip(
+                                    label: const Text("Add File"),
+                                    avatar: const Icon(Icons.attach_file),
+                                    onPressed: () async {
+                                      FilePickerResult? result =
+                                          await FilePicker.platform.pickFiles(
+                                        allowMultiple: true,
+                                        type: FileType.custom,
+                                        allowedExtensions: [
+                                          'png',
+                                          'jpg',
+                                          'jpeg',
+                                          'xlsx',
+                                          'pdf'
+                                        ],
+                                        withData: kIsWeb,
+                                      );
+
+                                      if (result != null) {
+                                        setState(() {
+                                          if (kIsWeb) {
+                                            attachedFilesBytes[index].addAll(
+                                                result.files
+                                                    .map((f) => f.bytes!)
+                                                    .toList());
+                                          } else {
+                                            attachedFiles[index].addAll(result
+                                                .paths
+                                                .map((p) => File(p!))
+                                                .toList());
+                                          }
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 12),
+
+                    const SizedBox(height: 16),
 
                     // Owner Name
                     TextField(
                       controller: _ownerController,
                       decoration: const InputDecoration(
-                          labelText: 'Project Owner Name',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.person)),
+                        labelText: 'Project Owner Name',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
                     ),
                     const SizedBox(height: 12),
 
-                    // File picker
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        FilePickerResult? result =
-                            await FilePicker.platform.pickFiles(
-                          type: FileType.custom,
-                          allowedExtensions: ['png', 'jpg', 'jpeg', 'xlsx'],
-                        );
-                        if (result != null) {
-                          selectedFile = File(result.files.single.path!);
-                          setState(() {}); // refresh button text
-                        }
-                      },
-                      icon: const Icon(Icons.attach_file),
-                      label: Text(selectedFile == null
-                          ? "Pick File"
-                          : "Selected: ${selectedFile!.path.split('/').last}"),
+                    // Owner image picker
+                    Center(
+                      child: GestureDetector(
+                        onTap: () async {
+                          FilePickerResult? result =
+                              await FilePicker.platform.pickFiles(
+                            type: FileType.image,
+                            withData: true,
+                          );
+
+                          if (result != null) {
+                            setState(() {
+                              if (kIsWeb) {
+                                selectedOwnerImageBytes =
+                                    result.files.single.bytes;
+                              } else {
+                                selectedOwnerImage =
+                                    File(result.files.single.path!);
+                              }
+                            });
+                          }
+                        },
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 35,
+                              backgroundImage: kIsWeb
+                                  ? (selectedOwnerImageBytes != null
+                                      ? MemoryImage(selectedOwnerImageBytes!)
+                                      : const AssetImage(
+                                              "assets/icons/default_user.png")
+                                          as ImageProvider)
+                                  : (selectedOwnerImage != null
+                                      ? FileImage(selectedOwnerImage!)
+                                      : const AssetImage(
+                                              "assets/icons/default_user.png")
+                                          as ImageProvider),
+                              child: (kIsWeb
+                                      ? selectedOwnerImageBytes == null
+                                      : selectedOwnerImage == null)
+                                  ? const Icon(Icons.add_a_photo,
+                                      color: Colors.white)
+                                  : null,
+                            ),
+                            const SizedBox(height: 6),
+                            const Text("Tap to upload owner image",
+                                style: TextStyle(fontSize: 11)),
+                          ],
+                        ),
+                      ),
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
 
-                    // Contact
+                    // Contact, Email, Address
                     TextField(
                       controller: _contactController,
                       keyboardType: TextInputType.phone,
@@ -1162,8 +1967,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                           prefixIcon: Icon(Icons.phone)),
                     ),
                     const SizedBox(height: 12),
-
-                    // Email
                     TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -1173,8 +1976,6 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                           prefixIcon: Icon(Icons.email)),
                     ),
                     const SizedBox(height: 12),
-
-                    // Address
                     TextField(
                       controller: _addressController,
                       maxLines: 2,
@@ -1185,102 +1986,68 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                     ),
                     const SizedBox(height: 20),
 
-                    // ---------------- Add Project Buttons ----------------
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
+                    // Add Projects Button
+                    Center(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 14),
                         ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () async {
-                            final projectName = _projectController.text.trim();
-                            final ownerName = _ownerController.text.trim();
-                            final contact = _contactController.text.trim();
-                            final email = _emailController.text.trim();
-                            final address = _addressController.text.trim();
+                        icon:
+                            const Icon(Icons.cloud_upload, color: Colors.white),
+                        label: const Text("Add Projects",
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 16)),
+                        onPressed: () async {
+                          final ownerName = _ownerController.text.trim();
+                          final contact = _contactController.text.trim();
+                          final email = _emailController.text.trim();
+                          final address = _addressController.text.trim();
 
-                            // --- Field Validations ---
-                            if (projectName.isEmpty ||
-                                ownerName.isEmpty ||
-                                contact.isEmpty ||
-                                email.isEmpty) {
-                              _showErrorDialog(context,
-                                  "Project name, owner, contact and email are required.");
-                              return;
-                            }
+                          if (ownerName.isEmpty ||
+                              contact.isEmpty ||
+                              email.isEmpty) {
+                            _showErrorDialog(context,
+                                "Owner, contact, and email are required.");
+                            return;
+                          }
 
-                            if (!phoneRegex.hasMatch(contact)) {
-                              _showErrorDialog(context,
-                                  "Please enter a valid Bangladeshi mobile number (11 digits, starts with 01).");
-                              return;
-                            }
+                          for (int i = 0; i < _projectControllers.length; i++) {
+                            final projectName =
+                                _projectControllers[i].text.trim();
+                            if (projectName.isEmpty) continue;
 
-                            if (!emailRegex.hasMatch(email)) {
-                              _showErrorDialog(context,
-                                  "Please enter a valid email address.");
-                              return;
-                            }
+                            final res = await addProjectDetails(
+                              projectName: projectName,
+                              ownerName: ownerName,
+                              contact: contact,
+                              email: email,
+                              address: address,
+                              files: attachedFiles[i],
+                              filesBytes: attachedFilesBytes[i],
+                              ownerImage: selectedOwnerImage,
+                              ownerImageBytes: selectedOwnerImageBytes,
+                            );
 
-                            // --- API Call ---
-                            try {
-                              final res = await addProjectDetails(
-                                projectName: projectName,
-                                ownerName: ownerName,
-                                contact: contact,
-                                email: email,
-                                address: address,
-                                file: selectedFile,
-                              );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(res['message'] ??
+                                    "Project added successfully"),
+                                backgroundColor: res['success'] == true
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                            );
+                          }
 
-                              print("Response: $res");
-
-                              // Show success/error in SnackBar
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      res['message'] ?? "Upload completed"),
-                                  backgroundColor: res['success']
-                                      ? Colors.green
-                                      : Colors.red,
-                                ),
-                              );
-
-                              if (res['success'] == true) {
-                                // Clear form fields
-                                _projectController.clear();
-                                _ownerController.clear();
-                                _contactController.clear();
-                                _emailController.clear();
-                                _addressController.clear();
-                                setState(() {
-                                  selectedFile = null;
-                                });
-
-                                // Close dialog
-                                Navigator.pop(context);
-
-                                // Refresh project list instantly
-                                await getProjectListData();
-                              }
-                            } catch (e) {
-                              print("Upload error: $e");
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Upload failed: $e"),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          },
-                          child: const Text("Add"),
-                        ),
-                      ],
+                          Navigator.pop(context);
+                          await getProjectListData();
+                        },
+                      ),
                     ),
-
-                    //To End add Project Buttons
                   ],
                 ),
               ),
@@ -1290,6 +2057,593 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
       ),
     );
   }
+
+  // void _showAddProjectDialog() {
+  //   final List<TextEditingController> _projectControllers = [
+  //     TextEditingController()
+  //   ];
+  //   final _ownerController = TextEditingController();
+  //   final _contactController = TextEditingController();
+  //   final _emailController = TextEditingController();
+  //   final _addressController = TextEditingController();
+
+  //   File? selectedFile;
+  //   File? selectedOwnerImage;
+  //   Uint8List? selectedOwnerImageBytes;
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => StatefulBuilder(
+  //       builder: (context, setState) => Dialog(
+  //         shape:
+  //             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  //         child: ConstrainedBox(
+  //           constraints: const BoxConstraints(maxWidth: 420),
+  //           child: SingleChildScrollView(
+  //             child: Padding(
+  //               padding: const EdgeInsets.all(20),
+  //               child: Column(
+  //                 mainAxisSize: MainAxisSize.min,
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   Center(
+  //                     child: Text(
+  //                       'Add Project',
+  //                       style: TextStyle(
+  //                         fontSize: 22,
+  //                         fontWeight: FontWeight.bold,
+  //                         color: Colors.teal.shade700,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 16),
+
+  //                   // 🟢 Multiple Project Name Fields
+  //                   Container(
+  //                     decoration: BoxDecoration(
+  //                       color: Colors.teal.withOpacity(0.05),
+  //                       borderRadius: BorderRadius.circular(8),
+  //                       border: Border.all(color: Colors.teal.shade100),
+  //                     ),
+  //                     padding: const EdgeInsets.all(10),
+  //                     child: ListView.builder(
+  //                       shrinkWrap: true,
+  //                       physics: const NeverScrollableScrollPhysics(),
+  //                       itemCount: _projectControllers.length,
+  //                       itemBuilder: (context, index) {
+  //                         return Padding(
+  //                           padding: const EdgeInsets.only(bottom: 10),
+  //                           child: Row(
+  //                             children: [
+  //                               Expanded(
+  //                                 child: TextField(
+  //                                   controller: _projectControllers[index],
+  //                                   decoration: InputDecoration(
+  //                                     labelText: 'Project Name ${index + 1}',
+  //                                     border: const OutlineInputBorder(),
+  //                                     prefixIcon: const Icon(Icons.business),
+  //                                   ),
+  //                                 ),
+  //                               ),
+  //                               const SizedBox(width: 8),
+  //                               if (index == _projectControllers.length - 1)
+  //                                 IconButton(
+  //                                   icon: const Icon(Icons.add_circle,
+  //                                       color: Colors.blueAccent),
+  //                                   onPressed: () {
+  //                                     setState(() {
+  //                                       _projectControllers
+  //                                           .add(TextEditingController());
+  //                                     });
+  //                                   },
+  //                                 ),
+  //                               if (_projectControllers.length > 1)
+  //                                 IconButton(
+  //                                   icon: const Icon(Icons.remove_circle,
+  //                                       color: Colors.redAccent),
+  //                                   onPressed: () {
+  //                                     setState(() {
+  //                                       _projectControllers.removeAt(index);
+  //                                     });
+  //                                   },
+  //                                 ),
+  //                             ],
+  //                           ),
+  //                         );
+  //                       },
+  //                     ),
+  //                   ),
+
+  //                   const SizedBox(height: 16),
+
+  //                   // 🔵 Owner Name
+  //                   TextField(
+  //                     controller: _ownerController,
+  //                     decoration: const InputDecoration(
+  //                       labelText: 'Project Owner Name',
+  //                       border: OutlineInputBorder(),
+  //                       prefixIcon: Icon(Icons.person),
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // 🟣 Owner Image Picker
+  //                   Center(
+  //                     child: GestureDetector(
+  //                       onTap: () async {
+  //                         FilePickerResult? result =
+  //                             await FilePicker.platform.pickFiles(
+  //                           type: FileType.image,
+  //                           withData: true,
+  //                         );
+  //                         if (result != null) {
+  //                           if (kIsWeb) {
+  //                             setState(() {
+  //                               selectedOwnerImageBytes =
+  //                                   result.files.single.bytes;
+  //                             });
+  //                           } else {
+  //                             setState(() {
+  //                               selectedOwnerImage =
+  //                                   File(result.files.single.path!);
+  //                             });
+  //                           }
+  //                         }
+  //                       },
+  //                       child: Column(
+  //                         children: [
+  //                           CircleAvatar(
+  //                             radius: 35,
+  //                             backgroundImage: kIsWeb
+  //                                 ? (selectedOwnerImageBytes != null
+  //                                     ? MemoryImage(selectedOwnerImageBytes!)
+  //                                     : const AssetImage(
+  //                                             "assets/icons/default_user.png")
+  //                                         as ImageProvider)
+  //                                 : (selectedOwnerImage != null
+  //                                     ? FileImage(selectedOwnerImage!)
+  //                                     : const AssetImage(
+  //                                             "assets/icons/default_user.png")
+  //                                         as ImageProvider),
+  //                             child: (kIsWeb
+  //                                     ? selectedOwnerImageBytes == null
+  //                                     : selectedOwnerImage == null)
+  //                                 ? const Icon(Icons.add_a_photo,
+  //                                     color: Colors.white)
+  //                                 : null,
+  //                           ),
+  //                           const SizedBox(height: 6),
+  //                           const Text("Tap to upload owner image",
+  //                               style: TextStyle(fontSize: 11))
+  //                         ],
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 16),
+
+  //                   // 🟤 File Picker + Live Preview
+
+  //                   // ---------------------Start Elevated Button for project Adding and submit-----------------
+
+  //                   ElevatedButton.icon(
+  //                     style: ElevatedButton.styleFrom(
+  //                         backgroundColor: Colors.teal.shade600),
+  //                     onPressed: () async {
+  //                       FilePickerResult? result =
+  //                           await FilePicker.platform.pickFiles(
+  //                         type: FileType.custom,
+  //                         allowedExtensions: [
+  //                           'png',
+  //                           'jpg',
+  //                           'jpeg',
+  //                           'xlsx',
+  //                           'pdf'
+  //                         ],
+  //                       );
+  //                       if (result != null) {
+  //                         final filePath = result.files.single.path!;
+  //                         final fileSizeMB =
+  //                             File(filePath).lengthSync() / (1024 * 1024);
+  //                         if (fileSizeMB > 20) {
+  //                           ScaffoldMessenger.of(context).showSnackBar(
+  //                             const SnackBar(
+  //                                 content: Text(
+  //                                     "Attached file should not exceed 20 MB")),
+  //                           );
+  //                           return;
+  //                         }
+  //                         setState(() {
+  //                           selectedFile = File(filePath);
+  //                         });
+  //                       }
+  //                     },
+  //                     icon: const Icon(Icons.attach_file),
+  //                     label: const Text("Attach File"),
+  //                   ),
+
+  //                   // ------------------End Elevated Button for project Adding and submit-----------
+
+  //                   // ✅ Instant File Preview
+  //                   if (selectedFile != null) ...[
+  //                     const SizedBox(height: 8),
+  //                     Container(
+  //                       decoration: BoxDecoration(
+  //                         color: Colors.teal.shade50,
+  //                         borderRadius: BorderRadius.circular(8),
+  //                         border: Border.all(color: Colors.teal.shade100),
+  //                       ),
+  //                       padding: const EdgeInsets.all(8),
+  //                       child: Row(
+  //                         children: [
+  //                           Icon(Icons.insert_drive_file,
+  //                               color: Colors.teal.shade700, size: 20),
+  //                           const SizedBox(width: 8),
+  //                           Expanded(
+  //                             child: Text(
+  //                               selectedFile!.path.split('/').last,
+  //                               style: const TextStyle(fontSize: 12),
+  //                               overflow: TextOverflow.ellipsis,
+  //                             ),
+  //                           ),
+  //                           IconButton(
+  //                             icon: const Icon(Icons.close, size: 18),
+  //                             onPressed: () {
+  //                               setState(() {
+  //                                 selectedFile = null;
+  //                               });
+  //                             },
+  //                           )
+  //                         ],
+  //                       ),
+  //                     ),
+  //                   ],
+
+  //                   const SizedBox(height: 16),
+
+  //                   // 🟡 Contact, Email, Address (unchanged)
+  //                   TextField(
+  //                     controller: _contactController,
+  //                     keyboardType: TextInputType.phone,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Contact Number',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.phone)),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   TextField(
+  //                     controller: _emailController,
+  //                     keyboardType: TextInputType.emailAddress,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Email Address',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.email)),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   TextField(
+  //                     controller: _addressController,
+  //                     maxLines: 2,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Permanent Address',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.location_on)),
+  //                   ),
+  //                   const SizedBox(height: 20),
+
+  //                   // ✅ Add Projects Button (loop all)
+  //                   Center(
+  //                     child: ElevatedButton.icon(
+  //                       style: ElevatedButton.styleFrom(
+  //                         backgroundColor: Colors.green,
+  //                         shape: RoundedRectangleBorder(
+  //                             borderRadius: BorderRadius.circular(10)),
+  //                         padding: const EdgeInsets.symmetric(
+  //                             horizontal: 30, vertical: 14),
+  //                       ),
+  //                       icon:
+  //                           const Icon(Icons.cloud_upload, color: Colors.white),
+  //                       label: const Text("Add Projects",
+  //                           style:
+  //                               TextStyle(color: Colors.white, fontSize: 16)),
+  //                       onPressed: () async {
+  //                         final ownerName = _ownerController.text.trim();
+  //                         final contact = _contactController.text.trim();
+  //                         final email = _emailController.text.trim();
+  //                         final address = _addressController.text.trim();
+
+  //                         if (ownerName.isEmpty ||
+  //                             contact.isEmpty ||
+  //                             email.isEmpty) {
+  //                           _showErrorDialog(context,
+  //                               "Owner, contact, and email are required.");
+  //                           return;
+  //                         }
+
+  //                         for (final controller in _projectControllers) {
+  //                           final projectName = controller.text.trim();
+  //                           if (projectName.isEmpty) continue;
+
+  //                           final res = await addProjectDetails(
+  //                             projectName: projectName,
+  //                             ownerName: ownerName,
+  //                             contact: contact,
+  //                             email: email,
+  //                             address: address,
+  //                             file: selectedFile,
+  //                             ownerImage: selectedOwnerImage,
+  //                             ownerImageBytes: selectedOwnerImageBytes,
+  //                           );
+
+  //                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+  //                             content: Text(res['message'] ??
+  //                                 "Project added successfully"),
+  //                             backgroundColor: res['success'] == true
+  //                                 ? Colors.green
+  //                                 : Colors.red,
+  //                           ));
+  //                         }
+
+  //                         Navigator.pop(context);
+  //                         await getProjectListData();
+  //                       },
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+//------------------ previous Nov 02, 2025----------------
+  // void _showAddProjectDialog() {
+  //   final _projectController = TextEditingController();
+  //   final _ownerController = TextEditingController();
+  //   final _contactController = TextEditingController();
+  //   final _emailController = TextEditingController();
+  //   final _addressController = TextEditingController();
+
+  //   File? selectedFile; // Project attachment (mobile)
+  //   File? selectedOwnerImage; // Owner image (mobile)
+  //   Uint8List? selectedOwnerImageBytes; // Owner image (web)
+
+  //   //--------------Start Add Project Dialog Box----------------------
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => StatefulBuilder(
+  //       builder: (context, setState) => Dialog(
+  //         shape:
+  //             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  //         child: ConstrainedBox(
+  //           constraints: const BoxConstraints(maxWidth: 400),
+  //           child: SingleChildScrollView(
+  //             child: Padding(
+  //               padding: const EdgeInsets.all(20),
+  //               child: Column(
+  //                 mainAxisSize: MainAxisSize.min,
+  //                 children: [
+  //                   const Text(
+  //                     'Add Project',
+  //                     style:
+  //                         TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Project Name
+  //                   TextField(
+  //                     controller: _projectController,
+  //                     decoration: const InputDecoration(
+  //                       labelText: 'Project Name',
+  //                       border: OutlineInputBorder(),
+  //                       prefixIcon: Icon(Icons.business),
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Owner Name
+  //                   TextField(
+  //                     controller: _ownerController,
+  //                     decoration: const InputDecoration(
+  //                       labelText: 'Project Owner Name',
+  //                       border: OutlineInputBorder(),
+  //                       prefixIcon: Icon(Icons.person),
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Owner Image Picker
+  //                   GestureDetector(
+  //                     onTap: () async {
+  //                       FilePickerResult? result =
+  //                           await FilePicker.platform.pickFiles(
+  //                         type: FileType.image,
+  //                         withData: true, // important for Web
+  //                       );
+  //                       if (result != null) {
+  //                         if (kIsWeb) {
+  //                           setState(() {
+  //                             selectedOwnerImageBytes =
+  //                                 result.files.single.bytes;
+  //                           });
+  //                         } else {
+  //                           setState(() {
+  //                             selectedOwnerImage =
+  //                                 File(result.files.single.path!);
+  //                           });
+  //                         }
+  //                       }
+  //                     },
+  //                     child: CircleAvatar(
+  //                       radius: 30,
+  //                       backgroundImage: kIsWeb
+  //                           ? (selectedOwnerImageBytes != null
+  //                               ? MemoryImage(selectedOwnerImageBytes!)
+  //                               : const AssetImage(
+  //                                       "assets/icons/default_user.png")
+  //                                   as ImageProvider)
+  //                           : (selectedOwnerImage != null
+  //                               ? FileImage(selectedOwnerImage!)
+  //                               : const AssetImage(
+  //                                       "assets/icons/default_user.png")
+  //                                   as ImageProvider),
+  //                       child: (kIsWeb
+  //                               ? selectedOwnerImageBytes == null
+  //                               : selectedOwnerImage == null)
+  //                           ? const Icon(Icons.add_a_photo)
+  //                           : null,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Project File Picker
+  //                   ElevatedButton.icon(
+  //                     onPressed: () async {
+  //                       FilePickerResult? result =
+  //                           await FilePicker.platform.pickFiles(
+  //                         type: FileType.custom,
+  //                         allowedExtensions: [
+  //                           'png',
+  //                           'jpg',
+  //                           'jpeg',
+  //                           'xlsx',
+  //                           'pdf'
+  //                         ],
+  //                       );
+  //                       if (result != null) {
+  //                         selectedFile = File(result.files.single.path!);
+  //                         setState(() {}); // refresh button text
+  //                       }
+  //                     },
+  //                     icon: const Icon(Icons.attach_file),
+  //                     label: Text(selectedFile == null
+  //                         ? "Pick File"
+  //                         : "Selected: ${selectedFile!.path.split('/').last}"),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Contact
+  //                   TextField(
+  //                     controller: _contactController,
+  //                     keyboardType: TextInputType.phone,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Contact Number',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.phone)),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Email
+  //                   TextField(
+  //                     controller: _emailController,
+  //                     keyboardType: TextInputType.emailAddress,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Email Address',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.email)),
+  //                   ),
+  //                   const SizedBox(height: 12),
+
+  //                   // Address
+  //                   TextField(
+  //                     controller: _addressController,
+  //                     maxLines: 2,
+  //                     decoration: const InputDecoration(
+  //                         labelText: 'Permanent Address',
+  //                         border: OutlineInputBorder(),
+  //                         prefixIcon: Icon(Icons.location_on)),
+  //                   ),
+  //                   const SizedBox(height: 20),
+
+  //                   // -------------Add Project Button---------------
+  //                   ElevatedButton(
+  //                     onPressed: () async {
+  //                       final projectName = _projectController.text.trim();
+  //                       final ownerName = _ownerController.text.trim();
+  //                       final contact = _contactController.text.trim();
+  //                       final email = _emailController.text.trim();
+  //                       final address = _addressController.text.trim();
+
+  //                       // Validation
+  //                       if (projectName.isEmpty ||
+  //                           ownerName.isEmpty ||
+  //                           contact.isEmpty ||
+  //                           email.isEmpty) {
+  //                         _showErrorDialog(context,
+  //                             "Project name, owner, contact, and email are required.");
+  //                         return;
+  //                       }
+
+  //                       if (!phoneRegex.hasMatch(contact)) {
+  //                         _showErrorDialog(context,
+  //                             "Enter a valid Bangladeshi number (11 digits, starts with 01).");
+  //                         return;
+  //                       }
+
+  //                       if (!emailRegex.hasMatch(email)) {
+  //                         _showErrorDialog(
+  //                             context, "Enter a valid email address.");
+  //                         return;
+  //                       }
+
+  //                       // API Call
+  //                       final res = await addProjectDetails(
+  //                         projectName: projectName,
+  //                         ownerName: ownerName,
+  //                         contact: contact,
+  //                         email: email,
+  //                         address: address,
+  //                         file: selectedFile,
+  //                         ownerImage: selectedOwnerImage, // Mobile
+  //                         ownerImageBytes: selectedOwnerImageBytes, // Web
+  //                       );
+
+  //                       ScaffoldMessenger.of(context).showSnackBar(
+  //                         SnackBar(
+  //                           content: Text(res['message'] ?? "Upload completed"),
+  //                           backgroundColor: res['success'] == true
+  //                               ? Colors.green
+  //                               : Colors.red,
+  //                         ),
+  //                       );
+
+  //                       if (res['success'] == true) {
+  //                         // Clear fields
+  //                         _projectController.clear();
+  //                         _ownerController.clear();
+  //                         _contactController.clear();
+  //                         _emailController.clear();
+  //                         _addressController.clear();
+  //                         setState(() {
+  //                           selectedFile = null;
+  //                           selectedOwnerImage = null;
+  //                           selectedOwnerImageBytes = null;
+  //                         });
+
+  //                         Navigator.pop(context);
+  //                         await getProjectListData(); // refresh project list
+  //                       }
+  //                     },
+  //                     child: const Text("Add"),
+  //                   ),
+
+  //                   //-----------End Add Project Button-------------
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+//--------------ENd Add Project Dialog Box---- Today------------------
+
+// ----------End To Add a New Project using a Dialog---------
 
 // utils.dart (or top of your widget file, before the class)
   void _showErrorDialog(BuildContext context, String message) {
@@ -1312,13 +2666,16 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
   final phoneRegex = RegExp(r'^(01)[0-9]{9}$'); // Bangladeshi 11-digit number
   final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
-  // ------------------ Period Dialog ------------------
+//----------------- Start Period Dialog-------------------
   void _showPeriodDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text("Select Period"),
+        title: const Text(
+          "Select Period",
+          style: TextStyle(fontSize: 10), // 🔹 font set to 10px
+        ),
         content: StatefulBuilder(
           builder: (context, setStateDialog) => Column(
             mainAxisSize: MainAxisSize.min,
@@ -1331,7 +2688,10 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 items: numbers
                     .map((num) => DropdownMenuItem(
                           value: num,
-                          child: Text(num.toString()),
+                          child: Text(
+                            num.toString(),
+                            style: const TextStyle(fontSize: 10), // 🔹
+                          ),
                         ))
                     .toList(),
                 onChanged: (value) =>
@@ -1345,7 +2705,10 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
                 items: units
                     .map((unit) => DropdownMenuItem(
                           value: unit,
-                          child: Text(unit),
+                          child: Text(
+                            unit,
+                            style: const TextStyle(fontSize: 10), // 🔹
+                          ),
                         ))
                     .toList(),
                 onChanged: (value) =>
@@ -1356,149 +2719,339 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel")),
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "Cancel",
+              style: TextStyle(fontSize: 10), // 🔹
+            ),
+          ),
           ElevatedButton(
             onPressed: () {
               setState(() {}); // update AppBar
               Navigator.pop(context);
               getTaskData(); // fetch tasks instantly
             },
-            child: const Text("Apply"),
+            child: const Text(
+              "Apply",
+              style: TextStyle(fontSize: 10), // 🔹
+            ),
           ),
         ],
       ),
     );
   }
+//----------------- End Period Dialog-------------------
 
-  // ------------------ Add Column ------------------
   void _showAddColumnDialog() {
     TextEditingController _controller = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Column'),
-        content: TextField(
-            controller: _controller,
-            decoration: const InputDecoration(hintText: 'Column Name')),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          TextButton(
-            onPressed: () {
-              if (_controller.text.isNotEmpty) {
-                addColumn(_controller.text);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Add'),
+      builder: (context) {
+        // Get the available height after keyboard opens
+        final availableHeight = MediaQuery.of(context).size.height -
+            MediaQuery.of(context).viewInsets.bottom;
+
+        return AlertDialog(
+          scrollable: true,
+          title: const Text(
+            'Add Column',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ],
-      ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: availableHeight * 0.5, // Half of remaining screen
+            ),
+            child: SingleChildScrollView(
+              child: TextField(
+                controller: _controller,
+                decoration: const InputDecoration(
+                  hintText: 'Column Name',
+                  hintStyle: TextStyle(fontSize: 10),
+                  border: UnderlineInputBorder(),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                ),
+                style: const TextStyle(fontSize: 10),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontSize: 10),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                if (_controller.text.isNotEmpty) {
+                  addColumn(_controller.text);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text(
+                'Add',
+                style: TextStyle(fontSize: 10),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  // ------------------ Add Project ------------------
-  Future<Map<String, dynamic>> addProjectDetails({
-    required String projectName,
-    required String ownerName,
-    required String contact,
-    required String email,
-    required String address,
-    File? file,
-  }) async {
-    FormData formData = FormData.fromMap({
-      "project_name": projectName,
-      "project_owner_name": ownerName,
-      "contact_number": contact,
-      "email_address": email,
-      "permanent_address": address,
-      "created_by": ownerName,
-      if (file != null)
-        "attached_file": await MultipartFile.fromFile(
-          file.path,
-          filename: file.path.split('/').last,
-        ),
-    });
+// // ------------------Start Add Column ------------------
+//   void _showAddColumnDialog() {
+//     TextEditingController _controller = TextEditingController();
 
-    final dio = Dio();
+//     showDialog(
+//       context: context,
+//       builder: (context) => AlertDialog(
+//         scrollable: true, // ✅ makes dialog scrollable when keyboard opens
+//         title: const Text(
+//           'Add Column',
+//           style: TextStyle(
+//             fontSize: 11, // ~10px equivalent
+//             fontWeight: FontWeight.bold, // ✅ bold text
+//           ),
+//         ),
+//         content: Padding(
+//           padding: EdgeInsets.only(
+//             bottom: MediaQuery.of(context).viewInsets.bottom,
+//           ),
+//           child: TextField(
+//             controller: _controller,
+//             decoration: const InputDecoration(
+//               hintText: 'Column Name',
+//               hintStyle: TextStyle(fontSize: 10),
+//               border: UnderlineInputBorder(), // ✅ straight underline
+//               enabledBorder: UnderlineInputBorder(
+//                 borderSide: BorderSide(color: Colors.grey),
+//               ),
+//               focusedBorder: UnderlineInputBorder(
+//                 borderSide: BorderSide(color: Colors.blue),
+//               ),
+//             ),
+//             style: const TextStyle(fontSize: 10),
+//           ),
+//         ),
+//         actions: [
+//           TextButton(
+//             onPressed: () => Navigator.pop(context),
+//             child: const Text(
+//               'Cancel',
+//               style: TextStyle(fontSize: 10),
+//             ),
+//           ),
+//           TextButton(
+//             onPressed: () {
+//               if (_controller.text.isNotEmpty) {
+//                 addColumn(_controller.text);
+//                 Navigator.pop(context);
+//               }
+//             },
+//             child: const Text(
+//               'Add',
+//               style: TextStyle(fontSize: 10),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// // ------------------End Add Column ------------------
 
-    try {
-      final response = await dio.post(
-        "http://192.168.32.105/API/add_project_kanban.php",
-        data: formData,
-        options: Options(
-          headers: {'Content-Type': 'multipart/form-data'},
-          responseType: ResponseType.plain, // 👈 treat as plain text first
-        ),
-      );
+  // void _showAddColumnDialog() {
+  //   TextEditingController _controller = TextEditingController();
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       scrollable: true, // ✅ allows dialog to scroll when keyboard opens
+  //       title: const Text(
+  //         'Add Column',
+  //         style: TextStyle(
+  //           fontSize: 11,
+  //           fontWeight: FontWeight.bold,
+  //         ),
+  //       ),
+  //       content: ConstrainedBox(
+  //         constraints: BoxConstraints(
+  //           maxHeight: MediaQuery.of(context).size.height * 0.5,
+  //         ),
+  //         child: SingleChildScrollView(
+  //           child: TextField(
+  //             controller: _controller,
+  //             decoration: const InputDecoration(
+  //               hintText: 'Column Name',
+  //               hintStyle: TextStyle(fontSize: 10),
+  //               border: UnderlineInputBorder(), // ✅ straight underline
+  //               enabledBorder: UnderlineInputBorder(
+  //                 borderSide: BorderSide(color: Colors.grey),
+  //               ),
+  //               focusedBorder: UnderlineInputBorder(
+  //                 borderSide: BorderSide(color: Colors.green),
+  //               ),
+  //             ),
+  //             style: const TextStyle(fontSize: 10),
+  //           ),
+  //         ),
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text(
+  //             'Cancel',
+  //             style: TextStyle(fontSize: 10),
+  //           ),
+  //         ),
+  //         TextButton(
+  //           onPressed: () {
+  //             if (_controller.text.isNotEmpty) {
+  //               addColumn(_controller.text);
+  //               Navigator.pop(context);
+  //             }
+  //           },
+  //           child: const Text(
+  //             'Add',
+  //             style: TextStyle(fontSize: 10),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-      print("✅ Raw Response: ${response.data}");
+// // ------------------Start Add Column ------------------
+//   void _showAddColumnDialog() {
+//     TextEditingController _controller = TextEditingController();
+//     showDialog(
+//       context: context,
+//       builder: (context) => AlertDialog(
+//         title: const Text(
+//           'Add Column',
+//           style: TextStyle(
+//             fontSize: 11, // ~10px equivalent
+//             fontWeight: FontWeight.bold, // ✅ bold text
+//           ),
+//         ),
+//         content: ConstrainedBox(
+//           constraints: BoxConstraints(
+//             maxHeight:
+//                 MediaQuery.of(context).size.height * 0.5, // ✅ limit height
+//           ),
+//           child: SingleChildScrollView(
+//             child: TextField(
+//               controller: _controller,
+//               decoration: const InputDecoration(
+//                 hintText: 'Column Name',
+//                 hintStyle: TextStyle(fontSize: 10), // 🔹
+//                 border: UnderlineInputBorder(), // ✅ straight underline
+//                 enabledBorder: UnderlineInputBorder(
+//                   borderSide:
+//                       BorderSide(color: Colors.grey), // default underline color
+//                 ),
+//                 focusedBorder: UnderlineInputBorder(
+//                   borderSide: BorderSide(
+//                       color: Colors.green), // underline color on focus
+//                 ),
+//               ),
+//               style: const TextStyle(fontSize: 10), // 🔹
+//             ),
+//           ),
+//         ),
+//         actions: [
+//           TextButton(
+//             onPressed: () => Navigator.pop(context),
+//             child: const Text(
+//               'Cancel',
+//               style: TextStyle(fontSize: 10), // 🔹
+//             ),
+//           ),
+//           TextButton(
+//             onPressed: () {
+//               if (_controller.text.isNotEmpty) {
+//                 addColumn(_controller.text);
+//                 Navigator.pop(context);
+//               }
+//             },
+//             child: const Text(
+//               'Add',
+//               style: TextStyle(fontSize: 10), // 🔹
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// // ------------------End Add Column ------------------
 
-      // Decode manually
-      final Map<String, dynamic> decoded = jsonDecode(response.data);
+// // ------------------Start Add Column ------------------
 
-      return decoded;
-    } catch (e) {
-      print("❌ Upload error: $e");
-      return {"success": false, "message": "Upload failed: $e"};
-    }
-  }
+  // void _showAddColumnDialog() {
+  //   TextEditingController _controller = TextEditingController();
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text(
+  //         'Add Column',
+  //         style: TextStyle(
+  //           fontSize: 11, // ~10px equivalent
+  //           fontWeight: FontWeight.bold, // ✅ bold text
+  //         ),
+  //       ),
+  //       content: ConstrainedBox(
+  //         constraints: BoxConstraints(
+  //           maxHeight:
+  //               MediaQuery.of(context).size.height * 0.5, // ✅ limit height
+  //         ),
+  //         child: SingleChildScrollView(
+  //           child: TextField(
+  //             controller: _controller,
+  //             decoration: const InputDecoration(
+  //               hintText: 'Column Name',
+  //               hintStyle: TextStyle(fontSize: 10), // 🔹
+  //             ),
+  //             style: const TextStyle(fontSize: 10), // 🔹
+  //           ),
+  //         ),
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text(
+  //             'Cancel',
+  //             style: TextStyle(fontSize: 10), // 🔹
+  //           ),
+  //         ),
+  //         TextButton(
+  //           onPressed: () {
+  //             if (_controller.text.isNotEmpty) {
+  //               addColumn(_controller.text);
+  //               Navigator.pop(context);
+  //             }
+  //           },
+  //           child: const Text(
+  //             'Add',
+  //             style: TextStyle(fontSize: 10), // 🔹
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-  @override
-  void addColumn(String title) async {
-    int newId = columns.length + 1;
-    setState(() => columns.add(KColumn(id: newId, title: title, children: [])));
-    final dio = Dio();
-    try {
-      await dio.post(
-        'http://192.168.32.105/API/add_column_kanban.php',
-        data: {"title": title, "created_by": "muhsina"},
-        options: Options(
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
-      );
-    } catch (e) {
-      print("Add column error: $e");
-    }
-  }
+// // ------------------End Add Column ------------------
 
-  @override
-  void addTask(String title, int column) async {
-    final taskId = Uuid().v4();
-    final newTask = KTask(
-      title: title,
-      taskId: taskId,
-      createdBy: "muhsina",
-      createdAt: DateTime.now().toIso8601String(),
-    );
-    setState(() => columns[column].children.insert(0, newTask));
-
-    final dio = Dio();
-    try {
-      int columnId = columns[column].id;
-      await dio.post(
-        "http://192.168.32.105/API/add_task_kanban.php",
-        data: {
-          "title": title,
-          "task_id": taskId,
-          "column_id": columnId,
-          "model_name": 1,
-          //"project_name": 1,
-          "project_id": 1,
-          "created_by": "muhsina",
-          // "project_name": _selectedProjectId, // 👈 link to project
-          // "created_by": _projectOwnerName,
-        },
-        options: Options(
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
-      );
-    } catch (e) {
-      print("Add task error: $e");
-    }
-  }
-
-  // ------------------ Edit Task ------------------
+  // ------------------ Start Edit Task ------------------
   void _showEditTask(int columnIndex, KTask task) {
     showModalBottomSheet(
       context: context,
@@ -1520,76 +3073,7 @@ class _KanbanSetStatePageState extends State<KanbanSetStatePage>
     );
   }
 
-  // ------------------ KanbanBoardController ------------------
-  @override
-  Future<void> deleteItem(int columnIndex, KTask task) async {
-    setState(() => columns[columnIndex].children.remove(task));
-    final dio = Dio();
-    try {
-      await dio.post(
-        "http://192.168.32.105/API/delete_task_kanban.php",
-        data: {"id": task.taskId, "deleted_by": "muhsina"},
-        options: Options(
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
-      );
-    } catch (e) {
-      print("Delete error: $e");
-    }
-  }
+  // ----------------End Edit Task ----------------------------
 
-  @override
-  void handleReOrder(int oldIndex, int newIndex, int index) {
-    setState(() {
-      if (oldIndex != newIndex) {
-        final task = columns[index].children.removeAt(oldIndex);
-        columns[index].children.insert(newIndex, task);
-      }
-    });
-  }
-
-  @override
-  void dragHandler(KData data, int index) async {
-    setState(() {
-      columns[data.from].children.remove(data.task);
-      columns[index].children.add(data.task);
-    });
-    final dio = Dio();
-    try {
-      await dio.post(
-        "http://192.168.32.105/API/drag_drop_kanban.php",
-        data: {
-          "id": data.taskId,
-          "column_name": index + 1,
-          "previous_status": data.from + 1,
-          "model_name": 1,
-          "project_name": 1,
-          "status_change_by": "muhsina"
-        },
-        options: Options(
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
-      );
-    } catch (e) {
-      print("Drag error: $e");
-    }
-  }
-
-  @override
-  void updateItem(int columnIndex, KTask task) async {
-    final dio = Dio();
-    try {
-      await dio.post(
-        "http://192.168.32.105/API/update_task_kanban.php",
-        data: {
-          "id": task.taskId,
-          "title": task.title,
-          "edited_by": "muhsina",
-          "edited_at": DateTime.now().toString()
-        },
-        options: Options(
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
-      );
-    } catch (e) {
-      print("Update error: $e");
-    }
-  }
+  //End Handle Reorder
 }

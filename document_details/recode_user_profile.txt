@@ -1,0 +1,49 @@
+https://chatgpt.com/c/68f76ddf-d040-8320-a5fb-7e24435a5c82
+
+
+
+Recommended Approach for You
+
+Since your app seems to be device-based (no login), here’s what’s best for your current setup:
+
+✅ Short term (easy):
+
+Auto-create user record in backend if none exists for that UUID (so reinstalls always work).
+
+✅ Long term (better):
+
+Replace your randomly generated UUID with a stable ID from device_info_plus.
+That way, even if the user deletes and reinstalls the app, the same ID will be generated again, and their data will reappear.
+
+
+UPDATE tbl_project_details
+SET device_user_id = 'LAPTOP_DEV_DEVICE_ID'
+WHERE device_user_id = '1a6175f6-e9f5-49ef-82ee-98da33c1cdbd';
+
+--------------------------------------------------------------------------------------------
+
+updating this query in my database from my laptop and mobile side "no data found for this user"
+
+UPDATE tbl_project_details
+SET device_user_id = 'LAPTOP_DEV_DEVICE_ID'
+WHERE device_user_id = '1a6175f6-e9f5-49ef-82ee-98da33c1cdbd';
+
+
+Projects loaded: 11
+🔑 Loaded saved device_user_id:
+d19113fb-249f-40c6-85d2-7aa72288af3a
+📡 Fetching user profile:
+http://192.168.32.168/API//get_user_profile_kanban.php?dev
+ice_user_id=d19113fb-249f-40c6-85d2-7aa72288af3a
+📡 Creating profile:
+http://192.168.32.168/API//create_user_profile.php  data:
+{device_user_id: d19113fb-249f-40c6-85d2-7aa72288af3a,
+project_owner_name: New User, project_name: My Project,
+contact_number: , email_address: , permanent_address: ,
+created_by: App}
+❌ _createProfileOnServer error: DioException [connection
+error]: The connection errored: The XMLHttpRequest onError
+callback was called. This typically indicates an error on
+the network layer. This indicates an error which most
+likely cannot be solved by the library.
+! Failed to create user profile on server

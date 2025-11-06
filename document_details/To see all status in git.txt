@@ -1,0 +1,104 @@
+PS D:\Flutter-Project\task_track> git status
+On branch muhsina
+Your branch is up to date with 'origin/muhsina'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   .flutter-plugins-dependencies
+        modified:   API/get_task_data_kanban.php
+        modified:   document_details/reload.txt
+        modified:   lib/presentation/pages/home_page.dart
+        modified:   pubspec.yaml
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        document_details/To_show_project.txt
+        document_details/appBar.txt
+        document_details/appBar_2025_09_23.txt
+        document_details/branch_commit.txt
+        document_details/run_php_server_anywhere.txt
+        lib/presentation/pages/home_page_2025_09_20.dart
+        lib/presentation/pages/three_calendar_dialog.dart
+
+no changes added to commit (use "git add" and/or "git commit -a")
+PS D:\Flutter-Project\task_track> git log -1
+commit 8e1986eb4e8e0720d7f18b85a23cca44b6928343 (HEAD -> muhsina, origin/muhsina)
+Author: muhsinashoma <muhsina.akter2@gmail.com>
+Date:   Sat Sep 20 00:40:43 2025 +0600
+
+    To Show All Projects as Dropdown in appBar
+PS D:\Flutter-Project\task_track> git add .
+PS D:\Flutter-Project\task_track> git commit -m "To Show Total Task Under Respective Project"
+[muhsina b32f38b] To Show Total Task Under Respective Project
+ 12 files changed, 2251 insertions(+), 214 deletions(-)
+ create mode 100644 document_details/To_show_project.txt
+ create mode 100644 document_details/appBar.txt
+ create mode 100644 document_details/appBar_2025_09_23.txt
+ create mode 100644 document_details/branch_commit.txt
+ create mode 100644 document_details/run_php_server_anywhere.txt
+ create mode 100644 lib/presentation/pages/home_page_2025_09_20.dart
+ create mode 100644 lib/presentation/pages/three_calendar_dialog.dart
+PS D:\Flutter-Project\task_track> git push origin muhsina
+Enumerating objects: 30, done.
+Counting objects: 100% (30/30), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (18/18), done.
+Writing objects: 100% (19/19), 7.89 KiB | 1.58 MiB/s, done.
+Total 19 (delta 14), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (14/14), completed with 10 local objects.
+To https://github.com/muhsinashoma/task_track.git
+   8e1986e..b32f38b  muhsina -> muhsina
+PS D:\Flutter-Project\task_track> git branch
+  master
+* muhsina
+  submaster
+PS D:\Flutter-Project\task_track> git checkout master
+Switched to branch 'master'
+Your branch is up to date with 'origin/master'.
+PS D:\Flutter-Project\task_track> git branch
+* master
+  muhsina
+  submaster
+PS D:\Flutter-Project\task_track> git merge muhsina
+Updating 1d1f4fa..b32f38b
+error: Your local changes to the following files would be overwritten by merge:
+        .flutter-plugins-dependencies
+Please commit your changes or stash them before you merge.
+Aborting
+PS D:\Flutter-Project\task_track> git commit -m "To Uploaded All Commit from muhsina branch to Main branch"
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   .flutter-plugins-dependencies
+
+no changes added to commit (use "git add" and/or "git commit -a")
+PS D:\Flutter-Project\task_track> git push origin master
+Everything up-to-date
+PS D:\Flutter-Project\task_track> git add .
+PS D:\Flutter-Project\task_track> git commit -m "To Upload All Commit from muhsina branch to Main branch"
+[master 2fed0e9] To Upload All Commit from muhsina branch to Main branch
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+PS D:\Flutter-Project\task_track> git merge muhsina
+Auto-merging .flutter-plugins-dependencies
+CONFLICT (content): Merge conflict in .flutter-plugins-dependencies
+Automatic merge failed; fix conflicts and then commit the result.
+PS D:\Flutter-Project\task_track> git add .flutter-plugins-dependencies
+PS D:\Flutter-Project\task_track> git commit -m "To Upload All Commit from muhsina branch to Main branch"
+[master cd236ed] To Upload All Commit from muhsina branch to Main branch
+PS D:\Flutter-Project\task_track> git merge muhsina
+Already up to date.
+PS D:\Flutter-Project\task_track> git push origin master
+Enumerating objects: 10, done.
+Counting objects: 100% (10/10), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (6/6), done.
+Writing objects: 100% (6/6), 688 bytes | 688.00 KiB/s, done.
+Total 6 (delta 4), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (4/4), completed with 3 local objects.
+To https://github.com/muhsinashoma/task_track.git
+   1d1f4fa..cd236ed  master -> master
+PS D:\Flutter-Project\task_track> 
