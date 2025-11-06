@@ -126,15 +126,16 @@ Example:
 git push origin feature-login
 
 
-✅ Summary Table
+🪄 Switch from master to muhsina Branch
+# 1. Check your current branch
+git branch
 
-Action	Command
-View branches	git branch
-Switch branch	git switch branch_name
-Create & switch branch	git switch -c new_branch_name
-Merge into main	git switch main → git merge branch_name
-Push branch to remote	git push origin branch_name
+# 2. Make sure all changes in master are saved (optional but safe)
+git add .
+git commit -m "Save progress before switching to muhsina branch"
 
-If you want, I can make a tiny cheat sheet for you that’s super easy to remember for daily Git branch operations.
+# 3. Switch to muhsina branch
+git checkout muhsina
 
-Do you want me to do that?
+# 4. (Optional) Get the latest updates from GitHub
+git pull origin muhsina
